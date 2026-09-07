@@ -1,0 +1,6 @@
+{
+  "name": "Control de Cambios y Reclamaciones de Productos MYG",
+  "description": "Sistema de Control de Cambios y Reclamaciones de Productos MYG con acceso por rutas, carpetas individuales, panel de alertas con sonido para el administrador, firmas digitales, vouchers y estadísticas.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
