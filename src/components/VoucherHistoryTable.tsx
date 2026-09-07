@@ -159,18 +159,18 @@ export const VoucherHistoryTable: React.FC<VoucherHistoryTableProps> = ({
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto space-y-6 animate-fade-in pb-12">
+    <div className="w-full max-w-6xl mx-auto space-y-3.5 animate-fade-in pb-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-xs">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-800 text-xs font-semibold mb-1">
-            <FileText className="w-3.5 h-3.5 text-emerald-600" />
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-800 text-[11px] font-semibold mb-0.5">
+            <FileText className="w-3 h-3 text-emerald-600" />
             {isAdmin ? 'Control General de Vouchers' : `Vouchers Emitidos: ${currentUser.routeId}`}
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
             {isAdmin ? 'Historial Global de Vouchers Emitidos' : `Mis Vouchers (${currentUser.vendorName})`}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+          <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
             Registro consecutivo con búsqueda rápida y reimpresión de comprobantes en PDF.
           </p>
         </div>
@@ -179,44 +179,44 @@ export const VoucherHistoryTable: React.FC<VoucherHistoryTableProps> = ({
           <button
             type="button"
             onClick={handleExportCSV}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 rounded-xl border border-emerald-200 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-200 transition-colors cursor-pointer"
           >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
             <span>Exportar CSV</span>
           </button>
           <button
             type="button"
             onClick={() => window.print()}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
           >
-            <Printer className="w-4 h-4" />
-            <span>Imprimir Informe</span>
+            <Printer className="w-3.5 h-3.5" />
+            <span>Imprimir</span>
           </button>
         </div>
       </div>
 
       {/* Barra de Búsqueda y Filtros Combinados */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+      <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs space-y-2.5">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
-            <Filter className="w-4 h-4 text-emerald-600" />
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+            <Filter className="w-3.5 h-3.5 text-emerald-600" />
             <span>Filtros y Búsqueda Rápida</span>
           </div>
-          <span className="text-xs text-slate-500 font-medium">
+          <span className="text-[11px] text-slate-500 font-medium">
             {filteredClaims.length} comprobantes encontrados
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs">
           {/* Búsqueda de texto */}
           <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar cliente, factura, voucher..."
-              className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+              className="w-full pl-8 pr-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:bg-white"
             />
           </div>
 
@@ -226,7 +226,7 @@ export const VoucherHistoryTable: React.FC<VoucherHistoryTableProps> = ({
               <select
                 value={selectedRoute}
                 onChange={(e) => setSelectedRoute(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+                className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:bg-white"
               >
                 <option value="ALL">Todas las Rutas (1-11)</option>
                 {ALL_ROUTES.map((r) => (
@@ -237,9 +237,9 @@ export const VoucherHistoryTable: React.FC<VoucherHistoryTableProps> = ({
               </select>
             </div>
           ) : (
-            <div className="flex items-center px-3 py-2 bg-slate-100 border border-slate-300 rounded-xl text-xs font-bold text-slate-700">
-              <Lock className="w-3.5 h-3.5 text-slate-400 mr-2" />
-              <span>Ruta Asignada: {currentUser.routeId}</span>
+            <div className="flex items-center px-2.5 py-1.5 bg-slate-100 border border-slate-300 rounded-lg text-xs font-bold text-slate-700">
+              <Lock className="w-3 h-3 text-slate-400 mr-1.5" />
+              <span>Ruta: {currentUser.routeId}</span>
             </div>
           )}
 
@@ -248,7 +248,7 @@ export const VoucherHistoryTable: React.FC<VoucherHistoryTableProps> = ({
             <select
               value={selectedProduct}
               onChange={(e) => setSelectedProduct(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+              className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:bg-white"
             >
               <option value="ALL">Todos los Productos ({products.length})</option>
               {products.map((p) => (
@@ -264,7 +264,7 @@ export const VoucherHistoryTable: React.FC<VoucherHistoryTableProps> = ({
             <select
               value={selectedReason}
               onChange={(e) => setSelectedReason(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+              className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:bg-white"
             >
               <option value="ALL">Todos los Motivos</option>
               {REASON_OPTIONS.map((r) => (
@@ -280,7 +280,7 @@ export const VoucherHistoryTable: React.FC<VoucherHistoryTableProps> = ({
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+              className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:bg-white"
             >
               <option value="ALL">Todos los Estados</option>
               <option value="Cambio Realizado">Cambio Realizado</option>
@@ -291,12 +291,12 @@ export const VoucherHistoryTable: React.FC<VoucherHistoryTableProps> = ({
           </div>
 
           {/* Rango de Fechas */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-1/2 px-2 py-2 bg-slate-50 border border-slate-300 rounded-xl text-[11px] focus:ring-2 focus:ring-emerald-500"
+              className="w-1/2 px-2 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-[11px] focus:ring-2 focus:ring-emerald-500"
               title="Fecha Inicial"
             />
             <span className="text-slate-400 text-xs">a</span>
@@ -304,7 +304,7 @@ export const VoucherHistoryTable: React.FC<VoucherHistoryTableProps> = ({
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-1/2 px-2 py-2 bg-slate-50 border border-slate-300 rounded-xl text-[11px] focus:ring-2 focus:ring-emerald-500"
+              className="w-1/2 px-2 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-[11px] focus:ring-2 focus:ring-emerald-500"
               title="Fecha Final"
             />
           </div>
@@ -312,14 +312,14 @@ export const VoucherHistoryTable: React.FC<VoucherHistoryTableProps> = ({
       </div>
 
       {/* Tabla de Vouchers */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
         {filteredClaims.length === 0 ? (
-          <div className="p-12 text-center">
-            <Package className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-            <h4 className="text-sm font-bold text-slate-800">No hay vouchers registrados con estos criterios</h4>
+          <div className="p-8 text-center">
+            <Package className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+            <h4 className="text-xs sm:text-sm font-bold text-slate-800">No hay vouchers registrados con estos criterios</h4>
             <button
               onClick={onNewClaim}
-              className="mt-3 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+              className="mt-2.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
             >
               Registrar Primer Reclamo
             </button>
@@ -329,60 +329,60 @@ export const VoucherHistoryTable: React.FC<VoucherHistoryTableProps> = ({
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 text-slate-600 font-bold uppercase tracking-wider border-b border-slate-200 text-[10px]">
                 <tr>
-                  <th className="py-3 px-4">Ruta</th>
-                  <th className="py-3 px-4">N° Voucher</th>
-                  <th className="py-3 px-4">Fecha/Hora</th>
-                  <th className="py-3 px-4">Cliente y Factura</th>
-                  <th className="py-3 px-4">Producto Reclamado</th>
-                  <th className="py-3 px-4 text-center">Cant.</th>
-                  <th className="py-3 px-4">Motivo</th>
-                  <th className="py-3 px-4">Piloto</th>
-                  <th className="py-3 px-4 text-right no-print">Acción</th>
+                  <th className="py-2.5 px-3">Ruta</th>
+                  <th className="py-2.5 px-3">N° Voucher</th>
+                  <th className="py-2.5 px-3">Fecha/Hora</th>
+                  <th className="py-2.5 px-3">Cliente y Factura</th>
+                  <th className="py-2.5 px-3">Producto Reclamado</th>
+                  <th className="py-2.5 px-3 text-center">Cant.</th>
+                  <th className="py-2.5 px-3">Motivo</th>
+                  <th className="py-2.5 px-3">Piloto</th>
+                  <th className="py-2.5 px-3 text-right no-print">Acción</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
                 {filteredClaims.map((claim) => (
                   <tr key={claim.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <span className="px-2 py-0.5 rounded-md text-[11px] font-mono font-black bg-slate-900 text-white">
+                    <td className="py-2 px-3">
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-black bg-slate-900 text-white">
                         {claim.routeId || 'RUTA-1'}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 font-mono font-bold text-emerald-800">
+                    <td className="py-2 px-3 font-mono font-bold text-emerald-800">
                       {claim.voucherNumber}
                     </td>
-                    <td className="py-3.5 px-4 text-slate-500 whitespace-nowrap">
+                    <td className="py-2 px-3 text-slate-500 whitespace-nowrap">
                       {claim.formattedDate} <br />
                       <span className="text-[10px] text-slate-400">{claim.formattedTime}</span>
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-2 px-3">
                       <strong className="block text-slate-900">{claim.clientName}</strong>
-                      <span className="font-mono text-[11px] text-slate-500">FAC: {claim.invoiceNumber}</span>
+                      <span className="font-mono text-[10px] text-slate-500">FAC: {claim.invoiceNumber}</span>
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-2 px-3">
                       <span className="font-semibold text-slate-900 block">{claim.productName}</span>
-                      <span className="text-[11px] text-slate-400 block">{claim.vendorName}</span>
+                      <span className="text-[10px] text-slate-400 block">{claim.vendorName}</span>
                     </td>
-                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                    <td className="py-2 px-3 text-center whitespace-nowrap">
                       <span className="font-black text-slate-900">{claim.quantity}</span>{' '}
                       <span className="text-[10px] text-slate-500">{claim.unit}</span>
                     </td>
-                    <td className="py-3.5 px-4">
-                      <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-900 border border-amber-200">
+                    <td className="py-2 px-3">
+                      <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-900 border border-amber-200">
                         {claim.reason}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 text-slate-600 whitespace-nowrap">
+                    <td className="py-2 px-3 text-slate-600 whitespace-nowrap text-[11px]">
                       {claim.deliveryPerson}
                     </td>
-                    <td className="py-3.5 px-4 text-right no-print">
-                      <div className="flex items-center justify-end gap-1.5">
+                    <td className="py-2 px-3 text-right no-print">
+                      <div className="flex items-center justify-end gap-1">
                         <button
                           type="button"
                           onClick={() => onOpenVoucher(claim)}
-                          className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-2xs transition-colors cursor-pointer"
+                          className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-2xs transition-colors cursor-pointer"
                         >
-                          Ver Voucher
+                          Voucher
                         </button>
                         {(isAdmin || claim.routeId === currentUser.routeId) && onDeleteClaim && (
                           <button
@@ -391,10 +391,10 @@ export const VoucherHistoryTable: React.FC<VoucherHistoryTableProps> = ({
                               setDeleteError(null);
                               setClaimToDelete(claim);
                             }}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white rounded-lg border border-rose-200 hover:border-rose-600 font-bold text-xs transition-all cursor-pointer shadow-2xs"
+                            className="inline-flex items-center gap-1 px-2 py-1 bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white rounded-lg border border-rose-200 hover:border-rose-600 font-bold text-xs transition-all cursor-pointer shadow-2xs"
                             title="Eliminar permanentemente este reclamo del sistema"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-3 h-3" />
                             <span>Eliminar</span>
                           </button>
                         )}

@@ -551,7 +551,7 @@ export default function App() {
       />
 
       {/* Sub-header Guía Rápida */}
-      <div className="no-print bg-slate-900 text-slate-300 text-xs py-2 px-4 border-b border-slate-800">
+      <div className="no-print bg-slate-900 text-slate-300 text-[11px] sm:text-xs py-1.5 px-3 sm:px-4 border-b border-slate-800">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="flex h-2 w-2 rounded-full bg-emerald-400"></span>
@@ -568,32 +568,32 @@ export default function App() {
             className="text-emerald-400 hover:text-emerald-300 font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors"
           >
             <HelpCircle className="w-3.5 h-3.5" />
-            <span>{showQuickGuide ? 'Ocultar Guía' : 'Guía del Sistema'}</span>
+            <span>{showQuickGuide ? 'Ocultar Guía' : 'Guía'}</span>
           </button>
         </div>
 
         {showQuickGuide && (
-          <div className="max-w-7xl mx-auto mt-3 pt-3 border-t border-slate-800 text-slate-300 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 animate-fade-in">
-            <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
-              <span className="text-emerald-400 font-bold block mb-1">1. Acceso por Ruta 🛣️</span>
+          <div className="max-w-7xl mx-auto mt-2 pt-2 border-t border-slate-800 text-slate-300 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 animate-fade-in">
+            <div className="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">
+              <span className="text-emerald-400 font-bold block mb-0.5">1. Acceso por Ruta 🛣️</span>
               <p className="text-[11px] text-slate-400">
                 Cada usuario es dirigido automáticamente a su carpeta exclusiva. Solo ve y trabaja sobre sus propios reclamos.
               </p>
             </div>
-            <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
-              <span className="text-emerald-400 font-bold block mb-1">2. Firmas Digitales ✍️</span>
+            <div className="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">
+              <span className="text-emerald-400 font-bold block mb-0.5">2. Firmas Digitales ✍️</span>
               <p className="text-[11px] text-slate-400">
                 Llene los 8 campos obligatorios y dibuje las firmas digitales del vendedor y del cliente en pantalla.
               </p>
             </div>
-            <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
-              <span className="text-emerald-400 font-bold block mb-1">3. Alerta Instantánea 🚨</span>
+            <div className="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">
+              <span className="text-emerald-400 font-bold block mb-0.5">3. Alerta Instantánea 🚨</span>
               <p className="text-[11px] text-slate-400">
                 Al registrar un reclamo, el Administrador recibe de inmediato una notificación emergente y un sonido de alerta.
               </p>
             </div>
-            <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
-              <span className="text-emerald-400 font-bold block mb-1">4. Voucher y PDF 🧾</span>
+            <div className="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">
+              <span className="text-emerald-400 font-bold block mb-0.5">4. Voucher y PDF 🧾</span>
               <p className="text-[11px] text-slate-400">
                 Genera consecutivo oficial único con botón listo para imprimir o guardar en PDF.
               </p>
@@ -603,7 +603,7 @@ export default function App() {
       </div>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-4 lg:px-6 py-3 sm:py-4">
         {currentUser ? (
           <AnimatePresence mode="wait">
             {activeTab === 'new-claim' && (

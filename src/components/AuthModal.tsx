@@ -97,11 +97,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm overflow-y-auto">
-      <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-6 animate-fade-in">
-        {/* Header con identidad visual MYG */}
-        <div className="bg-[#272d34] p-6 text-white text-center relative border-b border-slate-700/50">
-          <div className="w-full flex justify-center items-center mb-3">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/80 backdrop-blur-sm overflow-y-auto">
+      <div className="relative w-full max-w-sm sm:max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto animate-fade-in">
+        {/* Header compacto con identidad visual MYG */}
+        <div className="bg-[#272d34] px-4 py-3 sm:py-3.5 text-white text-center relative border-b border-slate-700/50">
+          <div className="w-full flex justify-center items-center mb-1">
             <img
               src={logoUrl || 'https://drive.google.com/uc?export=view&id=1CXYEzIMay6FRiYLLww9hjbc9xeMk82xi'}
               alt="Logo MYG"
@@ -112,51 +112,51 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   target.src = 'https://lh3.googleusercontent.com/d/1CXYEzIMay6FRiYLLww9hjbc9xeMk82xi';
                 }
               }}
-              className="w-[75%] sm:w-[50%] max-w-[280px] h-auto object-contain mx-auto block"
+              className="h-10 sm:h-12 w-auto max-w-[200px] object-contain mx-auto block drop-shadow-sm select-none"
             />
           </div>
-          <span className="text-[11px] font-black tracking-widest uppercase text-emerald-400 block mb-1">
+          <span className="text-[10px] font-black tracking-widest uppercase text-emerald-400 block leading-tight">
             Acceso Seguro por Rol y Ruta
           </span>
-          <h2 className="text-xl sm:text-2xl font-black tracking-tight">
-            Control de Cambios y Reclamaciones MYG
+          <h2 className="text-sm sm:text-base font-black tracking-tight leading-snug mt-0.5">
+            Control de Cambios y Reclamaciones
           </h2>
-          <p className="text-xs text-slate-300 mt-1">
-            Ingrese con su usuario de Ruta o cuenta de Administrador
+          <p className="text-[11px] text-slate-300 mt-0.5 leading-tight">
+            Ingrese con su usuario de Ruta o Administrador
           </p>
 
           {canClose && onClose && (
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white text-sm cursor-pointer"
+              className="absolute top-3 right-3 text-slate-400 hover:text-white text-sm cursor-pointer p-1"
             >
               ✕
             </button>
           )}
         </div>
 
-        {/* Formulario de Login */}
+        {/* Formulario de Login Compacto y Proporcional */}
         <form
           onSubmit={(e) => {
             e.preventDefault();
             handleLogin();
           }}
-          className="p-6 space-y-4"
+          className="p-4 sm:p-5 space-y-3"
         >
           {error && (
-            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs flex items-start gap-2">
+            <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs flex items-start gap-2">
               <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">
                 Usuario (Ruta o Admin)
               </label>
               <span className="text-[10px] text-emerald-600 font-semibold">
-                Mayúsculas y minúsculas habilitadas
+                Mayús / minús
               </span>
             </div>
             <div className="relative">
@@ -169,21 +169,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Ej. RUTA-1, ruta-1, Admin o admin"
                 required
-                className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white transition-all"
+                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white transition-all"
               />
             </div>
-            <span className="text-[11px] text-slate-400 block mt-1">
-              Acepta mayúsculas o minúsculas (ej. ruta-1, RUTA-1, admin, ADMIN)
+            <span className="text-[10px] text-slate-400 block mt-0.5">
+              Acepta mayúsculas o minúsculas (ej. ruta-1, RUTA-1, admin)
             </span>
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">
                 Contraseña
               </label>
               <span className="text-[10px] text-emerald-600 font-semibold">
-                Mayúsculas y minúsculas habilitadas
+                Mayús / minús
               </span>
             </div>
             <div className="relative">
@@ -196,18 +196,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Ingrese su clave asignada"
                 required
-                className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white transition-all"
+                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white transition-all"
               />
             </div>
-            <span className="text-[11px] text-slate-400 block mt-1">
-              Acepta mayúsculas y minúsculas (ej. Mg2026 o mg2026, Mgyg o mgyg, Mmig o mmig)
+            <span className="text-[10px] text-slate-400 block mt-0.5">
+              Acepta mayúsculas y minúsculas (ej. Mg2026, mg2026, mgyg)
             </span>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer mt-1"
           >
             <LogIn className="w-4 h-4" />
             <span>{loading ? 'Verificando...' : 'Iniciar Sesión'}</span>

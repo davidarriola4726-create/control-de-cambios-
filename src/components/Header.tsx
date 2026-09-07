@@ -60,8 +60,8 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="no-print sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs">
-      {/* Encabezado Superior: Logo Centrado (40-50% ancho), Sin marco blanco ni bordes, integrado al fondo */}
-      <div className="w-full bg-[#272d34] flex items-center justify-center py-3.5 sm:py-4.5 px-4 overflow-hidden border-b border-[#1b1e22]">
+      {/* Encabezado Superior: Logo Centrado, Proporcional y Sin Empujar el Contenido */}
+      <div className="w-full bg-[#272d34] flex items-center justify-center py-2 sm:py-2.5 px-4 border-b border-[#1b1e22]">
         <div className="w-full max-w-7xl mx-auto flex justify-center items-center">
           <img
             src={logoUrl || 'https://drive.google.com/uc?export=view&id=1CXYEzIMay6FRiYLLww9hjbc9xeMk82xi'}
@@ -73,17 +73,17 @@ export const Header: React.FC<HeaderProps> = ({
                 target.src = 'https://lh3.googleusercontent.com/d/1CXYEzIMay6FRiYLLww9hjbc9xeMk82xi';
               }
             }}
-            className="w-[85%] sm:w-[48%] md:w-[45%] max-w-[580px] h-auto object-contain mx-auto block drop-shadow-md select-none"
+            className="h-10 sm:h-12 md:h-14 w-auto max-w-[45%] object-contain mx-auto block drop-shadow-sm select-none"
           />
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14 sm:h-16">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
+        <div className="flex items-center justify-between h-12 sm:h-13">
           {/* Nombre del Sistema */}
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] sm:text-xs font-black tracking-widest text-emerald-800 uppercase">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-black tracking-widest text-emerald-800 uppercase">
                 MYG • Control Logístico
               </span>
               <span className="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-slate-300" />
@@ -91,7 +91,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {totalClaimsCount} {totalClaimsCount === 1 ? 'voucher' : 'vouchers'}
               </span>
             </div>
-            <h1 className="text-sm sm:text-base font-black text-slate-900 tracking-tight leading-tight">
+            <h1 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight leading-tight">
               Control de Cambios y Reclamaciones
             </h1>
           </div>
@@ -308,30 +308,30 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Barra de Pestañas / Menú Interactivo Adaptado al Rol */}
-        <div className="flex items-center space-x-1 sm:space-x-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-none border-t border-slate-100 sm:border-t-0">
+        <div className="flex items-center space-x-1 sm:space-x-1.5 overflow-x-auto pb-1.5 sm:pb-2 scrollbar-none border-t border-slate-100 sm:border-t-0">
           <button
             type="button"
             onClick={() => onTabChange('new-claim')}
-            className={`inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'new-claim'
                 ? 'bg-emerald-600 text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <FilePlus className="w-4 h-4" />
+            <FilePlus className="w-3.5 h-3.5" />
             <span>+ Nuevo Reclamo</span>
           </button>
 
           <button
             type="button"
             onClick={() => onTabChange('vendor-folders')}
-            className={`inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'vendor-folders'
                 ? 'bg-emerald-600 text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <FolderTree className="w-4 h-4" />
+            <FolderTree className="w-3.5 h-3.5" />
             <span>
               {isAdmin ? 'Carpetas por Ruta' : `Mi Carpeta (${currentUser?.routeId || 'Ruta'})`}
             </span>
@@ -340,26 +340,26 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             type="button"
             onClick={() => onTabChange('statistics')}
-            className={`inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'statistics'
                 ? 'bg-emerald-600 text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <BarChart3 className="w-4 h-4" />
+            <BarChart3 className="w-3.5 h-3.5" />
             <span>{isAdmin ? 'Gráficas Generales' : 'Mis Gráficas'}</span>
           </button>
 
           <button
             type="button"
             onClick={() => onTabChange('voucher-history')}
-            className={`inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'voucher-history'
                 ? 'bg-emerald-600 text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <Receipt className="w-4 h-4" />
+            <Receipt className="w-3.5 h-3.5" />
             <span>{isAdmin ? 'Historial Global' : 'Mis Vouchers'}</span>
           </button>
 
@@ -369,16 +369,16 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 onClick={() => onTabChange('admin-alerts')}
-                className={`inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                   activeTab === 'admin-alerts'
                     ? 'bg-amber-500 text-slate-950 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
-                <BellRing className="w-4 h-4" />
-                <span>Alertas Recientes</span>
+                <BellRing className="w-3.5 h-3.5" />
+                <span>Alertas</span>
                 {unreadAlertsCount > 0 && (
-                  <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-black bg-rose-600 text-white">
+                  <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-black bg-rose-600 text-white">
                     {unreadAlertsCount}
                   </span>
                 )}
@@ -387,13 +387,13 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 onClick={() => onTabChange('admin-users')}
-                className={`inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                   activeTab === 'admin-users'
                     ? 'bg-slate-900 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
-                <Users className="w-4 h-4" />
+                <Users className="w-3.5 h-3.5" />
                 <span>Gestión de Rutas</span>
               </button>
             </>
