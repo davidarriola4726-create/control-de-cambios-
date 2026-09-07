@@ -136,7 +136,7 @@ export const LogoConfigModal: React.FC<LogoConfigModalProps> = ({
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
               Vista Previa en Tiempo Real
             </label>
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-center min-h-[90px]">
+            <div className="bg-[#272d34] rounded-xl p-4 flex items-center justify-center min-h-[90px] overflow-hidden">
               <img
                 src={previewUrl}
                 alt="Vista previa del logo"
@@ -144,7 +144,7 @@ export const LogoConfigModal: React.FC<LogoConfigModalProps> = ({
                 onError={() => {
                   setError('No se pudo cargar la imagen desde el enlace proporcionado. Asegúrese de que el enlace sea público y directo.');
                 }}
-                className="max-h-16 w-auto max-w-full object-contain rounded-lg shadow-2xs"
+                className="w-[70%] max-w-[280px] h-auto object-contain mx-auto block drop-shadow-md"
               />
             </div>
             <p className="text-[11px] text-slate-500 mt-1.5 text-center">

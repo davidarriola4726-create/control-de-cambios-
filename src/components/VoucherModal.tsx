@@ -61,45 +61,53 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
 
         {/* Printable Document Area */}
         <div className="print-container p-6 sm:p-8 bg-white text-slate-900">
-          {/* Header */}
-          <div className="border-b-2 border-slate-900 pb-5 mb-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex items-center gap-3">
-              {logoUrl && (
-                <div className="h-14 sm:h-16 px-2 py-1 rounded-xl border border-slate-200 bg-white shrink-0 shadow-xs flex items-center justify-center max-w-[180px]">
-                  <img
-                    src={logoUrl}
-                    alt="Logo MYG"
-                    referrerPolicy="no-referrer"
-                    className="max-h-12 sm:max-h-14 w-auto object-contain"
-                  />
-                </div>
-              )}
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-emerald-600"></span>
-                  <span className="text-xs font-black tracking-widest text-emerald-800 uppercase">
-                    MYG • Control Logístico y Operativo
-                  </span>
-                </div>
-                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 mt-0.5">
-                  VOUCHER DE CAMBIO / RECLAMACIÓN
-                </h1>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Comprobante oficial de retiro y sustitución de producto
-                </p>
-              </div>
+          {/* Header con Logo Centrado, Proporcional y Claro */}
+          <div className="border-b-2 border-slate-900 pb-5 mb-5 text-center">
+            {/* Logo Centrado (40-50% de ancho, sin marco blanco ni bordes) */}
+            <div className="w-full bg-[#272d34] py-3.5 sm:py-4.5 px-4 flex justify-center items-center mb-4 print:bg-[#272d34]">
+              <img
+                src={logoUrl || 'https://drive.google.com/uc?export=view&id=1CXYEzIMay6FRiYLLww9hjbc9xeMk82xi'}
+                alt="Logo MYG"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  if (!target.src.includes('lh3.googleusercontent.com')) {
+                    target.src = 'https://lh3.googleusercontent.com/d/1CXYEzIMay6FRiYLLww9hjbc9xeMk82xi';
+                  }
+                }}
+                className="w-[85%] sm:w-[48%] md:w-[45%] max-w-[460px] h-auto object-contain mx-auto block print:max-w-[380px]"
+              />
             </div>
 
-            {/* Consecutivo Box */}
-            <div className="bg-slate-100 border border-slate-300 rounded-xl px-4 py-2.5 text-right w-full sm:w-auto">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                N° de Requerimiento Consecutivo
-              </span>
-              <span className="text-xl font-mono font-black text-emerald-700 tracking-tight">
-                {claim.voucherNumber}
-              </span>
-              <div className="flex items-center justify-end gap-1 text-[11px] text-slate-500 mt-0.5">
-                <Calendar className="w-3 h-3 text-slate-400" />
+            <div>
+              <div className="flex items-center justify-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+                <span className="text-xs font-black tracking-widest text-emerald-800 uppercase">
+                  MYG • Control Logístico y Operativo
+                </span>
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+              </div>
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 mt-1">
+                VOUCHER DE CAMBIO / RECLAMACIÓN
+              </h1>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Comprobante oficial de retiro y sustitución de producto
+              </p>
+            </div>
+
+            {/* Consecutivo Box Centrado */}
+            <div className="mt-4 inline-flex flex-col sm:flex-row items-center justify-center gap-3 bg-slate-100 border border-slate-300 rounded-xl px-5 py-2">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-600">
+                  N° Requerimiento Consecutivo:
+                </span>
+                <span className="text-lg sm:text-xl font-mono font-black text-emerald-700 tracking-tight">
+                  {claim.voucherNumber}
+                </span>
+              </div>
+              <span className="hidden sm:inline text-slate-300">|</span>
+              <div className="flex items-center gap-1.5 text-xs text-slate-600 font-medium">
+                <Calendar className="w-3.5 h-3.5 text-slate-400" />
                 <span>{claim.formattedDate} - {claim.formattedTime}</span>
               </div>
             </div>

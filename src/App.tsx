@@ -42,7 +42,10 @@ export default function App() {
   const [logoUrl, setLogoUrl] = useState<string>(() => {
     try {
       const saved = localStorage.getItem(LOCAL_STORAGE_LOGO_KEY);
-      if (saved) return saved;
+      if (saved && saved.includes('1CXYEzIMay6FRiYLLww9hjbc9xeMk82xi')) {
+        return saved;
+      }
+      localStorage.setItem(LOCAL_STORAGE_LOGO_KEY, DEFAULT_LOGO_URL);
     } catch (e) {
       console.warn('Could not read logo from localStorage:', e);
     }

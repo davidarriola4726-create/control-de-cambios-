@@ -60,46 +60,40 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="no-print sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-20">
-          {/* Logo y Nombre del Sistema */}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onOpenLogoConfig}
-              title="Clic para cambiar o configurar el logo"
-              className="relative group cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500 rounded-2xl shrink-0"
-            >
-              <div className="h-11 sm:h-13 px-2 py-1 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center justify-center transition-all group-hover:border-emerald-500 group-hover:shadow-md">
-                {logoUrl ? (
-                  <img
-                    src={logoUrl}
-                    alt="Logo MYG"
-                    referrerPolicy="no-referrer"
-                    className="max-h-9 sm:max-h-11 w-auto max-w-[130px] sm:max-w-[170px] object-contain"
-                  />
-                ) : (
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-emerald-700 via-teal-600 to-emerald-500 text-white flex items-center justify-center">
-                    <Boxes className="w-5 h-5" />
-                  </div>
-                )}
-              </div>
-            </button>
+      {/* Encabezado Superior: Logo Centrado (40-50% ancho), Sin marco blanco ni bordes, integrado al fondo */}
+      <div className="w-full bg-[#272d34] flex items-center justify-center py-3.5 sm:py-4.5 px-4 overflow-hidden border-b border-[#1b1e22]">
+        <div className="w-full max-w-7xl mx-auto flex justify-center items-center">
+          <img
+            src={logoUrl || 'https://drive.google.com/uc?export=view&id=1CXYEzIMay6FRiYLLww9hjbc9xeMk82xi'}
+            alt="Logo MYG"
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              if (!target.src.includes('lh3.googleusercontent.com')) {
+                target.src = 'https://lh3.googleusercontent.com/d/1CXYEzIMay6FRiYLLww9hjbc9xeMk82xi';
+              }
+            }}
+            className="w-[85%] sm:w-[48%] md:w-[45%] max-w-[580px] h-auto object-contain mx-auto block drop-shadow-md select-none"
+          />
+        </div>
+      </div>
 
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] sm:text-xs font-black tracking-widest text-emerald-800 uppercase">
-                  MYG • Control Logístico
-                </span>
-                <span className="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-slate-300" />
-                <span className="hidden sm:inline-block text-[11px] text-slate-500 font-medium">
-                  {totalClaimsCount} {totalClaimsCount === 1 ? 'voucher' : 'vouchers'}
-                </span>
-              </div>
-              <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-tight">
-                Control de Cambios y Reclamaciones
-              </h1>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14 sm:h-16">
+          {/* Nombre del Sistema */}
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] sm:text-xs font-black tracking-widest text-emerald-800 uppercase">
+                MYG • Control Logístico
+              </span>
+              <span className="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-slate-300" />
+              <span className="hidden sm:inline-block text-[11px] text-slate-500 font-medium">
+                {totalClaimsCount} {totalClaimsCount === 1 ? 'voucher' : 'vouchers'}
+              </span>
             </div>
+            <h1 className="text-sm sm:text-base font-black text-slate-900 tracking-tight leading-tight">
+              Control de Cambios y Reclamaciones
+            </h1>
           </div>
 
           {/* Right Section: Alerts + Cloud Sync + User Profile */}

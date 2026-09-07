@@ -100,20 +100,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm overflow-y-auto">
       <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-6 animate-fade-in">
         {/* Header con identidad visual MYG */}
-        <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 p-6 text-white text-center relative">
-          <div className="mx-auto h-16 sm:h-20 px-3 py-1.5 rounded-2xl bg-white border border-slate-700/60 flex items-center justify-center shadow-lg shadow-black/40 mb-3 max-w-[220px]">
-            {logoUrl ? (
-              <img
-                src={logoUrl}
-                alt="Logo MYG"
-                referrerPolicy="no-referrer"
-                className="max-h-14 sm:max-h-16 w-auto max-w-full object-contain"
-              />
-            ) : (
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center">
-                <Lock className="w-6 h-6 text-slate-950" />
-              </div>
-            )}
+        <div className="bg-[#272d34] p-6 text-white text-center relative border-b border-slate-700/50">
+          <div className="w-full flex justify-center items-center mb-3">
+            <img
+              src={logoUrl || 'https://drive.google.com/uc?export=view&id=1CXYEzIMay6FRiYLLww9hjbc9xeMk82xi'}
+              alt="Logo MYG"
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                if (!target.src.includes('lh3.googleusercontent.com')) {
+                  target.src = 'https://lh3.googleusercontent.com/d/1CXYEzIMay6FRiYLLww9hjbc9xeMk82xi';
+                }
+              }}
+              className="w-[75%] sm:w-[50%] max-w-[280px] h-auto object-contain mx-auto block"
+            />
           </div>
           <span className="text-[11px] font-black tracking-widest uppercase text-emerald-400 block mb-1">
             Acceso Seguro por Rol y Ruta
