@@ -60,12 +60,12 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="no-print sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs">
-      {/* Encabezado Superior: Logo Centrado, Proporcional y Sin Empujar el Contenido */}
-      <div className="w-full bg-[#272d34] flex items-center justify-center py-2 sm:py-2.5 px-4 border-b border-[#1b1e22]">
+      {/* Encabezado Superior: Logo Destacado, Proporcional, Reconocible al Instante */}
+      <div className="w-full bg-[#2c3137] flex items-center justify-center py-1.5 sm:py-2 px-3 sm:px-4">
         <div className="w-full max-w-7xl mx-auto flex justify-center items-center">
           <img
             src={logoUrl || 'https://drive.google.com/uc?export=view&id=1CXYEzIMay6FRiYLLww9hjbc9xeMk82xi'}
-            alt="Logo MYG"
+            alt="Logo MYG Distribuidora"
             referrerPolicy="no-referrer"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
@@ -73,7 +73,7 @@ export const Header: React.FC<HeaderProps> = ({
                 target.src = 'https://lh3.googleusercontent.com/d/1CXYEzIMay6FRiYLLww9hjbc9xeMk82xi';
               }
             }}
-            className="h-10 sm:h-12 md:h-14 w-auto max-w-[45%] object-contain mx-auto block drop-shadow-sm select-none"
+            className="h-16 sm:h-20 md:h-24 lg:h-28 w-auto object-contain mx-auto block select-none drop-shadow-sm transition-all"
           />
         </div>
       </div>

@@ -64,7 +64,7 @@ export const VoucherModal: React.FC<VoucherModalProps> = ({
           {/* Header con Logo Centrado, Proporcional y Claro */}
           <div className="border-b-2 border-slate-900 pb-5 mb-5 text-center">
             {/* Logo Centrado (40-50% de ancho, sin marco blanco ni bordes) */}
-            <div className="w-full bg-[#272d34] py-3.5 sm:py-4.5 px-4 flex justify-center items-center mb-4 print:bg-[#272d34]">
+            <div className="w-full bg-[#2c3137] py-3.5 sm:py-4.5 px-4 flex justify-center items-center mb-4 print:bg-[#2c3137]">
               <img
                 src={logoUrl || 'https://drive.google.com/uc?export=view&id=1CXYEzIMay6FRiYLLww9hjbc9xeMk82xi'}
                 alt="Logo MYG"

@@ -100,7 +100,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/80 backdrop-blur-sm overflow-y-auto">
       <div className="relative w-full max-w-sm sm:max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto animate-fade-in">
         {/* Header compacto con identidad visual MYG */}
-        <div className="bg-[#272d34] px-4 py-3 sm:py-3.5 text-white text-center relative border-b border-slate-700/50">
+        <div className="bg-[#2c3137] px-4 py-3 sm:py-3.5 text-white text-center relative border-b border-slate-700/50">
           <div className="w-full flex justify-center items-center mb-1">
             <img
               src={logoUrl || 'https://drive.google.com/uc?export=view&id=1CXYEzIMay6FRiYLLww9hjbc9xeMk82xi'}
@@ -112,7 +112,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   target.src = 'https://lh3.googleusercontent.com/d/1CXYEzIMay6FRiYLLww9hjbc9xeMk82xi';
                 }
               }}
-              className="h-10 sm:h-12 w-auto max-w-[200px] object-contain mx-auto block drop-shadow-sm select-none"
+              className="h-12 sm:h-14 w-auto max-w-[220px] object-contain mx-auto block drop-shadow-sm select-none"
             />
           </div>
           <span className="text-[10px] font-black tracking-widest uppercase text-emerald-400 block leading-tight">

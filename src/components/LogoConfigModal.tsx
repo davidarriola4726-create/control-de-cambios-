@@ -136,7 +136,7 @@ export const LogoConfigModal: React.FC<LogoConfigModalProps> = ({
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
               Vista Previa en Tiempo Real
             </label>
-            <div className="bg-[#272d34] rounded-xl p-4 flex items-center justify-center min-h-[90px] overflow-hidden">
+            <div className="bg-[#2c3137] rounded-xl p-4 flex items-center justify-center min-h-[90px] overflow-hidden">
               <img
                 src={previewUrl}
                 alt="Vista previa del logo"

@@ -3,7 +3,6 @@ import { ProductClaim, ClaimReason, ClaimStatus, UserAccount } from '../types';
 import { DigitalSignaturePad } from './DigitalSignaturePad';
 import {
   REASON_OPTIONS,
-  COMMON_PRODUCTS,
   COMMON_PILOTS,
 } from '../data/initialData';
 import { DEFAULT_USERS, ALL_ROUTES } from '../data/usersData';
@@ -143,7 +142,7 @@ export const NewClaimForm: React.FC<NewClaimFormProps> = ({
       return;
     }
     if (!effectiveProduct) {
-      setErrorMessage('Campo obligatorio: Ingrese el Nombre del Producto a reclamar.');
+      setErrorMessage('Campo obligatorio: Escriba el nombre exacto del producto.');
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
@@ -446,14 +445,14 @@ export const NewClaimForm: React.FC<NewClaimFormProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {/* Nombre del Producto */}
+            {/* Nombre del Producto: Campo libre obligatorio, sin lista ni autocompletado */}
             <div className="sm:col-span-2">
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">
                   Nombre del Producto <span className="text-rose-600 font-black">*</span>
                 </label>
-                <span className="text-[10px] text-emerald-700 font-semibold">
-                  Editable libre
+                <span className="text-[10px] text-slate-500 font-medium">
+                  Texto libre obligatorio
                 </span>
               </div>
               <div className="relative">
@@ -462,18 +461,13 @@ export const NewClaimForm: React.FC<NewClaimFormProps> = ({
                 </span>
                 <input
                   type="text"
-                  list="products-datalist"
                   value={productName}
                   onChange={(e) => setProductName(e.target.value)}
-                  placeholder="Escriba el nombre exacto del producto..."
+                  placeholder="Escriba el nombre exacto del producto"
                   required
+                  autoComplete="off"
                   className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs sm:text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white transition-all"
                 />
-                <datalist id="products-datalist">
-                  {COMMON_PRODUCTS.map((prod) => (
-                    <option key={prod} value={prod} />
-                  ))}
-                </datalist>
               </div>
             </div>
 
