@@ -13,100 +13,100 @@ export const DEFAULT_USERS: UserAccount[] = [
   {
     id: 'user-ruta-1',
     username: 'RUTA-1',
-    displayName: 'Asesor RUTA-1',
+    displayName: 'Brian Gómez',
     role: 'ROUTE',
     routeId: 'RUTA-1',
-    vendorName: 'Carlos Méndez (Ruta 1)',
+    vendorName: 'Brian Gómez',
     password: 'Mgyg'
   },
   {
     id: 'user-ruta-2',
     username: 'RUTA-2',
-    displayName: 'Asesora RUTA-2',
+    displayName: 'Melvin Sequeen',
     role: 'ROUTE',
     routeId: 'RUTA-2',
-    vendorName: 'Ana Morales (Ruta 2)',
+    vendorName: 'Melvin Sequeen',
     password: 'Mgyg'
   },
   {
     id: 'user-ruta-3',
     username: 'RUTA-3',
-    displayName: 'Asesor RUTA-3',
+    displayName: 'Mel Marvin Gómez',
     role: 'ROUTE',
     routeId: 'RUTA-3',
-    vendorName: 'Roberto Gómez (Ruta 3)',
+    vendorName: 'Mel Marvin Gómez',
     password: 'Mgyg'
   },
   {
     id: 'user-ruta-4',
     username: 'RUTA-4',
-    displayName: 'Asesora RUTA-4',
+    displayName: 'Marcos Juárez',
     role: 'ROUTE',
     routeId: 'RUTA-4',
-    vendorName: 'Lucía Paredes (Ruta 4)',
+    vendorName: 'Marcos Juárez',
     password: 'Mgyg'
   },
   {
     id: 'user-ruta-5',
     username: 'RUTA-5',
-    displayName: 'Asesor RUTA-5',
+    displayName: 'Vendedor Ruta 5',
     role: 'ROUTE',
     routeId: 'RUTA-5',
-    vendorName: 'Fernando Castillo (Ruta 5)',
+    vendorName: 'Vendedor Ruta 5',
     password: 'Mgyg'
   },
   {
     id: 'user-ruta-6',
     username: 'RUTA-6',
-    displayName: 'Asesora RUTA-6',
+    displayName: 'Gustavo Gómez',
     role: 'ROUTE',
     routeId: 'RUTA-6',
-    vendorName: 'Sofía Estrada (Ruta 6)',
+    vendorName: 'Gustavo Gómez',
     password: 'Mgyg'
   },
   {
     id: 'user-ruta-7',
     username: 'RUTA-7',
-    displayName: 'Asesor RUTA-7',
+    displayName: 'Ruta 7',
     role: 'ROUTE',
     routeId: 'RUTA-7',
-    vendorName: 'Manuel Ramírez (Ruta 7)',
+    vendorName: 'Ruta 7',
     password: 'Mgyg'
   },
   {
     id: 'user-ruta-8',
     username: 'RUTA-8',
-    displayName: 'Asesora RUTA-8',
+    displayName: 'Marvin Otoniel',
     role: 'ROUTE',
     routeId: 'RUTA-8',
-    vendorName: 'Karla Mendoza (Ruta 8)',
+    vendorName: 'Marvin Otoniel',
     password: 'Mgyg'
   },
   {
     id: 'user-ruta-9',
     username: 'RUTA-9',
-    displayName: 'Asesor RUTA-9',
+    displayName: 'Sergio Catú',
     role: 'ROUTE',
     routeId: 'RUTA-9',
-    vendorName: 'David Arriola (Ruta 9)',
-    password: 'Mmig' // Password específica solicitada
+    vendorName: 'Sergio Catú',
+    password: 'Mmig'
   },
   {
     id: 'user-ruta-10',
     username: 'RUTA-10',
-    displayName: 'Asesor RUTA-10',
+    displayName: 'Edgar Guzmán',
     role: 'ROUTE',
     routeId: 'RUTA-10',
-    vendorName: 'Javier Orellana (Ruta 10)',
+    vendorName: 'Edgar Guzmán',
     password: 'Mgyg'
   },
   {
     id: 'user-ruta-11',
     username: 'RUTA-11',
-    displayName: 'Asesor RUTA-11',
+    displayName: 'Esaú Osorio',
     role: 'ROUTE',
     routeId: 'RUTA-11',
-    vendorName: 'Estuardo López (Ruta 11)',
+    vendorName: 'Esaú Osorio',
     password: 'Mgyg'
   }
 ];

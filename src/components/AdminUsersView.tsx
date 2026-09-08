@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserAccount } from '../types';
 import { DEFAULT_USERS } from '../data/usersData';
 import {
@@ -27,6 +27,30 @@ export const AdminUsersView: React.FC<AdminUsersViewProps> = ({ currentUser }) =
   const [resetMessage, setResetMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/users')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.data)) {
+          setUsers((prev) =>
+            prev.map((u) => {
+              const remote = data.data.find((d: any) => d.id === u.id || d.username === u.username);
+              if (remote) {
+                return {
+                  ...u,
+                  vendorName: remote.vendorName,
+                  displayName: remote.displayName,
+                  lastLogin: remote.lastLogin || u.lastLogin,
+                };
+              }
+              return u;
+            })
+          );
+        }
+      })
+      .catch((e) => console.warn('Could not load remote users:', e));
+  }, []);
 
   const filteredUsers = users.filter((u) => {
     if (!searchQuery.trim()) return true;

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { ProductClaim, UserAccount } from '../types';
 import { REASON_OPTIONS } from '../data/initialData';
-import { ALL_ROUTES } from '../data/usersData';
+import { ALL_ROUTES, DEFAULT_USERS } from '../data/usersData';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 import {
   Search,
@@ -229,11 +229,14 @@ export const VoucherHistoryTable: React.FC<VoucherHistoryTableProps> = ({
                 className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:bg-white"
               >
                 <option value="ALL">Todas las Rutas (1-11)</option>
-                {ALL_ROUTES.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
+                {ALL_ROUTES.map((r) => {
+                  const matched = DEFAULT_USERS.find((u) => u.routeId === r);
+                  return (
+                    <option key={r} value={r}>
+                      {r} {matched?.vendorName ? `— ${matched.vendorName}` : ''}
+                    </option>
+                  );
+                })}
               </select>
             </div>
           ) : (

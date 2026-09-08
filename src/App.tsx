@@ -57,7 +57,22 @@ export default function App() {
     try {
       const saved = localStorage.getItem(USER_SESSION_KEY);
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        const match = DEFAULT_USERS.find(
+          (u) =>
+            u.username.toUpperCase() === parsed.username?.toUpperCase() ||
+            (parsed.routeId && u.routeId === parsed.routeId)
+        );
+        if (match) {
+          const updatedUser = {
+            ...parsed,
+            displayName: match.displayName,
+            vendorName: match.vendorName,
+          };
+          localStorage.setItem(USER_SESSION_KEY, JSON.stringify(updatedUser));
+          return updatedUser;
+        }
+        return parsed;
       }
     } catch (e) {
       console.warn('Could not parse user session:', e);
@@ -79,15 +94,23 @@ export default function App() {
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed)) {
-          // Remove any legacy test mock claims (e.g. claim-1001, VCH-2026-000)
-          const cleaned = parsed.filter(
-            (c: any) =>
-              !c.id?.startsWith('claim-100') &&
-              !c.voucherNumber?.startsWith('VCH-2026-000') &&
-              c.clientName !== 'Supermercado La Bendición - Sucursal 1' &&
-              c.clientName !== 'Distribuidora San José' &&
-              c.clientName !== 'Minisuper El Roble'
-          );
+          // Remove any legacy test mock claims and sync vendorName to latest route configuration
+          const cleaned = parsed
+            .filter(
+              (c: any) =>
+                !c.id?.startsWith('claim-100') &&
+                !c.voucherNumber?.startsWith('VCH-2026-000') &&
+                c.clientName !== 'Supermercado La Bendición - Sucursal 1' &&
+                c.clientName !== 'Distribuidora San José' &&
+                c.clientName !== 'Minisuper El Roble'
+            )
+            .map((c: ProductClaim) => {
+              const matchedRoute = DEFAULT_USERS.find((u) => u.routeId === c.routeId);
+              if (matchedRoute && matchedRoute.vendorName) {
+                return { ...c, vendorName: matchedRoute.vendorName };
+              }
+              return c;
+            });
           return cleaned;
         }
       }
@@ -160,8 +183,15 @@ export default function App() {
         if (res.ok) {
           const data = await res.json();
           if (data.success && Array.isArray(data.data)) {
-            setClaims(data.data);
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data.data));
+            const synced = data.data.map((c: ProductClaim) => {
+              const matchedRoute = DEFAULT_USERS.find((u) => u.routeId === c.routeId);
+              if (matchedRoute && matchedRoute.vendorName) {
+                return { ...c, vendorName: matchedRoute.vendorName };
+              }
+              return c;
+            });
+            setClaims(synced);
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(synced));
             setIsCloudSynced(true);
           }
         } else {
@@ -453,7 +483,8 @@ export default function App() {
     const updated = claims.filter((c) => {
       const matchRoute = c.routeId === routeId;
       const matchVendor = c.vendorName && c.vendorName.includes(routeId.replace('RUTA-', 'Ruta '));
-      return !(matchRoute || matchVendor);
+      const matchDefaultVendor = DEFAULT_USERS.find((u) => u.routeId === routeId)?.vendorName === c.vendorName;
+      return !(matchRoute || matchVendor || matchDefaultVendor);
     });
     setClaims(updated);
     try {

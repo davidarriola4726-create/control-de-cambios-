@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { ProductClaim, UserAccount } from '../types';
-import { ALL_ROUTES } from '../data/usersData';
+import { ALL_ROUTES, DEFAULT_USERS } from '../data/usersData';
 import {
   BarChart,
   Bar,
@@ -161,11 +161,15 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({ claims, currentU
       counts[r].units += (c.quantity || 1);
     });
 
-    return Object.entries(counts).map(([route, d]) => ({
-      route,
-      reclamos: d.claims,
-      unidades: d.units,
-    }));
+    return Object.entries(counts).map(([route, d]) => {
+      const matched = DEFAULT_USERS.find((u) => u.routeId === route);
+      return {
+        route,
+        vendorName: matched?.vendorName || route,
+        reclamos: d.claims,
+        unidades: d.units,
+      };
+    });
   }, [claims]);
 
   return (
@@ -203,11 +207,14 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({ claims, currentU
                   className="bg-transparent font-bold text-slate-800 focus:outline-none cursor-pointer text-xs"
                 >
                   <option value="ALL">Todas las Rutas (1-11)</option>
-                  {ALL_ROUTES.map((r) => (
-                    <option key={r} value={r}>
-                      {r}
-                    </option>
-                  ))}
+                  {ALL_ROUTES.map((r) => {
+                    const matched = DEFAULT_USERS.find((u) => u.routeId === r);
+                    return (
+                      <option key={r} value={r}>
+                        {r} {matched?.vendorName ? `— ${matched.vendorName}` : ''}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
             )}
