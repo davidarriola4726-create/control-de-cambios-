@@ -9,6 +9,7 @@ import {
   normalizeRoute,
   testGoogleSheetsStatus,
   isGoogleSheetsConfigured,
+  getWebhookUrl,
   DEFAULT_SHEET_ID,
   DEFAULT_TAB_NAME,
   SHEET_NAME_TITLE,
@@ -416,36 +417,34 @@ app.get('/api/records', async (req, res) => {
 
     if (sheetsResult.success && Array.isArray(sheetsResult.data) && sheetsResult.data.length > 0) {
       const sheetsClaims = sheetsResult.data;
-      const mergedMap = new Map<string, any>();
 
-      // Keep local claims that might have full base64 signatures or other local attributes
+      // Index local claims by ID and voucher to preserve full local base64 signatures
+      const localMap = new Map<string, any>();
       localClaims.forEach((c: any) => {
-        const key = c.voucherNumber || c.id;
-        if (key) mergedMap.set(key, c);
+        if (c.voucherNumber) localMap.set(c.voucherNumber, c);
+        if (c.id) localMap.set(c.id, c);
       });
 
-      // Overlay all claims read from Google Sheets
-      sheetsClaims.forEach((c: any) => {
-        const key = c.voucherNumber || c.id;
-        if (key) {
-          const existing = mergedMap.get(key);
-          mergedMap.set(key, {
-            ...existing,
-            ...c,
-            // If the local copy has a full base64 signature and sheet was truncated or empty, keep the local signature
-            vendorSignature: (c.vendorSignature && !c.vendorSignature.startsWith('[')) ? c.vendorSignature : (existing?.vendorSignature || c.vendorSignature),
-            clientSignature: (c.clientSignature && !c.clientSignature.startsWith('[')) ? c.clientSignature : (existing?.clientSignature || c.clientSignature)
-          });
-        }
+      // Claims read from Google Sheets are the definitive record list
+      const finalClaims = sheetsClaims.map((c: any) => {
+        const local = localMap.get(c.voucherNumber) || localMap.get(c.id);
+        return {
+          ...c,
+          vendorSignature: (c.vendorSignature && !c.vendorSignature.startsWith('['))
+            ? c.vendorSignature
+            : (local?.vendorSignature || c.vendorSignature),
+          clientSignature: (c.clientSignature && !c.clientSignature.startsWith('['))
+            ? c.clientSignature
+            : (local?.clientSignature || c.clientSignature),
+        };
       });
 
-      const mergedList = Array.from(mergedMap.values());
-      saveClaims(mergedList);
+      saveClaims(finalClaims);
 
       return res.json({
         success: true,
-        count: mergedList.length,
-        data: mergedList,
+        count: finalClaims.length,
+        data: finalClaims,
         source: sheetsResult.source
       });
     }
@@ -466,6 +465,12 @@ app.get('/api/records', async (req, res) => {
       source: 'local-fallback'
     });
   }
+});
+
+// GET webhook URL for client-side direct calls
+app.get('/api/webhook/url', (req, res) => {
+  const webhookUrl = getWebhookUrl();
+  res.json({ success: Boolean(webhookUrl), webhookUrl });
 });
 
 // GET direct read from Google Sheets with diagnostics

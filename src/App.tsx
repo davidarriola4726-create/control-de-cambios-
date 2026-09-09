@@ -22,7 +22,8 @@ import {
   fetchReclamosFromSheet,
   appendReclamoToSheet,
   appendReclamoViaBackend,
-  deleteReclamoFromSheet
+  deleteReclamoFromSheet,
+  fetchClaimsFromWebhook
 } from './services/sheetsService';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -186,7 +187,29 @@ export default function App() {
         }
       }
 
-      // 2. Direct client Google Sheets fetch as fallback if configured
+      // 2. Direct client Google Sheets Webhook fetch as secondary fallback
+      const webhookClaims = await fetchClaimsFromWebhook();
+      if (webhookClaims && webhookClaims.length > 0) {
+        const synced = webhookClaims.map((c: ProductClaim) => {
+          const normalizedRoute = normalizeRouteId(c.routeId, c.vendorName);
+          const matchedRoute = DEFAULT_USERS.find(
+            (u) => u.routeId === normalizedRoute || (c.vendorName && u.vendorName?.toLowerCase() === c.vendorName.toLowerCase())
+          );
+          return {
+            ...c,
+            routeId: normalizedRoute,
+            vendorName: c.vendorName || matchedRoute?.vendorName || `Vendedor ${normalizedRoute}`
+          };
+        });
+        setClaims(synced);
+        try {
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(synced));
+        } catch {}
+        setIsCloudSynced(true);
+        return;
+      }
+
+      // 3. Direct client Google Sheets API fetch if OAuth token is available
       const sheetId = getStoredSpreadsheetId();
       if (sheetId) {
         const token = await getAccessToken().catch(() => null);

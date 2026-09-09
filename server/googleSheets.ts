@@ -246,7 +246,7 @@ export function formatWebhookPayload(claim: any, tabName: string) {
     cSig = `[Firma Digital Cliente - ${claim.clientName || 'Conforme'}]`;
   }
 
-  const ID_Reclamo = claim.id || claim.voucherNumber || '';
+  const ID_Reclamo = claim.voucherNumber || claim.id || '';
   const Ruta = claim.routeId || '';
   const Vendedor = claim.vendorName || '';
   const Cliente = claim.clientName || '';
@@ -663,7 +663,17 @@ export function normalizeRoute(rawRoute: any, vendorName?: string): string {
 }
 
 function formatDateString(fecha: any): string {
-  const str = String(fecha || '').trim();
+  if (!fecha) return new Date().toLocaleDateString('es-GT');
+  const str = String(fecha).trim();
+  if (str.includes('T') || str.includes('Z')) {
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      const day = String(d.getUTCDate()).padStart(2, '0');
+      const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const year = d.getUTCFullYear();
+      return `${day}/${month}/${year}`;
+    }
+  }
   if (str.startsWith('Date(')) {
     const match = str.match(/Date\((\d+),(\d+),(\d+)/);
     if (match) {
@@ -672,6 +682,24 @@ function formatDateString(fecha: any): string {
       const d = String(parseInt(match[3], 10)).padStart(2, '0');
       return `${d}/${m}/${y}`;
     }
+  }
+  return str;
+}
+
+function formatTimeString(hora: any): string {
+  if (!hora) return '00:00';
+  const str = String(hora).trim();
+  if (str.includes('T') || str.includes('Z')) {
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      const h = String(d.getUTCHours()).padStart(2, '0');
+      const m = String(d.getUTCMinutes()).padStart(2, '0');
+      return `${h}:${m}`;
+    }
+  }
+  const parts = str.split(':');
+  if (parts.length >= 2) {
+    return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
   }
   return str;
 }
@@ -757,14 +785,23 @@ export function parseRowToClaim(raw: any, index: number): any {
   }
 
   const finalRoute = normalizeRoute(ruta, vendedor);
-  const formattedD = formatDateString(fecha) || new Date().toLocaleDateString('es-GT');
-  const formattedT = String(hora || '00:00');
+  const formattedD = formatDateString(fecha);
+  const formattedT = formatTimeString(hora);
   const baseId = String(id || '').trim();
-  const claimId = baseId || `claim-row-${index + 1}`;
+  const claimId = baseId ? `${baseId}_${index + 1}` : `claim-row-${index + 1}`;
+  
+  let voucherNumber = '';
+  if (baseId.startsWith('VCH-')) {
+    voucherNumber = baseId;
+  } else if (raw?.voucherNumber && String(raw.voucherNumber).startsWith('VCH-')) {
+    voucherNumber = String(raw.voucherNumber);
+  } else {
+    voucherNumber = `VCH-2026-${String(index + 1).padStart(4, '0')}`;
+  }
 
   return {
     id: claimId,
-    voucherNumber: baseId.startsWith('VCH-') ? baseId : (claimId.startsWith('claim-') ? claimId : `VCH-${claimId}`),
+    voucherNumber,
     createdAt: parseDateToISO(formattedD, formattedT),
     formattedDate: formattedD,
     formattedTime: formattedT,

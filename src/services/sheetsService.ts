@@ -492,6 +492,70 @@ export async function fetchSheetsServerStatus(): Promise<{
 }
 
 /**
+ * Reads all claims directly from Google Sheets using the configured GOOGLE_SHEETS_WEBHOOK.
+ * Performs a GET request to the webhook or the backend endpoint reading the webhook.
+ */
+export async function fetchClaimsFromWebhook(): Promise<ProductClaim[]> {
+  try {
+    // 1. Try to read from /api/records (which performs GET to GOOGLE_SHEETS_WEBHOOK)
+    const res = await fetch('/api/records?refresh=webhook');
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        return json.data;
+      }
+    }
+  } catch (e) {
+    console.warn('Backend webhook read error, attempting direct client fetch:', e);
+  }
+
+  // 2. Fallback to direct client fetch if webhookUrl is known
+  try {
+    const configRes = await fetch('/api/webhook/url');
+    if (configRes.ok) {
+      const config = await configRes.json();
+      if (config.webhookUrl) {
+        const getUrl = `${config.webhookUrl}${config.webhookUrl.includes('?') ? '&' : '?'}action=read&tab=RECLAMOS`;
+        const res = await fetch(getUrl, { redirect: 'follow' });
+        if (res.ok) {
+          const rawData = await res.json();
+          const items = Array.isArray(rawData) ? rawData : (rawData.records || rawData.data || []);
+          if (Array.isArray(items)) {
+            return items.map((r: any, idx: number) => {
+              const baseId = String(r.ID_Reclamo || r.id || '').trim();
+              return {
+                id: baseId ? `${baseId}_${idx + 1}` : `claim-row-${idx + 1}`,
+                voucherNumber: baseId.startsWith('VCH-') ? baseId : (r.voucherNumber || `VCH-2026-${String(idx + 1).padStart(4, '0')}`),
+                routeId: r.Ruta || 'RUTA-1',
+                vendorName: r.Vendedor || '',
+                clientName: r.Cliente || 'Cliente',
+                invoiceNumber: String(r.Factura || 'S/F'),
+                deliveryPerson: r.Piloto || 'Piloto Asignado',
+                productName: r.Producto || 'Producto General',
+                reason: r.Motivo || 'Defecto de Fábrica',
+                formattedDate: r.Fecha || new Date().toLocaleDateString('es-GT'),
+                formattedTime: r.Hora || '00:00',
+                vendorSignature: r.FirmaVendedor || '',
+                clientSignature: r.FirmaCliente || '',
+                quantity: Number(r.quantity) || 1,
+                unit: r.unit || 'Unidades',
+                status: r.status || 'Cambio Realizado',
+                createdAt: new Date().toISOString(),
+                syncedToCloud: true
+              } as ProductClaim;
+            });
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Direct client webhook fetch error:', e);
+  }
+
+  return [];
+}
+
+/**
  * Triggers full synchronization of all claims via the backend.
  */
 export async function syncAllClaimsViaBackend(): Promise<{
