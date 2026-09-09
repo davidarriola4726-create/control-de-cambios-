@@ -469,6 +469,7 @@ export async function fetchSheetsServerStatus(): Promise<{
   defaultSheetId: string;
   defaultTab: string;
   columns: string[];
+  isWebhook?: boolean;
 }> {
   try {
     const res = await fetch('/api/sheets/status');

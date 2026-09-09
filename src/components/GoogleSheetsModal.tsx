@@ -329,13 +329,13 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
             </div>
           </div>
 
-          {/* Backend Service Account Status Card */}
+          {/* Backend Webhook / Service Account Status Card */}
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-4.5 space-y-3 shadow-md">
             <div className="flex items-center justify-between border-b border-slate-700 pb-2.5">
               <div className="flex items-center gap-2">
                 <KeyRound className="w-4 h-4 text-emerald-400" />
                 <span className="text-xs font-black uppercase tracking-wider">
-                  Escritura Automática (Cuenta de Servicio)
+                  Escritura Automática ({serverStatus?.isWebhook ? 'Webhook Activo' : 'Webhook / Cuenta de Servicio'})
                 </span>
               </div>
               <span
@@ -348,10 +348,10 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
                 }`}
               >
                 {serverStatus?.canAccess
-                  ? 'Activa y Conectada'
+                  ? (serverStatus?.isWebhook ? 'Webhook Conectado' : 'Activa y Conectada')
                   : serverStatus?.configured
                   ? 'Permiso de Hoja Pendiente'
-                  : 'Sin Credenciales en Servidor'}
+                  : 'Sin Webhook ni Credenciales'}
               </span>
             </div>
 
@@ -362,7 +362,7 @@ export const GoogleSheetsModal: React.FC<GoogleSheetsModalProps> = ({
             {serverStatus?.email && (
               <div className="bg-slate-950/60 p-2.5 rounded-xl border border-slate-700/80 text-xs">
                 <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">
-                  Correo de Cuenta de Servicio:
+                  {serverStatus.isWebhook ? 'Método de Conexión Activo:' : 'Correo de Cuenta de Servicio:'}
                 </span>
                 <code className="text-emerald-300 font-mono text-[11px] select-all break-all">
                   {serverStatus.email}

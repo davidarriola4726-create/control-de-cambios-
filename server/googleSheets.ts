@@ -9,6 +9,7 @@ export const DEFAULT_SHEET_ID = '1H6VGhiSJaKH4QbtkmV6SMbR51ml_T4RKIKkPZHzGyPU';
 export const DEFAULT_TAB_NAME = 'RECLAMOS';
 export const SHEET_NAME_TITLE = 'Base de datos real';
 
+// Exact 12 columns requested by the user
 export const RECLAMOS_COLUMNS = [
   'ID_Reclamo',
   'Ruta',
@@ -23,6 +24,21 @@ export const RECLAMOS_COLUMNS = [
   'FirmaVendedor',
   'FirmaCliente'
 ];
+
+/**
+ * Retrieves the configured Google Sheets Webhook URL, if any.
+ * Supports both GOOGLE_SHEETS_WEBHOOK and GOOGLE_SHEETS_WEBHOOK_URL.
+ */
+export function getWebhookUrl(): string | null {
+  const url = process.env.GOOGLE_SHEETS_WEBHOOK || process.env.GOOGLE_SHEETS_WEBHOOK_URL;
+  if (!url) return null;
+  const trimmed = url.trim();
+  // Filter out placeholders
+  if (trimmed.startsWith('[') || trimmed.includes('PEGA AQUÍ') || trimmed.length < 15) {
+    return null;
+  }
+  return trimmed;
+}
 
 /**
  * Extracts credentials from environment variables.
@@ -49,7 +65,7 @@ export function getServiceAccountCredentials(): {
       email = parsed.client_email || null;
       key = parsed.private_key || null;
     } catch {
-      // Might be malformed or something else
+      // Malformed JSON
     }
   }
 
@@ -59,7 +75,6 @@ export function getServiceAccountCredentials(): {
   }
 
   if (!key && process.env.GOOGLE_PRIVATE_KEY) {
-    // Handle escaped newlines from environment strings
     key = process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n');
   }
 
@@ -67,10 +82,10 @@ export function getServiceAccountCredentials(): {
 }
 
 /**
- * Checks if a Google Service Account or Webhook is configured.
+ * Checks if Google Sheets integration is configured (either via Webhook or Service Account).
  */
 export function isGoogleSheetsConfigured(): boolean {
-  if (process.env.GOOGLE_SHEETS_WEBHOOK_URL) return true;
+  if (getWebhookUrl()) return true;
   const { email, key } = getServiceAccountCredentials();
   return Boolean(email && key);
 }
@@ -140,7 +155,10 @@ export async function ensureSheetStructure(
           requests: [
             {
               addSheet: {
-                properties: { title: tabName }
+                properties: {
+                  title: tabName,
+                  gridProperties: { rowCount: 1000, columnCount: 14 }
+                }
               }
             }
           ]
@@ -148,16 +166,16 @@ export async function ensureSheetStructure(
       });
     }
 
-    // 2. Check if row 1 has headers
-    const headersUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(
+    // 2. Check if headers exist
+    const readUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(
       tabName
     )}!A1:L1`;
-    const headersRes = await fetch(headersUrl, {
+    const readRes = await fetch(readUrl, {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
 
-    const headersData = await headersRes.json().catch(() => ({}));
-    const existingHeaders = headersData.values?.[0] || [];
+    const readData = await readRes.json().catch(() => ({}));
+    const existingHeaders = (readData.values && readData.values[0]) || [];
 
     if (existingHeaders.length === 0 || existingHeaders[0] !== RECLAMOS_COLUMNS[0]) {
       // Write headers
@@ -185,8 +203,6 @@ export async function ensureSheetStructure(
  * ID_Reclamo, Ruta, Vendedor, Cliente, Factura, Piloto, Producto, Motivo, Fecha, Hora, FirmaVendedor, FirmaCliente
  */
 export function formatClaimRow(claim: any): (string | number)[] {
-  // Handle signatures: Google Sheets has a cell character limit of ~50,000.
-  // If base64 is too long, we store a summary text to prevent Google API errors.
   let vSig = claim.vendorSignature || '';
   if (vSig.length > 35000) {
     vSig = `[Firma Digital Vendedor - ${claim.vendorName || claim.routeId}]`;
@@ -198,7 +214,7 @@ export function formatClaimRow(claim: any): (string | number)[] {
   }
 
   return [
-    claim.id || '',
+    claim.id || claim.voucherNumber || '',
     claim.routeId || '',
     claim.vendorName || '',
     claim.clientName || '',
@@ -214,7 +230,143 @@ export function formatClaimRow(claim: any): (string | number)[] {
 }
 
 /**
- * Appends a claim record directly to Google Sheets using the Service Account.
+ * Formats the complete payload for POST to Google Sheets Webhook.
+ * Contains both top-level keys with the exact column names:
+ * ID_Reclamo, Ruta, Vendedor, Cliente, Factura, Piloto, Producto, Motivo, Fecha, Hora, FirmaVendedor, FirmaCliente
+ * and array/sub-object formats for maximum compatibility with any Apps Script implementation.
+ */
+export function formatWebhookPayload(claim: any, tabName: string) {
+  let vSig = claim.vendorSignature || '';
+  if (vSig.length > 35000) {
+    vSig = `[Firma Digital Vendedor - ${claim.vendorName || claim.routeId}]`;
+  }
+
+  let cSig = claim.clientSignature || '';
+  if (cSig.length > 35000) {
+    cSig = `[Firma Digital Cliente - ${claim.clientName || 'Conforme'}]`;
+  }
+
+  const ID_Reclamo = claim.id || claim.voucherNumber || '';
+  const Ruta = claim.routeId || '';
+  const Vendedor = claim.vendorName || '';
+  const Cliente = claim.clientName || '';
+  const Factura = claim.invoiceNumber || 'S/F';
+  const Piloto = claim.deliveryPerson || 'Piloto Asignado';
+  const Producto = claim.productName || '';
+  const Motivo = claim.reason || 'Defecto de Fábrica';
+  const Fecha = claim.formattedDate || '';
+  const Hora = claim.formattedTime || '';
+  const FirmaVendedor = vSig;
+  const FirmaCliente = cSig;
+
+  const row = [
+    ID_Reclamo,
+    Ruta,
+    Vendedor,
+    Cliente,
+    Factura,
+    Piloto,
+    Producto,
+    Motivo,
+    Fecha,
+    Hora,
+    FirmaVendedor,
+    FirmaCliente
+  ];
+
+  return {
+    // Exact requested fields at root level
+    ID_Reclamo,
+    Ruta,
+    Vendedor,
+    Cliente,
+    Factura,
+    Piloto,
+    Producto,
+    Motivo,
+    Fecha,
+    Hora,
+    FirmaVendedor,
+    FirmaCliente,
+
+    // Auxiliary parameters for standard Apps Script patterns
+    action: 'append',
+    tab: tabName,
+    sheetName: tabName,
+    row,
+    data: {
+      ID_Reclamo,
+      Ruta,
+      Vendedor,
+      Cliente,
+      Factura,
+      Piloto,
+      Producto,
+      Motivo,
+      Fecha,
+      Hora,
+      FirmaVendedor,
+      FirmaCliente
+    }
+  };
+}
+
+/**
+ * Sends data to the Google Sheets Webhook URL.
+ */
+export async function sendToGoogleSheetsWebhook(payload: any): Promise<{
+  success: boolean;
+  message?: string;
+  error?: string;
+}> {
+  const webhookUrl = getWebhookUrl();
+  if (!webhookUrl) {
+    return {
+      success: false,
+      error: 'URL de Webhook no configurada en las variables de entorno (GOOGLE_SHEETS_WEBHOOK).'
+    };
+  }
+
+  try {
+    console.log(`[GoogleSheets Webhook] Enviando reclamo a ${webhookUrl.slice(0, 45)}...`);
+    const res = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json, text/plain, */*'
+      },
+      body: JSON.stringify(payload),
+      redirect: 'follow'
+    });
+
+    // Google Apps Script redirects with 302 or answers 200
+    if (res.ok || res.status === 302 || res.status === 307) {
+      console.log('[GoogleSheets Webhook] Reclamo recibido y registrado con éxito.');
+      return {
+        success: true,
+        message: 'Reclamo guardado exitosamente en Google Sheets mediante Webhook.'
+      };
+    }
+
+    const responseText = await res.text().catch(() => '');
+    console.warn(`[GoogleSheets Webhook] Respuesta HTTP ${res.status}:`, responseText.slice(0, 200));
+    return {
+      success: false,
+      error: `El Webhook respondió con estado ${res.status}: ${responseText.slice(0, 150)}`
+    };
+  } catch (err: any) {
+    console.error('[GoogleSheets Webhook Exception]:', err.message);
+    return {
+      success: false,
+      error: `Error al contactar el Webhook de Google Sheets: ${err.message}`
+    };
+  }
+}
+
+/**
+ * Appends a claim record directly to Google Sheets using either:
+ * 1. Webhook (GOOGLE_SHEETS_WEBHOOK / GOOGLE_SHEETS_WEBHOOK_URL) - Priority
+ * 2. Service Account JWT credentials
  */
 export async function appendClaimToGoogleSheets(claim: any): Promise<{
   success: boolean;
@@ -222,62 +374,55 @@ export async function appendClaimToGoogleSheets(claim: any): Promise<{
   error?: string;
 }> {
   try {
-    if (!isGoogleSheetsConfigured()) {
+    const webhookUrl = getWebhookUrl();
+    const tabName = process.env.GOOGLE_SHEETS_TAB || DEFAULT_TAB_NAME;
+
+    // 1. PRIORITIZE GOOGLE SHEETS WEBHOOK (Direct POST with the 12 fields)
+    if (webhookUrl) {
+      const payload = formatWebhookPayload(claim, tabName);
+      return await sendToGoogleSheetsWebhook(payload);
+    }
+
+    // 2. FALLBACK TO GOOGLE SERVICE ACCOUNT JWT
+    if (isGoogleSheetsConfigured()) {
+      const { sheetId, tabName: saTab } = getServiceAccountCredentials();
+      const token = await getGoogleServiceAccountAccessToken();
+
+      // Ensure tab and headers exist
+      await ensureSheetStructure(token, sheetId, saTab);
+
+      const row = formatClaimRow(claim);
+      const appendUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(
+        saTab
+      )}!A:L:append?valueInputOption=USER_ENTERED`;
+
+      const res = await fetch(appendUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          values: [row]
+        })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        const msg = errData?.error?.message || res.statusText;
+        console.error('[GoogleSheets] Error al escribir en hoja:', msg);
+        return { success: false, error: msg };
+      }
+
       return {
-        success: false,
-        message: 'Google Sheets no configurado. Defina las credenciales en el servidor.'
+        success: true,
+        message: `Reclamo guardado exitosamente en Google Sheets (${saTab})`
       };
     }
 
-    const row = formatClaimRow(claim);
-
-    // Option A: Direct Google Apps Script Webhook
-    if (process.env.GOOGLE_SHEETS_WEBHOOK_URL) {
-      const webhookUrl = process.env.GOOGLE_SHEETS_WEBHOOK_URL.trim();
-      const whRes = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'append', row, claim })
-      });
-      if (whRes.ok) {
-        return {
-          success: true,
-          message: 'Reclamo guardado en Google Sheets exitosamente (vía Webhook).'
-        };
-      }
-    }
-
-    // Option B: Google Service Account JWT
-    const { sheetId, tabName } = getServiceAccountCredentials();
-    const token = await getGoogleServiceAccountAccessToken();
-
-    // Ensure tab and headers exist
-    await ensureSheetStructure(token, sheetId, tabName);
-    const appendUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(
-      tabName
-    )}!A:L:append?valueInputOption=USER_ENTERED`;
-
-    const res = await fetch(appendUrl, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        values: [row]
-      })
-    });
-
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      const msg = errData?.error?.message || res.statusText;
-      console.error('[GoogleSheets] Error al escribir en hoja:', msg);
-      return { success: false, error: msg };
-    }
-
     return {
-      success: true,
-      message: `Reclamo guardado exitosamente en Google Sheets (${tabName})`
+      success: false,
+      message: 'Google Sheets no configurado. Defina GOOGLE_SHEETS_WEBHOOK o credenciales de Service Account.'
     };
   } catch (err: any) {
     console.error('[GoogleSheets] Error inesperado:', err);
@@ -303,15 +448,28 @@ export async function syncAllClaimsToGoogleSheets(claims: any[]): Promise<{
       };
     }
 
-    if (process.env.GOOGLE_SHEETS_WEBHOOK_URL) {
-      const webhookUrl = process.env.GOOGLE_SHEETS_WEBHOOK_URL.trim();
+    const webhookUrl = getWebhookUrl();
+    const tabName = process.env.GOOGLE_SHEETS_TAB || DEFAULT_TAB_NAME;
+
+    // A. Webhook Sync
+    if (webhookUrl) {
       const rows = claims.map((c) => formatClaimRow(c));
+      const items = claims.map((c) => formatWebhookPayload(c, tabName));
       const whRes = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'sync', rows })
+        body: JSON.stringify({
+          action: 'sync',
+          tab: tabName,
+          sheetName: tabName,
+          rows,
+          items,
+          count: claims.length
+        }),
+        redirect: 'follow'
       });
-      if (whRes.ok) {
+
+      if (whRes.ok || whRes.status === 302 || whRes.status === 307) {
         return {
           success: true,
           count: claims.length,
@@ -320,15 +478,16 @@ export async function syncAllClaimsToGoogleSheets(claims: any[]): Promise<{
       }
     }
 
-    const { sheetId, tabName } = getServiceAccountCredentials();
+    // B. Service Account Sync
+    const { sheetId, tabName: saTab } = getServiceAccountCredentials();
     const token = await getGoogleServiceAccountAccessToken();
 
     // Ensure tab and headers exist
-    await ensureSheetStructure(token, sheetId, tabName);
+    await ensureSheetStructure(token, sheetId, saTab);
 
     // Read existing IDs to avoid duplicate rows
     const readUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(
-      tabName
+      saTab
     )}!A:A`;
     const readRes = await fetch(readUrl, {
       headers: { Authorization: `Bearer ${token}` }
@@ -347,12 +506,12 @@ export async function syncAllClaimsToGoogleSheets(claims: any[]): Promise<{
       return {
         success: true,
         count: 0,
-        message: 'Todos los reclamos ya están presentes en Google Sheets.'
+        message: 'Todos los reclamos ya están sincronizados en Google Sheets.'
       };
     }
 
     const appendUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(
-      tabName
+      saTab
     )}!A:L:append?valueInputOption=USER_ENTERED`;
 
     const res = await fetch(appendUrl, {
@@ -392,21 +551,27 @@ export async function testGoogleSheetsStatus(): Promise<{
   canAccess: boolean;
   error?: string;
   sheetTitle?: string;
+  isWebhook?: boolean;
 }> {
-  const creds = getServiceAccountCredentials();
+  const webhookUrl = getWebhookUrl();
+  const tabName = process.env.GOOGLE_SHEETS_TAB || DEFAULT_TAB_NAME;
+  const sheetId = process.env.GOOGLE_SHEET_ID || DEFAULT_SHEET_ID;
 
-  // If Webhook URL is set
-  if (process.env.GOOGLE_SHEETS_WEBHOOK_URL) {
+  // 1. If Webhook URL is set and valid
+  if (webhookUrl) {
     return {
       configured: true,
-      sheetId: creds.sheetId,
-      tabName: creds.tabName,
-      email: 'Google Apps Script Webhook',
+      sheetId,
+      tabName,
+      email: 'Webhook Activo (GOOGLE_SHEETS_WEBHOOK)',
       canAccess: true,
-      sheetTitle: SHEET_NAME_TITLE
+      sheetTitle: SHEET_NAME_TITLE,
+      isWebhook: true
     };
   }
 
+  // 2. Service account check
+  const creds = getServiceAccountCredentials();
   if (!creds.email || !creds.key) {
     return {
       configured: false,
@@ -414,7 +579,7 @@ export async function testGoogleSheetsStatus(): Promise<{
       tabName: creds.tabName,
       email: creds.email,
       canAccess: false,
-      error: 'Variables de entorno de Google Service Account no definidas.'
+      error: 'Defina GOOGLE_SHEETS_WEBHOOK o credenciales de Google Service Account.'
     };
   }
 
