@@ -5,6 +5,8 @@ import { createServer as createViteServer } from 'vite';
 import {
   appendClaimToGoogleSheets,
   syncAllClaimsToGoogleSheets,
+  readAllClaimsFromGoogleSheets,
+  normalizeRoute,
   testGoogleSheetsStatus,
   isGoogleSheetsConfigured,
   DEFAULT_SHEET_ID,
@@ -406,14 +408,74 @@ app.post('/api/users/reset-password', (req, res) => {
 
 // =================== CLAIMS & RECORDS ===================
 
-// GET all records
-app.get('/api/records', (req, res) => {
-  const claims = getStoredClaims();
-  res.json({
-    success: true,
-    count: claims.length,
-    data: claims
-  });
+// GET all records - automatically reads all records from Google Sheets (Webhook / Live / SA)
+app.get('/api/records', async (req, res) => {
+  try {
+    const localClaims = getStoredClaims();
+    const sheetsResult = await readAllClaimsFromGoogleSheets();
+
+    if (sheetsResult.success && Array.isArray(sheetsResult.data) && sheetsResult.data.length > 0) {
+      const sheetsClaims = sheetsResult.data;
+      const mergedMap = new Map<string, any>();
+
+      // Keep local claims that might have full base64 signatures or other local attributes
+      localClaims.forEach((c: any) => {
+        const key = c.voucherNumber || c.id;
+        if (key) mergedMap.set(key, c);
+      });
+
+      // Overlay all claims read from Google Sheets
+      sheetsClaims.forEach((c: any) => {
+        const key = c.voucherNumber || c.id;
+        if (key) {
+          const existing = mergedMap.get(key);
+          mergedMap.set(key, {
+            ...existing,
+            ...c,
+            // If the local copy has a full base64 signature and sheet was truncated or empty, keep the local signature
+            vendorSignature: (c.vendorSignature && !c.vendorSignature.startsWith('[')) ? c.vendorSignature : (existing?.vendorSignature || c.vendorSignature),
+            clientSignature: (c.clientSignature && !c.clientSignature.startsWith('[')) ? c.clientSignature : (existing?.clientSignature || c.clientSignature)
+          });
+        }
+      });
+
+      const mergedList = Array.from(mergedMap.values());
+      saveClaims(mergedList);
+
+      return res.json({
+        success: true,
+        count: mergedList.length,
+        data: mergedList,
+        source: sheetsResult.source
+      });
+    }
+
+    res.json({
+      success: true,
+      count: localClaims.length,
+      data: localClaims,
+      source: 'local-cache'
+    });
+  } catch (err: any) {
+    console.error('[GET /api/records] Error reading records:', err);
+    const localClaims = getStoredClaims();
+    res.json({
+      success: true,
+      count: localClaims.length,
+      data: localClaims,
+      source: 'local-fallback'
+    });
+  }
+});
+
+// GET direct read from Google Sheets with diagnostics
+app.get('/api/sheets/read', async (req, res) => {
+  try {
+    const result = await readAllClaimsFromGoogleSheets();
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // POST a new claim record with auto-consecutive voucher number and admin alert

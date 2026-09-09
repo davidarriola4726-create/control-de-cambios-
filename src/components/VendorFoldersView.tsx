@@ -20,8 +20,43 @@ import {
   Lock,
   Truck,
   Shield,
-  Trash2
+  Trash2,
+  RefreshCw
 } from 'lucide-react';
+
+export const normalizeRouteId = (rawRoute: any, vendorName?: string): string => {
+  const str = String(rawRoute || '').trim();
+  if (str) {
+    const match = str.match(/^(?:ruta\s*[-_]?\s*|r\s*[-_]?\s*)?(\d+)/i);
+    if (match && match[1]) {
+      return `RUTA-${parseInt(match[1], 10)}`;
+    }
+    const upper = str.toUpperCase();
+    if (upper.startsWith('RUTA-')) return upper;
+  }
+  if (vendorName) {
+    const vStr = String(vendorName).trim().toLowerCase();
+    const vendorMap: { [key: string]: string } = {
+      'brian': 'RUTA-1',
+      'melvin sequeen': 'RUTA-2',
+      'melvin': 'RUTA-2',
+      'mel marvin': 'RUTA-3',
+      'marcos': 'RUTA-4',
+      'ruta 5': 'RUTA-5',
+      'gustavo': 'RUTA-6',
+      'ruta 7': 'RUTA-7',
+      'marvin otoniel': 'RUTA-8',
+      'sergio': 'RUTA-9',
+      'edgar': 'RUTA-10',
+      'esaú': 'RUTA-11',
+      'esau': 'RUTA-11'
+    };
+    for (const [vKey, rId] of Object.entries(vendorMap)) {
+      if (vStr.includes(vKey)) return rId;
+    }
+  }
+  return str.toUpperCase() || 'RUTA-1';
+};
 
 interface VendorFoldersViewProps {
   claims: ProductClaim[];
@@ -31,6 +66,8 @@ interface VendorFoldersViewProps {
   onEmptyFolder?: (routeId: string) => void;
   onClearRouteClaims?: (routeId: string) => void;
   onNewClaimForVendor?: (vendorName: string) => void;
+  onRefreshCloudRecords?: () => Promise<void>;
+  isSyncing?: boolean;
 }
 
 export const VendorFoldersView: React.FC<VendorFoldersViewProps> = ({
@@ -40,12 +77,14 @@ export const VendorFoldersView: React.FC<VendorFoldersViewProps> = ({
   onDeleteClaim,
   onEmptyFolder,
   onClearRouteClaims,
+  onRefreshCloudRecords,
+  isSyncing = false
 }) => {
   const isRouteUser = currentUser.role === 'ROUTE';
-  const userRouteId = currentUser.routeId || 'RUTA-1';
+  const userRouteId = normalizeRouteId(currentUser.routeId, currentUser.vendorName);
   const clearFolderAction = onClearRouteClaims || onEmptyFolder;
 
-  // Group all claims by routeId (fallback to matching by vendorName or RUTA-1)
+  // Group all claims by normalized routeId
   const routeGroups = useMemo(() => {
     const groups: { [key: string]: ProductClaim[] } = {};
 
@@ -55,12 +94,7 @@ export const VendorFoldersView: React.FC<VendorFoldersViewProps> = ({
     });
 
     claims.forEach((claim) => {
-      let r = claim.routeId;
-      if (!r) {
-        // Infer from vendorName if routeId missing
-        const matched = DEFAULT_USERS.find((u) => u.vendorName === claim.vendorName);
-        r = matched?.routeId || 'RUTA-1';
-      }
+      const r = normalizeRouteId(claim.routeId, claim.vendorName);
       if (!groups[r]) groups[r] = [];
       groups[r].push(claim);
     });
@@ -260,9 +294,24 @@ export const VendorFoldersView: React.FC<VendorFoldersViewProps> = ({
             </p>
           </div>
 
-          <div className="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 text-xs font-bold text-slate-700 self-start sm:self-auto">
-            <Shield className="w-3.5 h-3.5 text-emerald-600" />
-            <span>11 Carpetas Activas</span>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            {onRefreshCloudRecords && (
+              <button
+                type="button"
+                onClick={() => onRefreshCloudRecords()}
+                disabled={isSyncing}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-bold transition-colors cursor-pointer disabled:opacity-50"
+                title="Actualizar y leer registros desde Google Sheets"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 text-emerald-700 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span>{isSyncing ? 'Leyendo Hoja...' : 'Leer de Google Sheets'}</span>
+              </button>
+            )}
+
+            <div className="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-700">
+              <Shield className="w-3.5 h-3.5 text-emerald-600" />
+              <span>11 Carpetas Activas</span>
+            </div>
           </div>
         </div>
 
@@ -363,6 +412,19 @@ export const VendorFoldersView: React.FC<VendorFoldersViewProps> = ({
           </div>
 
           <div className="no-print flex items-center gap-1.5 self-end sm:self-center">
+            {onRefreshCloudRecords && (
+              <button
+                type="button"
+                onClick={() => onRefreshCloudRecords()}
+                disabled={isSyncing}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                title="Sincronizar con Google Sheets"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 text-emerald-700 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span>{isSyncing ? 'Sincronizando...' : 'Actualizar'}</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={handleExportCSV}
@@ -568,8 +630,8 @@ export const VendorFoldersView: React.FC<VendorFoldersViewProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
-                {filteredClaims.map((claim) => (
-                  <tr key={claim.id} className="hover:bg-slate-50/80 transition-colors">
+                {filteredClaims.map((claim, index) => (
+                  <tr key={`${claim.id}-${index}`} className="hover:bg-slate-50/80 transition-colors">
                     <td className="py-2 px-3 font-mono font-bold text-emerald-800">
                       {claim.voucherNumber}
                     </td>

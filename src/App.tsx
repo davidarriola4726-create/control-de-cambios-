@@ -4,7 +4,7 @@ import { INITIAL_CLAIMS } from './data/initialData';
 import { DEFAULT_USERS } from './data/usersData';
 import { Header } from './components/Header';
 import { NewClaimForm } from './components/NewClaimForm';
-import { VendorFoldersView } from './components/VendorFoldersView';
+import { VendorFoldersView, normalizeRouteId } from './components/VendorFoldersView';
 import { StatisticsView } from './components/StatisticsView';
 import { VoucherHistoryTable } from './components/VoucherHistoryTable';
 import { VoucherModal } from './components/VoucherModal';
@@ -157,49 +157,52 @@ export default function App() {
     }
   };
 
-  // Sync Claims with Google Sheets and Server (Clean system starting empty)
-  const fetchCloudRecords = useCallback(async () => {
+  // Sync Claims with Google Sheets and Server
+  const fetchCloudRecords = useCallback(async (force = false) => {
     try {
       setIsSyncing(true);
-      const sheetId = getStoredSpreadsheetId();
-      let sheetLoaded = false;
-
-      if (sheetId) {
-        try {
-          const token = await getAccessToken();
-          if (token) {
-            const sheetClaims = await fetchReclamosFromSheet(token, sheetId);
-            setClaims(sheetClaims);
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(sheetClaims));
-            setIsCloudSynced(true);
-            sheetLoaded = true;
-          }
-        } catch (sheetErr) {
-          console.warn('Could not read from Google Sheets RECLAMOS:', sheetErr);
+      // 1. Fetch from server which directly reads from Google Sheets (Webhook / Live / SA)
+      const res = await fetch(`/api/records${force ? '?refresh=sheets' : ''}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          const synced = data.data.map((c: ProductClaim) => {
+            const normalizedRoute = normalizeRouteId(c.routeId, c.vendorName);
+            const matchedRoute = DEFAULT_USERS.find(
+              (u) => u.routeId === normalizedRoute || (c.vendorName && u.vendorName?.toLowerCase() === c.vendorName.toLowerCase())
+            );
+            return {
+              ...c,
+              routeId: normalizedRoute,
+              vendorName: c.vendorName || matchedRoute?.vendorName || `Vendedor ${normalizedRoute}`
+            };
+          });
+          setClaims(synced);
+          try {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(synced));
+          } catch {}
+          setIsCloudSynced(true);
+          return;
         }
       }
 
-      if (!sheetLoaded) {
-        const res = await fetch('/api/records');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success && Array.isArray(data.data)) {
-            const synced = data.data.map((c: ProductClaim) => {
-              const matchedRoute = DEFAULT_USERS.find((u) => u.routeId === c.routeId);
-              if (matchedRoute && matchedRoute.vendorName) {
-                return { ...c, vendorName: matchedRoute.vendorName };
-              }
-              return c;
-            });
-            setClaims(synced);
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(synced));
+      // 2. Direct client Google Sheets fetch as fallback if configured
+      const sheetId = getStoredSpreadsheetId();
+      if (sheetId) {
+        const token = await getAccessToken().catch(() => null);
+        if (token) {
+          const sheetClaims = await fetchReclamosFromSheet(token, sheetId).catch(() => []);
+          if (sheetClaims && sheetClaims.length > 0) {
+            setClaims(sheetClaims);
+            try {
+              localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(sheetClaims));
+            } catch {}
             setIsCloudSynced(true);
           }
-        } else {
-          setIsCloudSynced(false);
         }
       }
     } catch (err) {
+      console.warn('Could not sync cloud records:', err);
       setIsCloudSynced(false);
     } finally {
       setIsSyncing(false);
@@ -292,6 +295,9 @@ export default function App() {
     } else {
       setActiveTab('new-claim');
     }
+
+    // Automatically read all records from Google Sheets upon login
+    fetchCloudRecords(true);
   };
 
   // Handle Logout
@@ -671,6 +677,8 @@ export default function App() {
                   onOpenVoucher={handleOpenVoucher}
                   onDeleteClaim={handleDeleteClaim}
                   onClearRouteClaims={handleClearRouteClaims}
+                  onRefreshCloudRecords={() => fetchCloudRecords(true)}
+                  isSyncing={isSyncing}
                 />
               </motion.div>
             )}
