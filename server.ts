@@ -2,6 +2,16 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
+import {
+  appendClaimToGoogleSheets,
+  syncAllClaimsToGoogleSheets,
+  testGoogleSheetsStatus,
+  isGoogleSheetsConfigured,
+  DEFAULT_SHEET_ID,
+  DEFAULT_TAB_NAME,
+  SHEET_NAME_TITLE,
+  RECLAMOS_COLUMNS
+} from './server/googleSheets';
 
 const app = express();
 const PORT = 3000;
@@ -407,7 +417,7 @@ app.get('/api/records', (req, res) => {
 });
 
 // POST a new claim record with auto-consecutive voucher number and admin alert
-app.post('/api/records', (req, res) => {
+app.post('/api/records', async (req, res) => {
   try {
     const claims = getStoredClaims();
     const newRecord = req.body;
@@ -468,11 +478,30 @@ app.post('/api/records', (req, res) => {
     alerts.unshift(newAlert);
     saveAlerts(alerts);
 
+    // 📊 AUTO-APPEND DIRECTLY TO GOOGLE SHEETS VIA SERVICE ACCOUNT
+    let sheetsSync = { success: false, attempted: false, message: '' };
+    if (isGoogleSheetsConfigured()) {
+      try {
+        sheetsSync.attempted = true;
+        const sheetResult = await appendClaimToGoogleSheets(newRecord);
+        sheetsSync = { ...sheetsSync, ...sheetResult, attempted: true };
+        if (sheetResult.success) {
+          newRecord.syncedToGoogleSheets = true;
+          // Update stored claim with sync flag
+          saveClaims(claims);
+        }
+      } catch (sheetsErr: any) {
+        console.warn('[GoogleSheets Auto-Append Error]:', sheetsErr.message);
+        sheetsSync.message = sheetsErr.message;
+      }
+    }
+
     res.status(201).json({
       success: true,
       message: 'Registro y voucher generados exitosamente',
       data: newRecord,
-      alert: newAlert
+      alert: newAlert,
+      sheetsSync
     });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -600,6 +629,50 @@ app.post('/api/records/seed', (req, res) => {
   res.json({ success: true, count: 0, message: 'Sistema limpio sin datos de prueba' });
 });
 
+// =================== GOOGLE SHEETS SERVICE ACCOUNT ENDPOINTS ===================
+
+// GET status and diagnostics of Google Sheets connection
+app.get('/api/sheets/status', async (req, res) => {
+  try {
+    const status = await testGoogleSheetsStatus();
+    res.json({
+      success: true,
+      defaultSheetId: DEFAULT_SHEET_ID,
+      defaultTab: DEFAULT_TAB_NAME,
+      sheetNameTitle: SHEET_NAME_TITLE,
+      columns: RECLAMOS_COLUMNS,
+      ...status
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST append single claim to Google Sheets
+app.post('/api/sheets/append', async (req, res) => {
+  try {
+    const claim = req.body;
+    if (!claim || !claim.id) {
+      return res.status(400).json({ success: false, message: 'Reclamo inválido o incompleto' });
+    }
+    const result = await appendClaimToGoogleSheets(claim);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST sync all stored claims to Google Sheets
+app.post('/api/sheets/sync', async (req, res) => {
+  try {
+    const claims = getStoredClaims();
+    const result = await syncAllClaimsToGoogleSheets(claims);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
@@ -615,9 +688,15 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Servidor de Control de Cambios MYG activo en http://0.0.0.0:${PORT}`);
-  });
+  if (!process.env.VERCEL) {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Servidor de Control de Cambios MYG activo en http://0.0.0.0:${PORT}`);
+    });
+  }
 }
 
-startServer();
+if (!process.env.VERCEL) {
+  startServer();
+}
+
+export default app;

@@ -3,11 +3,32 @@ import { DEFAULT_USERS } from '../data/usersData';
 
 export const LOCAL_STORAGE_SHEET_KEY = 'myg_google_sheets_spreadsheet_id';
 
+// Default configuration provided by the user
+export const DEFAULT_SPREADSHEET_ID = '1H6VGhiSJaKH4QbtkmV6SMbR51ml_T4RKIKkPZHzGyPU';
+export const DEFAULT_SHEET_TITLE = 'Base de datos real';
+export const DEFAULT_RECLAMOS_TAB = 'RECLAMOS';
+
+// Exact 12 columns requested
+export const RECLAMOS_COLUMNS = [
+  'ID_Reclamo',
+  'Ruta',
+  'Vendedor',
+  'Cliente',
+  'Factura',
+  'Piloto',
+  'Producto',
+  'Motivo',
+  'Fecha',
+  'Hora',
+  'FirmaVendedor',
+  'FirmaCliente'
+];
+
 /**
  * Extracts the Google Spreadsheet ID from either a full URL or a raw ID string.
  */
 export function extractSpreadsheetId(input: string): string {
-  if (!input) return '';
+  if (!input) return DEFAULT_SPREADSHEET_ID;
   const trimmed = input.trim();
   // Match https://docs.google.com/spreadsheets/d/{ID}/...
   const match = trimmed.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
@@ -18,20 +39,22 @@ export function extractSpreadsheetId(input: string): string {
   if (/^[a-zA-Z0-9-_]{20,}$/.test(trimmed)) {
     return trimmed;
   }
-  return trimmed;
+  return trimmed || DEFAULT_SPREADSHEET_ID;
 }
 
 export function getStoredSpreadsheetId(): string {
   try {
-    return localStorage.getItem(LOCAL_STORAGE_SHEET_KEY) || '';
-  } catch {
-    return '';
+    const saved = localStorage.getItem(LOCAL_STORAGE_SHEET_KEY);
+    if (saved && saved.trim()) return saved.trim();
+  } catch (e) {
+    console.warn('Could not read spreadsheet ID from localStorage', e);
   }
+  return DEFAULT_SPREADSHEET_ID;
 }
 
 export function saveSpreadsheetId(id: string): void {
   try {
-    localStorage.setItem(LOCAL_STORAGE_SHEET_KEY, id);
+    localStorage.setItem(LOCAL_STORAGE_SHEET_KEY, id || DEFAULT_SPREADSHEET_ID);
   } catch (e) {
     console.warn('Could not store spreadsheet ID in localStorage', e);
   }
@@ -54,7 +77,8 @@ export async function inspectSpreadsheet(
   accessToken: string,
   spreadsheetId: string
 ): Promise<SheetConnectionInfo> {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=properties.title,sheets.properties`;
+  const targetId = extractSpreadsheetId(spreadsheetId);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${targetId}?fields=properties.title,sheets.properties`;
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` }
   });
@@ -86,7 +110,7 @@ export async function inspectSpreadsheet(
   }
 
   return {
-    spreadsheetTitle: data.properties?.title || 'Google Sheet',
+    spreadsheetTitle: data.properties?.title || DEFAULT_SHEET_TITLE,
     hasUsuariosSheet: hasUsuarios,
     hasReclamosSheet: hasReclamos,
     reclamosSheetId,
@@ -105,6 +129,7 @@ export async function initializeSheetStructure(
   needUsuarios: boolean,
   needReclamos: boolean
 ): Promise<void> {
+  const targetId = extractSpreadsheetId(spreadsheetId);
   const requests: any[] = [];
 
   if (needUsuarios) {
@@ -123,7 +148,7 @@ export async function initializeSheetStructure(
       addSheet: {
         properties: {
           title: 'RECLAMOS',
-          gridProperties: { rowCount: 1000, columnCount: 15 }
+          gridProperties: { rowCount: 1000, columnCount: 14 }
         }
       }
     });
@@ -131,7 +156,7 @@ export async function initializeSheetStructure(
 
   if (requests.length > 0) {
     const batchRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${targetId}:batchUpdate`,
       {
         method: 'POST',
         headers: {
@@ -143,27 +168,29 @@ export async function initializeSheetStructure(
     );
 
     if (!batchRes.ok) {
-      const err = await batchRes.json().catch(() => ({}));
-      throw new Error(err?.error?.message || 'No se pudieron crear las hojas requeridas.');
+      const errorData = await batchRes.json().catch(() => ({}));
+      throw new Error(
+        errorData?.error?.message || 'No se pudieron crear las pestañas en Google Sheets.'
+      );
     }
   }
 
-  // Populate USUARIOS header and default users if needed
+  // Populate USUARIOS headers and initial rows if needed
   if (needUsuarios) {
     const usuariosValues = [
       ['ID', 'TipoUsuario', 'NombreRuta', 'Contraseña', 'NombreVendedor', 'Estado'],
       ...DEFAULT_USERS.map((u) => [
         u.id,
-        u.role === 'ADMIN' ? 'Administrador' : 'Usuario',
+        u.role,
         u.username,
-        u.password || 'Mgyg',
+        u.password,
         u.vendorName,
         'Activo'
       ])
     ];
 
     await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/USUARIOS!A1:F${usuariosValues.length}?valueInputOption=USER_ENTERED`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${targetId}/values/USUARIOS!A1:F${usuariosValues.length}?valueInputOption=USER_ENTERED`,
       {
         method: 'PUT',
         headers: {
@@ -175,35 +202,17 @@ export async function initializeSheetStructure(
     );
   }
 
-  // Populate RECLAMOS headers (leaving data empty as required)
+  // Populate RECLAMOS headers with the exact 12 columns requested
   if (needReclamos) {
-    const reclamosHeaders = [
-      [
-        'ID_Reclamo',
-        'N_Voucher',
-        'FechaHora',
-        'NombreRuta',
-        'NombreVendedor',
-        'Cliente',
-        'Factura',
-        'Piloto',
-        'Producto',
-        'Motivo',
-        'FirmaVendedor',
-        'FirmaCliente',
-        'Estado'
-      ]
-    ];
-
     await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/RECLAMOS!A1:M1?valueInputOption=USER_ENTERED`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${targetId}/values/RECLAMOS!A1:L1?valueInputOption=USER_ENTERED`,
       {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ values: reclamosHeaders })
+        body: JSON.stringify({ values: [RECLAMOS_COLUMNS] })
       }
     );
   }
@@ -211,54 +220,44 @@ export async function initializeSheetStructure(
 
 /**
  * Reads users from the "USUARIOS" sheet.
- * Format: ID, TipoUsuario, NombreRuta, Contraseña, NombreVendedor, Estado
  */
 export async function fetchUsuariosFromSheet(
   accessToken: string,
   spreadsheetId: string
 ): Promise<UserAccount[]> {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/USUARIOS!A1:F100`;
+  const targetId = extractSpreadsheetId(spreadsheetId);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${targetId}/values/USUARIOS!A1:F100`;
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` }
   });
 
   if (!res.ok) {
-    throw new Error('No se pudo leer la hoja USUARIOS.');
+    throw new Error('No se pudo leer la hoja USUARIOS de Google Sheets.');
   }
 
   const data = await res.json();
   const rows: string[][] = data.values || [];
-  if (rows.length <= 1) {
-    return [];
-  }
+  if (rows.length <= 1) return [];
 
   const users: UserAccount[] = [];
-
-  // Skip row 0 (headers)
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
-    if (!row || row.length < 3) continue;
+    if (!row || row.length === 0 || !row[0]?.trim()) continue;
 
-    const id = row[0]?.trim() || `USR-${i}`;
-    const tipoUsuario = (row[1] || '').trim();
-    const nombreRuta = (row[2] || '').trim();
-    const contrasena = (row[3] || '').trim();
-    const nombreVendedor = (row[4] || '').trim();
-    const estado = (row[5] || 'Activo').trim();
-
-    const isAdmin =
-      tipoUsuario.toLowerCase().includes('admin') ||
-      nombreRuta.toLowerCase() === 'admin';
+    const id = row[0]?.trim();
+    const role = (row[1]?.trim() === 'ADMIN' ? 'ADMIN' : 'ROUTE') as 'ADMIN' | 'ROUTE';
+    const username = (row[2] || '').trim();
+    const password = (row[3] || 'Mgyg').trim();
+    const vendorName = (row[4] || '').trim();
 
     users.push({
-      id,
-      username: nombreRuta,
-      displayName: isAdmin ? 'Administrador MYG' : `${nombreVendedor} (${nombreRuta})`,
-      role: isAdmin ? 'ADMIN' : 'ROUTE',
-      routeId: isAdmin ? undefined : nombreRuta,
-      vendorName: nombreVendedor || nombreRuta,
-      password: contrasena,
-      lastLogin: estado === 'Activo' ? 'Activo' : 'Inactivo'
+      id: id || `user-${i}`,
+      username: username || (role === 'ADMIN' ? 'Admin' : `RUTA-${i}`),
+      displayName: vendorName || username,
+      role,
+      routeId: role === 'ROUTE' ? username : undefined,
+      vendorName,
+      password
     });
   }
 
@@ -266,69 +265,17 @@ export async function fetchUsuariosFromSheet(
 }
 
 /**
- * Updates a user's password directly in the USUARIOS sheet.
- */
-export async function updateUserPasswordInSheet(
-  accessToken: string,
-  spreadsheetId: string,
-  username: string,
-  newPassword: string
-): Promise<boolean> {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/USUARIOS!A1:F100`;
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${accessToken}` }
-  });
-
-  if (!res.ok) {
-    throw new Error('No se pudo acceder a la hoja USUARIOS para actualizar la contraseña.');
-  }
-
-  const data = await res.json();
-  const rows: string[][] = data.values || [];
-
-  let targetRowIndex = -1;
-  for (let i = 1; i < rows.length; i++) {
-    const row = rows[i];
-    if (row && row[2]?.trim().toLowerCase() === username.trim().toLowerCase()) {
-      targetRowIndex = i + 1; // 1-indexed for Sheets A1 notation
-      break;
-    }
-  }
-
-  if (targetRowIndex === -1) {
-    throw new Error(`Usuario "${username}" no encontrado en la hoja USUARIOS.`);
-  }
-
-  // Update cell D{targetRowIndex}
-  const updateUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/USUARIOS!D${targetRowIndex}?valueInputOption=USER_ENTERED`;
-  const updateRes = await fetch(updateUrl, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      values: [[newPassword]]
-    })
-  });
-
-  if (!updateRes.ok) {
-    throw new Error('Error al guardar la nueva contraseña en Google Sheets.');
-  }
-
-  return true;
-}
-
-/**
  * Reads claims from the "RECLAMOS" sheet.
- * Format:
- * [ID_Reclamo, N_Voucher, FechaHora, NombreRuta, NombreVendedor, Cliente, Factura, Piloto, Producto, Motivo, FirmaVendedor, FirmaCliente, Estado]
+ * Supports both the exact 12 columns requested:
+ * [ID_Reclamo, Ruta, Vendedor, Cliente, Factura, Piloto, Producto, Motivo, Fecha, Hora, FirmaVendedor, FirmaCliente]
+ * and the legacy 13 columns.
  */
 export async function fetchReclamosFromSheet(
   accessToken: string,
   spreadsheetId: string
 ): Promise<ProductClaim[]> {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/RECLAMOS!A1:M1000`;
+  const targetId = extractSpreadsheetId(spreadsheetId);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${targetId}/values/RECLAMOS!A1:M1000`;
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` }
   });
@@ -340,7 +287,6 @@ export async function fetchReclamosFromSheet(
   const data = await res.json();
   const rows: string[][] = data.values || [];
   if (rows.length <= 1) {
-    // Sheet is empty or only has headers
     return [];
   }
 
@@ -350,29 +296,56 @@ export async function fetchReclamosFromSheet(
     const row = rows[i];
     if (!row || row.length === 0 || !row[0]?.trim()) continue;
 
-    const id = row[0]?.trim() || `REC-${i}`;
-    const voucherNumber = row[1]?.trim() || `VCH-${id}`;
-    const fechaHora = (row[2] || '').trim();
-    const routeId = (row[3] || 'RUTA-1').trim();
-    const vendorName = (row[4] || '').trim();
-    const clientName = (row[5] || '').trim();
-    const invoiceNumber = (row[6] || '').trim();
-    const deliveryPerson = (row[7] || '').trim();
-    const productName = (row[8] || '').trim();
-    const reason = (row[9] || 'Defecto de Fábrica').trim() as ClaimReason;
-    const vendorSignature = (row[10] || '').trim();
-    const clientSignature = (row[11] || '').trim();
-    const status = (row[12] || 'Cambio Realizado').trim() as ClaimStatus;
+    const isLegacy13 = row.length >= 13 && (row[1]?.startsWith('VCH-') || row[2]?.includes('/'));
 
-    // Parse date and time if available
-    let formattedDate = '05/09/2026';
-    let formattedTime = '12:00';
-    if (fechaHora.includes(' ')) {
-      const parts = fechaHora.split(' ');
-      formattedDate = parts[0] || formattedDate;
-      formattedTime = parts[1] || formattedTime;
-    } else if (fechaHora) {
-      formattedDate = fechaHora;
+    let id: string;
+    let voucherNumber: string;
+    let routeId: string;
+    let vendorName: string;
+    let clientName: string;
+    let invoiceNumber: string;
+    let deliveryPerson: string;
+    let productName: string;
+    let reason: ClaimReason;
+    let formattedDate: string;
+    let formattedTime: string;
+    let vendorSignature: string;
+    let clientSignature: string;
+    let status: ClaimStatus = 'Cambio Realizado';
+
+    if (isLegacy13) {
+      id = row[0]?.trim() || `REC-${i}`;
+      voucherNumber = row[1]?.trim() || `VCH-${id}`;
+      const fechaHora = (row[2] || '').trim();
+      routeId = (row[3] || 'RUTA-1').trim();
+      vendorName = (row[4] || '').trim();
+      clientName = (row[5] || '').trim();
+      invoiceNumber = (row[6] || '').trim();
+      deliveryPerson = (row[7] || '').trim();
+      productName = (row[8] || '').trim();
+      reason = (row[9] || 'Defecto de Fábrica').trim() as ClaimReason;
+      vendorSignature = (row[10] || '').trim();
+      clientSignature = (row[11] || '').trim();
+      status = (row[12] || 'Cambio Realizado').trim() as ClaimStatus;
+
+      formattedDate = fechaHora.split(' ')[0] || '08/09/2026';
+      formattedTime = fechaHora.split(' ')[1] || '12:00';
+    } else {
+      // Exact 12 columns requested:
+      // 0: ID_Reclamo, 1: Ruta, 2: Vendedor, 3: Cliente, 4: Factura, 5: Piloto, 6: Producto, 7: Motivo, 8: Fecha, 9: Hora, 10: FirmaVendedor, 11: FirmaCliente
+      id = row[0]?.trim() || `claim-${i}`;
+      voucherNumber = id.startsWith('VCH-') ? id : `VCH-${id.replace('claim-', '')}`;
+      routeId = (row[1] || 'RUTA-1').trim();
+      vendorName = (row[2] || '').trim();
+      clientName = (row[3] || '').trim();
+      invoiceNumber = (row[4] || '').trim();
+      deliveryPerson = (row[5] || '').trim();
+      productName = (row[6] || '').trim();
+      reason = (row[7] || 'Defecto de Fábrica').trim() as ClaimReason;
+      formattedDate = (row[8] || '08/09/2026').trim();
+      formattedTime = (row[9] || '12:00').trim();
+      vendorSignature = (row[10] || '').trim();
+      clientSignature = (row[11] || '').trim();
     }
 
     claims.push({
@@ -401,28 +374,40 @@ export async function fetchReclamosFromSheet(
 }
 
 /**
- * Appends a new claim to the "RECLAMOS" sheet.
+ * Appends a new claim directly to the "RECLAMOS" sheet with the 12 columns.
  */
 export async function appendReclamoToSheet(
   accessToken: string,
   spreadsheetId: string,
   claim: ProductClaim
 ): Promise<void> {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/RECLAMOS!A:M:append?valueInputOption=USER_ENTERED`;
+  const targetId = extractSpreadsheetId(spreadsheetId);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${targetId}/values/RECLAMOS!A:L:append?valueInputOption=USER_ENTERED`;
+
+  let vSig = claim.vendorSignature || '';
+  if (vSig.length > 35000) {
+    vSig = `[Firma Digital Vendedor - ${claim.vendorName || claim.routeId}]`;
+  }
+  let cSig = claim.clientSignature || '';
+  if (cSig.length > 35000) {
+    cSig = `[Firma Digital Cliente - ${claim.clientName || 'Conforme'}]`;
+  }
+
+  // Exact 12 columns requested:
+  // ID_Reclamo, Ruta, Vendedor, Cliente, Factura, Piloto, Producto, Motivo, Fecha, Hora, FirmaVendedor, FirmaCliente
   const rowValues = [
     claim.id,
-    claim.voucherNumber,
-    `${claim.formattedDate} ${claim.formattedTime}`,
     claim.routeId,
     claim.vendorName,
     claim.clientName,
-    claim.invoiceNumber,
-    claim.deliveryPerson,
+    claim.invoiceNumber || 'S/F',
+    claim.deliveryPerson || 'Piloto Asignado',
     claim.productName,
     claim.reason,
-    claim.vendorSignature,
-    claim.clientSignature,
-    claim.status
+    claim.formattedDate,
+    claim.formattedTime,
+    vSig,
+    cSig
   ];
 
   const res = await fetch(url, {
@@ -446,8 +431,88 @@ export async function appendReclamoToSheet(
 }
 
 /**
- * PHYSICALLY DELETES A ROW from the "RECLAMOS" sheet by ID_Reclamo or voucherNumber.
- * If cannot connect or fails, throws "No se pudo eliminar. Verifica los permisos de la base de datos."
+ * Appends a claim via the server-side Service Account endpoint.
+ */
+export async function appendReclamoViaBackend(claim: ProductClaim): Promise<{
+  success: boolean;
+  message?: string;
+  error?: string;
+}> {
+  try {
+    const res = await fetch('/api/sheets/append', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(claim)
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+    const err = await res.json().catch(() => ({}));
+    return { success: false, error: err.message || res.statusText };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
+/**
+ * Fetches Service Account diagnostics and connection status from the backend.
+ */
+export async function fetchSheetsServerStatus(): Promise<{
+  success: boolean;
+  configured: boolean;
+  canAccess: boolean;
+  sheetId: string;
+  tabName: string;
+  sheetTitle?: string;
+  email?: string | null;
+  error?: string;
+  defaultSheetId: string;
+  defaultTab: string;
+  columns: string[];
+}> {
+  try {
+    const res = await fetch('/api/sheets/status');
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e: any) {
+    console.warn('Could not fetch server sheets status:', e);
+  }
+  return {
+    success: false,
+    configured: false,
+    canAccess: false,
+    sheetId: DEFAULT_SPREADSHEET_ID,
+    tabName: DEFAULT_RECLAMOS_TAB,
+    defaultSheetId: DEFAULT_SPREADSHEET_ID,
+    defaultTab: DEFAULT_RECLAMOS_TAB,
+    columns: RECLAMOS_COLUMNS
+  };
+}
+
+/**
+ * Triggers full synchronization of all claims via the backend.
+ */
+export async function syncAllClaimsViaBackend(): Promise<{
+  success: boolean;
+  count: number;
+  message?: string;
+  error?: string;
+}> {
+  try {
+    const res = await fetch('/api/sheets/sync', { method: 'POST' });
+    if (res.ok) {
+      return await res.json();
+    }
+    const err = await res.json().catch(() => ({}));
+    return { success: false, count: 0, error: err.error || err.message || res.statusText };
+  } catch (e: any) {
+    return { success: false, count: 0, error: e.message };
+  }
+}
+
+/**
+ * PHYSICALLY DELETES A ROW from the "RECLAMOS" sheet by ID_Reclamo.
  */
 export async function deleteReclamoFromSheet(
   accessToken: string,
@@ -455,8 +520,9 @@ export async function deleteReclamoFromSheet(
   claimIdOrVoucher: string
 ): Promise<boolean> {
   try {
+    const targetId = extractSpreadsheetId(spreadsheetId);
     // 1. Get spreadsheet metadata to locate numeric sheetId for "RECLAMOS"
-    const metaUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties`;
+    const metaUrl = `https://sheets.googleapis.com/v4/spreadsheets/${targetId}?fields=sheets.properties`;
     const metaRes = await fetch(metaUrl, {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
@@ -480,7 +546,7 @@ export async function deleteReclamoFromSheet(
     }
 
     // 2. Read column A and B of RECLAMOS to find exact row index
-    const readUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/RECLAMOS!A:B`;
+    const readUrl = `https://sheets.googleapis.com/v4/spreadsheets/${targetId}/values/RECLAMOS!A:B`;
     const readRes = await fetch(readUrl, {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
@@ -506,12 +572,11 @@ export async function deleteReclamoFromSheet(
 
     if (targetRow0Indexed === -1) {
       console.warn(`Registro ${claimIdOrVoucher} no encontrado en la hoja RECLAMOS.`);
-      // If row not found in sheets, it might already have been deleted or only present locally
       return true;
     }
 
     // 3. Issue batchUpdate deleteDimension to physically delete the entire row
-    const deleteUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`;
+    const deleteUrl = `https://sheets.googleapis.com/v4/spreadsheets/${targetId}:batchUpdate`;
     const deleteRes = await fetch(deleteUrl, {
       method: 'POST',
       headers: {

@@ -21,6 +21,7 @@ import {
   getStoredSpreadsheetId,
   fetchReclamosFromSheet,
   appendReclamoToSheet,
+  appendReclamoViaBackend,
   deleteReclamoFromSheet
 } from './services/sheetsService';
 import { motion, AnimatePresence } from 'motion/react';
@@ -368,17 +369,19 @@ export default function App() {
         }
       }
 
-      // If Google Sheets is connected, also append directly to RECLAMOS sheet
+      // Directly write to Google Sheets (RECLAMOS)
       const sheetId = getStoredSpreadsheetId();
-      if (sheetId) {
-        try {
-          const token = await getAccessToken();
-          if (token) {
-            await appendReclamoToSheet(token, sheetId, newRecord);
-          }
-        } catch (sheetAppendErr) {
-          console.warn('Could not append claim to Google Sheets:', sheetAppendErr);
+      try {
+        const token = await getAccessToken();
+        if (token && sheetId) {
+          await appendReclamoToSheet(token, sheetId, newRecord);
+        } else {
+          // Automatic write via Google Service Account on backend
+          await appendReclamoViaBackend(newRecord);
         }
+      } catch (sheetAppendErr) {
+        console.warn('Google Sheets client append warning, trying backend service account:', sheetAppendErr);
+        await appendReclamoViaBackend(newRecord).catch(() => {});
       }
 
       // Update state and localStorage
