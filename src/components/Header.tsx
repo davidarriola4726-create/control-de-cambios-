@@ -145,7 +145,7 @@ export const Header: React.FC<HeaderProps> = ({
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                   </span>
                   <span className="text-[11px] sm:text-xs font-bold text-emerald-800 tracking-tight">
-                    🟢 En línea
+                    🟢 En línea y sincronizado
                   </span>
                 </>
               ) : (

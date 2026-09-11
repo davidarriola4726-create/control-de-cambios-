@@ -25,17 +25,20 @@ export const RECLAMOS_COLUMNS = [
   'FirmaCliente'
 ];
 
+export const DEFAULT_WEBHOOK_URL =
+  'https://script.google.com/macros/s/AKfycbwgRlpK-3FKVcOoy7KMAZmNg8AjxYxBmePR4pT2XDNSscuNUeYGFWNaoD9CmNkX0laJuQ/exec';
+
 /**
  * Retrieves the configured Google Sheets Webhook URL, if any.
- * Supports both GOOGLE_SHEETS_WEBHOOK and GOOGLE_SHEETS_WEBHOOK_URL.
+ * Supports both GOOGLE_SHEETS_WEBHOOK and GOOGLE_SHEETS_WEBHOOK_URL with fallback to DEFAULT_WEBHOOK_URL.
  */
 export function getWebhookUrl(): string | null {
-  const url = process.env.GOOGLE_SHEETS_WEBHOOK || process.env.GOOGLE_SHEETS_WEBHOOK_URL;
-  if (!url) return null;
+  const url = process.env.GOOGLE_SHEETS_WEBHOOK || process.env.GOOGLE_SHEETS_WEBHOOK_URL || DEFAULT_WEBHOOK_URL;
+  if (!url) return DEFAULT_WEBHOOK_URL;
   const trimmed = url.trim();
   // Filter out placeholders
   if (trimmed.startsWith('[') || trimmed.includes('PEGA AQUÍ') || trimmed.length < 15) {
-    return null;
+    return DEFAULT_WEBHOOK_URL;
   }
   return trimmed;
 }

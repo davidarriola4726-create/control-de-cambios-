@@ -674,3 +674,167 @@ export async function deleteReclamoFromSheet(
     throw new Error('No se pudo eliminar. Verifica los permisos de la base de datos.');
   }
 }
+
+/**
+ * Robust RFC 4180 CSV parser handling multiline strings and quotes
+ */
+export function parseCSV(csvText: string): string[][] {
+  const rows: string[][] = [];
+  let currentRow: string[] = [];
+  let currentField = '';
+  let insideQuotes = false;
+
+  for (let i = 0; i < csvText.length; i++) {
+    const char = csvText[i];
+    const nextChar = csvText[i + 1];
+
+    if (char === '"') {
+      if (insideQuotes && nextChar === '"') {
+        currentField += '"';
+        i++;
+      } else {
+        insideQuotes = !insideQuotes;
+      }
+    } else if (char === ',' && !insideQuotes) {
+      currentRow.push(currentField);
+      currentField = '';
+    } else if ((char === '\r' || char === '\n') && !insideQuotes) {
+      if (char === '\r' && nextChar === '\n') {
+        i++;
+      }
+      currentRow.push(currentField);
+      currentField = '';
+      if (currentRow.length > 0 && currentRow.some((f) => f.trim() !== '')) {
+        rows.push(currentRow);
+      }
+      currentRow = [];
+    } else {
+      currentField += char;
+    }
+  }
+  if (currentField !== '' || currentRow.length > 0) {
+    currentRow.push(currentField);
+    if (currentRow.some((f) => f.trim() !== '')) {
+      rows.push(currentRow);
+    }
+  }
+  return rows;
+}
+
+/**
+ * Direct public CSV Reader from Google Sheets.
+ * Works on ANY device in the world without requiring user authentication.
+ */
+export async function fetchClaimsFromGoogleSheetsCSV(spreadsheetId = DEFAULT_SPREADSHEET_ID): Promise<ProductClaim[]> {
+  const targetId = extractSpreadsheetId(spreadsheetId);
+  const csvUrl = `https://docs.google.com/spreadsheets/d/${targetId}/gviz/tq?tqx=out:csv&sheet=RECLAMOS&_t=${Date.now()}`;
+  
+  const res = await fetch(csvUrl, {
+    cache: 'no-store',
+    headers: { 'Cache-Control': 'no-cache' }
+  });
+  
+  if (!res.ok) {
+    throw new Error(`Error al leer CSV de Google Sheets: HTTP ${res.status}`);
+  }
+  
+  const text = await res.text();
+  const rows = parseCSV(text);
+  if (!rows || rows.length <= 1) {
+    return [];
+  }
+  
+  const headers = rows[0];
+  const headerMap: { [key: string]: number } = {};
+  headers.forEach((h, idx) => {
+    headerMap[h.trim().toLowerCase().replace(/[^a-z0-9]/g, '')] = idx;
+  });
+
+  const claims: ProductClaim[] = [];
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || row.length === 0 || row.every((c) => c.trim() === '')) continue;
+    
+    const rawId = (row[headerMap['idreclamo']] || row[0] || '').trim();
+    const route = (row[headerMap['ruta']] || row[1] || 'RUTA-1').trim();
+    const vendor = (row[headerMap['vendedor']] || row[2] || '').trim();
+    const client = (row[headerMap['cliente']] || row[3] || 'Cliente').trim();
+    const invoice = (row[headerMap['factura']] || row[4] || 'S/F').trim();
+    const pilot = (row[headerMap['piloto']] || row[5] || 'Piloto Asignado').trim();
+    const product = (row[headerMap['producto']] || row[6] || 'Producto General').trim();
+    const reason = (row[headerMap['motivo']] || row[7] || 'Defecto de Fábrica').trim();
+    const date = (row[headerMap['fecha']] || row[8] || '').trim();
+    const time = (row[headerMap['hora']] || row[9] || '00:00').trim();
+    const vSig = (row[headerMap['firmavendedor']] || row[10] || '').trim();
+    const cSig = (row[headerMap['firmacliente'] ?? headerMap['firmaclienete']] || row[11] || '').trim();
+
+    let voucherNumber = rawId;
+    if (!voucherNumber || voucherNumber.startsWith('claim-')) {
+      voucherNumber = `MYG-REC-${String(i).padStart(4, '0')}`;
+    }
+
+    claims.push({
+      id: rawId || `claim-${i}`,
+      voucherNumber,
+      routeId: route,
+      vendorName: vendor,
+      clientName: client,
+      invoiceNumber: invoice,
+      deliveryPerson: pilot,
+      productName: product,
+      reason: reason as ClaimReason,
+      formattedDate: date || new Date().toLocaleDateString('es-GT'),
+      formattedTime: time || '00:00',
+      vendorSignature: vSig,
+      clientSignature: cSig,
+      quantity: 1,
+      unit: 'Unidades',
+      status: 'Cambio Realizado',
+      createdAt: new Date().toISOString(),
+      syncedToCloud: true
+    });
+  }
+
+  return claims;
+}
+
+export const DEFAULT_APPS_SCRIPT_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbwgRlpK-3FKVcOoy7KMAZmNg8AjxYxBmePR4pT2XDNSscuNUeYGFWNaoD9CmNkX0laJuQ/exec';
+
+/**
+ * Direct POST to Google Apps Script Webhook.
+ * Writes directly to the Google Sheet from any device.
+ */
+export async function sendClaimToGoogleAppsScript(claim: any): Promise<boolean> {
+  const webhookUrl = DEFAULT_APPS_SCRIPT_WEBHOOK_URL;
+  const payload = {
+    action: 'addReclamo',
+    tab: 'RECLAMOS',
+    ID_Reclamo: claim.voucherNumber || claim.id,
+    Ruta: claim.routeId,
+    Vendedor: claim.vendorName,
+    Cliente: claim.clientName,
+    Factura: claim.invoiceNumber,
+    Piloto: claim.deliveryPerson,
+    Producto: claim.productName,
+    Motivo: claim.reason,
+    Fecha: claim.formattedDate,
+    Hora: claim.formattedTime,
+    FirmaVendedor: claim.vendorSignature,
+    FirmaCliente: claim.clientSignature
+  };
+
+  try {
+    await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+      mode: 'no-cors'
+    });
+    return true;
+  } catch (err) {
+    console.warn('Direct Apps Script fetch warning:', err);
+    return false;
+  }
+}
+

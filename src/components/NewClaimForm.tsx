@@ -186,7 +186,7 @@ export const NewClaimForm: React.FC<NewClaimFormProps> = ({
       const created = await onSaveClaim(claimPayload);
 
       const voucherCode = created?.voucherNumber || 'MYG-REC-0001';
-      setSuccessMessage(`✅ Guardado y sincronizado en tiempo real — N°: ${voucherCode}`);
+      setSuccessMessage(`✅ Guardado y sincronizado — N°: ${voucherCode}`);
       playNewClaimChime(0.8);
       
       // Clear signatures and form

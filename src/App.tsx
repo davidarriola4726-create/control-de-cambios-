@@ -23,7 +23,9 @@ import {
   appendReclamoToSheet,
   appendReclamoViaBackend,
   deleteReclamoFromSheet,
-  fetchClaimsFromWebhook
+  fetchClaimsFromWebhook,
+  fetchClaimsFromGoogleSheetsCSV,
+  sendClaimToGoogleAppsScript
 } from './services/sheetsService';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -89,38 +91,8 @@ export default function App() {
   // Active Navigation Tab
   const [activeTab, setActiveTab] = useState<ActiveTab>('new-claim');
 
-  // Claims Database State
-  const [claims, setClaims] = useState<ProductClaim[]>(() => {
-    try {
-      const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed)) {
-          // Remove any legacy test mock claims and sync vendorName to latest route configuration
-          const cleaned = parsed
-            .filter(
-              (c: any) =>
-                !c.id?.startsWith('claim-100') &&
-                !c.voucherNumber?.startsWith('VCH-2026-000') &&
-                c.clientName !== 'Supermercado La Bendición - Sucursal 1' &&
-                c.clientName !== 'Distribuidora San José' &&
-                c.clientName !== 'Minisuper El Roble'
-            )
-            .map((c: ProductClaim) => {
-              const matchedRoute = DEFAULT_USERS.find((u) => u.routeId === c.routeId);
-              if (matchedRoute && matchedRoute.vendorName) {
-                return { ...c, vendorName: matchedRoute.vendorName };
-              }
-              return c;
-            });
-          return cleaned;
-        }
-      }
-    } catch (e) {
-      console.warn('Could not read from localStorage:', e);
-    }
-    return [];
-  });
+  // Claims Database State - Loaded directly from Google Sheets (no local storage)
+  const [claims, setClaims] = useState<ProductClaim[]>([]);
 
   // Admin Alerts State
   const [alerts, setAlerts] = useState<AdminAlert[]>([]);
@@ -162,18 +134,18 @@ export default function App() {
   const knownClaimKeysRef = useRef<Set<string>>(new Set());
   const initialClaimsLoadedRef = useRef<boolean>(false);
 
-  // Sync Claims with Google Sheets and Server in Real Time
+  // Sync Claims with Google Sheets and Server in Real Time (Bidirectional across all devices)
   const fetchCloudRecords = useCallback(async (force = false, silent = false) => {
     try {
       if (!silent) {
         setIsSyncing(true);
       }
-      // 1. Fetch from server which directly reads from Google Sheets (Webhook / Live / SA)
-      const res = await fetch(`/api/records${force ? '?refresh=sheets' : ''}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && Array.isArray(data.data)) {
-          const synced = data.data.map((c: ProductClaim) => {
+
+      // 1. Direct Public Google Sheets CSV Fetch (Fastest, zero-latency, global real-time)
+      try {
+        const csvClaims = await fetchClaimsFromGoogleSheetsCSV();
+        if (Array.isArray(csvClaims)) {
+          const synced = csvClaims.map((c: ProductClaim) => {
             const normalizedRoute = normalizeRouteId(c.routeId, c.vendorName);
             const matchedRoute = DEFAULT_USERS.find(
               (u) => u.routeId === normalizedRoute || (c.vendorName && u.vendorName?.toLowerCase() === c.vendorName.toLowerCase())
@@ -185,7 +157,7 @@ export default function App() {
             };
           });
 
-          // If background polling detects a brand new claim, alert Admin with chime sound!
+          // Detect brand new claims and alert Admin with chime sound automatically
           if (initialClaimsLoadedRef.current && currentUser?.role === 'ADMIN') {
             const brandNew = synced.filter((c: ProductClaim) => {
               const k = c.voucherNumber || c.id;
@@ -203,66 +175,49 @@ export default function App() {
           initialClaimsLoadedRef.current = true;
 
           setClaims(synced);
-          try {
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(synced));
-          } catch {}
           setIsCloudSynced(true);
           return;
         }
+      } catch (csvErr) {
+        console.warn('Direct CSV fetch failed, falling back to server proxy:', csvErr);
       }
 
-      // 2. Direct client Google Sheets Webhook fetch as secondary fallback
-      const webhookClaims = await fetchClaimsFromWebhook();
-      if (webhookClaims && webhookClaims.length > 0) {
-        const synced = webhookClaims.map((c: ProductClaim) => {
-          const normalizedRoute = normalizeRouteId(c.routeId, c.vendorName);
-          const matchedRoute = DEFAULT_USERS.find(
-            (u) => u.routeId === normalizedRoute || (c.vendorName && u.vendorName?.toLowerCase() === c.vendorName.toLowerCase())
-          );
-          return {
-            ...c,
-            routeId: normalizedRoute,
-            vendorName: c.vendorName || matchedRoute?.vendorName || `Vendedor ${normalizedRoute}`
-          };
-        });
-
-        if (initialClaimsLoadedRef.current && currentUser?.role === 'ADMIN') {
-          const brandNew = synced.filter((c: ProductClaim) => {
-            const k = c.voucherNumber || c.id;
-            return k && !knownClaimKeysRef.current.has(k);
+      // 2. Fetch from server which reads from Google Sheets (Webhook / Live / SA)
+      const res = await fetch(`/api/records${force ? '?refresh=sheets' : ''}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          const synced = data.data.map((c: ProductClaim) => {
+            const normalizedRoute = normalizeRouteId(c.routeId, c.vendorName);
+            const matchedRoute = DEFAULT_USERS.find(
+              (u) => u.routeId === normalizedRoute || (c.vendorName && u.vendorName?.toLowerCase() === c.vendorName.toLowerCase())
+            );
+            return {
+              ...c,
+              routeId: normalizedRoute,
+              vendorName: c.vendorName || matchedRoute?.vendorName || `Vendedor ${normalizedRoute}`
+            };
           });
-          if (brandNew.length > 0) {
-            playNewClaimChime(0.85);
+
+          if (initialClaimsLoadedRef.current && currentUser?.role === 'ADMIN') {
+            const brandNew = synced.filter((c: ProductClaim) => {
+              const k = c.voucherNumber || c.id;
+              return k && !knownClaimKeysRef.current.has(k);
+            });
+            if (brandNew.length > 0) {
+              playNewClaimChime(0.85);
+            }
           }
-        }
 
-        synced.forEach((c: ProductClaim) => {
-          const k = c.voucherNumber || c.id;
-          if (k) knownClaimKeysRef.current.add(k);
-        });
-        initialClaimsLoadedRef.current = true;
+          synced.forEach((c: ProductClaim) => {
+            const k = c.voucherNumber || c.id;
+            if (k) knownClaimKeysRef.current.add(k);
+          });
+          initialClaimsLoadedRef.current = true;
 
-        setClaims(synced);
-        try {
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(synced));
-        } catch {}
-        setIsCloudSynced(true);
-        return;
-      }
-
-      // 3. Direct client Google Sheets API fetch if OAuth token is available
-      const sheetId = getStoredSpreadsheetId();
-      if (sheetId) {
-        const token = await getAccessToken().catch(() => null);
-        if (token) {
-          const sheetClaims = await fetchReclamosFromSheet(token, sheetId).catch(() => []);
-          if (sheetClaims && sheetClaims.length > 0) {
-            setClaims(sheetClaims);
-            try {
-              localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(sheetClaims));
-            } catch {}
-            setIsCloudSynced(true);
-          }
+          setClaims(synced);
+          setIsCloudSynced(true);
+          return;
         }
       }
     } catch (err) {
@@ -333,10 +288,10 @@ export default function App() {
       })
       .catch(() => {});
 
-    // 1. Recarga automática cada 5 segundos desde Google Sheets para sincronización en tiempo real
+    // 1. Recarga automática cada 3 segundos desde Google Sheets para sincronización en tiempo real
     const claimsInterval = setInterval(() => {
       fetchCloudRecords(true, true);
-    }, 5000);
+    }, 3000);
 
     // Poll alerts every 3 seconds for immediate admin notification
     const alertsInterval = setInterval(fetchAlerts, 3000);
@@ -379,85 +334,54 @@ export default function App() {
     setIsAuthModalOpen(true);
   };
 
-  // Save Claim Handler
+  // Save Claim Handler - Direct Google Sheets Write & Real-Time Sync
   const handleSaveClaim = async (
     claimData: Omit<ProductClaim, 'id' | 'voucherNumber' | 'syncedToCloud'>
   ): Promise<ProductClaim | null> => {
     try {
-      let newRecord: ProductClaim;
+      // 1. Calculate consecutive voucher number MYG-REC-XXXX
+      const existingNums = claims
+        .map((c) => {
+          const m = c.voucherNumber?.match(/(?:MYG-REC-|VCH-)?(?:(\d{4})-)?(\d+)/i);
+          return m ? parseInt(m[2] || m[1], 10) : 0;
+        })
+        .filter((n) => !isNaN(n));
+      const nextVal = existingNums.length > 0 ? Math.max(...existingNums) + 1 : 1;
+      const padded = String(nextVal).padStart(4, '0');
+      const voucherNumber = `MYG-REC-${padded}`;
+      const claimId = `claim-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
 
+      let newRecord: ProductClaim = {
+        ...claimData,
+        id: claimId,
+        voucherNumber,
+        syncedToCloud: true,
+      };
+
+      // 2. Direct POST to Google Apps Script Webhook (writes row directly to Google Sheets)
+      sendClaimToGoogleAppsScript(newRecord).catch((scriptErr) => {
+        console.warn('Direct Apps Script send notice:', scriptErr);
+      });
+
+      // 3. Post to backend server (synchronizes admin alerts and fallback storage)
       try {
         const res = await fetch('/api/records', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(claimData),
+          body: JSON.stringify(newRecord),
         });
-
         if (res.ok) {
           const result = await res.json();
-          newRecord = result.data;
-          setIsCloudSynced(true);
-          // Refresh alerts immediately so Admin receives alert without delay
+          if (result.data?.voucherNumber) {
+            newRecord.voucherNumber = result.data.voucherNumber;
+          }
           fetchAlerts();
-        } else {
-          throw new Error('Server returned non-200');
         }
-      } catch (networkErr) {
-        setIsCloudSynced(false);
-        const existingNums = claims
-          .map((c) => {
-            const m = c.voucherNumber.match(/(?:MYG-REC-|VCH-)?(?:(\d{4})-)?(\d+)/i);
-            return m ? parseInt(m[2] || m[1], 10) : 0;
-          })
-          .filter((n) => !isNaN(n));
-        const nextVal = existingNums.length > 0 ? Math.max(...existingNums) + 1 : 1;
-        const padded = String(nextVal).padStart(4, '0');
-
-        newRecord = {
-          ...claimData,
-          id: `local-${Date.now()}`,
-          voucherNumber: `MYG-REC-${padded}`,
-          syncedToCloud: false,
-        };
-
-        // If offline fallback, generate local alert if admin is active
-        const fallbackAlert: AdminAlert = {
-          id: `alert-${Date.now()}`,
-          claimId: newRecord.id,
-          voucherNumber: newRecord.voucherNumber,
-          routeId: newRecord.routeId || 'RUTA-1',
-          productName: newRecord.productName,
-          clientName: newRecord.clientName,
-          timestamp: newRecord.createdAt,
-          formattedDateTime: `${newRecord.formattedDate} ${newRecord.formattedTime}`,
-          createdAt: newRecord.createdAt,
-          read: false,
-          message: `NUEVO RECLAMO — ${newRecord.routeId || 'RUTA-1'} | Producto: ${newRecord.productName} | Cliente: ${newRecord.clientName} | Fecha: ${newRecord.formattedDate} ${newRecord.formattedTime}`
-        };
-
-        setAlerts((prev) => [fallbackAlert, ...prev]);
-        if (currentUser?.role === 'ADMIN') {
-          setActivePopupAlert(fallbackAlert);
-          playNewClaimChime(0.85);
-        }
+      } catch (backendErr) {
+        console.warn('Backend record sync notice:', backendErr);
       }
 
-      // Directly write to Google Sheets (RECLAMOS)
-      const sheetId = getStoredSpreadsheetId();
-      try {
-        const token = await getAccessToken();
-        if (token && sheetId) {
-          await appendReclamoToSheet(token, sheetId, newRecord);
-        } else {
-          // Automatic write via Google Service Account on backend
-          await appendReclamoViaBackend(newRecord);
-        }
-      } catch (sheetAppendErr) {
-        console.warn('Google Sheets client append warning, trying backend service account:', sheetAppendErr);
-        await appendReclamoViaBackend(newRecord).catch(() => {});
-      }
-
-      // Update state and localStorage
+      // 4. Update memory state so user sees voucher immediately
       if (newRecord.voucherNumber) {
         knownClaimKeysRef.current.add(newRecord.voucherNumber);
       }
@@ -465,18 +389,13 @@ export default function App() {
         knownClaimKeysRef.current.add(newRecord.id);
       }
 
-      const updatedList = [newRecord, ...claims.filter((c) => c.id !== newRecord.id)];
-      setClaims(updatedList);
-      try {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedList));
-      } catch (storageErr) {
-        console.warn('LocalStorage error:', storageErr);
-      }
+      setClaims((prev) => [newRecord, ...prev.filter((c) => c.id !== newRecord.id)]);
+      setIsCloudSynced(true);
 
-      // Trigger immediate background sync with Google Sheets
+      // 5. Trigger cloud sync from Google Sheets after short delay
       setTimeout(() => {
         fetchCloudRecords(true, true);
-      }, 1200);
+      }, 1000);
 
       return newRecord;
     } catch (err: any) {
@@ -537,13 +456,7 @@ export default function App() {
 
     // 2. Immediately update claims state so UI updates instantaneously
     setClaims((prev) => {
-      const updated = prev.filter((c) => c.id !== claimId && c.voucherNumber !== claimId);
-      try {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
-      } catch (e) {
-        console.warn('LocalStorage error:', e);
-      }
-      return updated;
+      return prev.filter((c) => c.id !== claimId && c.voucherNumber !== claimId);
     });
 
     // 3. Remove any associated alert and close active voucher if open
