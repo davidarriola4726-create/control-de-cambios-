@@ -798,29 +798,59 @@ export async function fetchClaimsFromGoogleSheetsCSV(spreadsheetId = DEFAULT_SPR
   return claims;
 }
 
-export const DEFAULT_APPS_SCRIPT_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbwgRlpK-3FKVcOoy7KMAZmNg8AjxYxBmePR4pT2XDNSscuNUeYGFWNaoD9CmNkX0laJuQ/exec';
+export const DEFAULT_APPS_SCRIPT_WEBHOOK_URL =
+  'https://script.google.com/macros/s/AKfycbywmUm9Op8JukKtTjNgdh5uvp-3jNctTIh5zN75IGhngT7gFbrwOuBM4EsqqELQyfXIUQ/exec';
 
 /**
  * Direct POST to Google Apps Script Webhook.
  * Writes directly to the Google Sheet from any device.
+ * Format matches: { idReclamo, ruta, vendedor, cliente, factura, piloto, producto, motivo, fecha, hora, firmaVendedor, firmaCliente }
  */
 export async function sendClaimToGoogleAppsScript(claim: any): Promise<boolean> {
   const webhookUrl = DEFAULT_APPS_SCRIPT_WEBHOOK_URL;
+  const idReclamo = claim.voucherNumber || claim.id;
+  const ruta = claim.routeId;
+  const vendedor = claim.vendorName;
+  const cliente = claim.clientName;
+  const factura = claim.invoiceNumber;
+  const piloto = claim.deliveryPerson;
+  const producto = claim.productName;
+  const motivo = claim.reason;
+  const fecha = claim.formattedDate;
+  const hora = claim.formattedTime;
+  const firmaVendedor = claim.vendorSignature;
+  const firmaCliente = claim.clientSignature;
+
   const payload = {
+    // Exact requested format
+    idReclamo,
+    ruta,
+    vendedor,
+    cliente,
+    factura,
+    piloto,
+    producto,
+    motivo,
+    fecha,
+    hora,
+    firmaVendedor,
+    firmaCliente,
+
+    // Header column compatibility
+    ID_Reclamo: idReclamo,
+    Ruta: ruta,
+    Vendedor: vendedor,
+    Cliente: cliente,
+    Factura: factura,
+    Piloto: piloto,
+    Producto: producto,
+    Motivo: motivo,
+    Fecha: fecha,
+    Hora: hora,
+    FirmaVendedor: firmaVendedor,
+    FirmaCliente: firmaCliente,
     action: 'addReclamo',
-    tab: 'RECLAMOS',
-    ID_Reclamo: claim.voucherNumber || claim.id,
-    Ruta: claim.routeId,
-    Vendedor: claim.vendorName,
-    Cliente: claim.clientName,
-    Factura: claim.invoiceNumber,
-    Piloto: claim.deliveryPerson,
-    Producto: claim.productName,
-    Motivo: claim.reason,
-    Fecha: claim.formattedDate,
-    Hora: claim.formattedTime,
-    FirmaVendedor: claim.vendorSignature,
-    FirmaCliente: claim.clientSignature
+    tab: 'RECLAMOS'
   };
 
   try {

@@ -26,7 +26,7 @@ export const RECLAMOS_COLUMNS = [
 ];
 
 export const DEFAULT_WEBHOOK_URL =
-  'https://script.google.com/macros/s/AKfycbwgRlpK-3FKVcOoy7KMAZmNg8AjxYxBmePR4pT2XDNSscuNUeYGFWNaoD9CmNkX0laJuQ/exec';
+  'https://script.google.com/macros/s/AKfycbywmUm9Op8JukKtTjNgdh5uvp-3jNctTIh5zN75IGhngT7gFbrwOuBM4EsqqELQyfXIUQ/exec';
 
 /**
  * Retrieves the configured Google Sheets Webhook URL, if any.
@@ -278,7 +278,21 @@ export function formatWebhookPayload(claim: any, tabName: string) {
   ];
 
   return {
-    // Exact requested fields at root level
+    // Exact requested fields in camelCase
+    idReclamo: ID_Reclamo,
+    ruta: Ruta,
+    vendedor: Vendedor,
+    cliente: Cliente,
+    factura: Factura,
+    piloto: Piloto,
+    producto: Producto,
+    motivo: Motivo,
+    fecha: Fecha,
+    hora: Hora,
+    firmaVendedor: FirmaVendedor,
+    firmaCliente: FirmaCliente,
+
+    // Header matching fields
     ID_Reclamo,
     Ruta,
     Vendedor,
@@ -298,6 +312,18 @@ export function formatWebhookPayload(claim: any, tabName: string) {
     sheetName: tabName,
     row,
     data: {
+      idReclamo: ID_Reclamo,
+      ruta: Ruta,
+      vendedor: Vendedor,
+      cliente: Cliente,
+      factura: Factura,
+      piloto: Piloto,
+      producto: Producto,
+      motivo: Motivo,
+      fecha: Fecha,
+      hora: Hora,
+      firmaVendedor: FirmaVendedor,
+      firmaCliente: FirmaCliente,
       ID_Reclamo,
       Ruta,
       Vendedor,
