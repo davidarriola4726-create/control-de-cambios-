@@ -184,7 +184,7 @@ export const NewClaimForm: React.FC<NewClaimFormProps> = ({
 
       const created = await onSaveClaim(claimPayload);
 
-      setSuccessMessage('¡Reclamo registrado exitosamente! Se generó el voucher consecutivo oficial.');
+      setSuccessMessage('✅ Guardado y sincronizado en tiempo real');
       
       // Clear signatures and form
       setClientName('');

@@ -285,10 +285,18 @@ app.post('/api/login', (req, res) => {
       (u) => u.username.trim().toUpperCase() === username.trim().toUpperCase()
     );
 
-    // Enable uppercase and lowercase: matches exact case or case-insensitive (Mgyg, mgyg, MGYG, Mmig, mmig, MMIG, Mg2026, mg2026, MG2026)
+    const inputPass = password.trim();
+    const inputPassLower = inputPass.toLowerCase();
+    const userPassLower = (user?.password || '').toLowerCase();
+
+    // Enable uppercase, lowercase and specific passwords:
+    // Admin: MYG2026 or Mg2026
+    // Routes: myg, Mgyg, Mmig
     const passwordMatches = user && (
-      user.password === password.trim() ||
-      user.password.toLowerCase() === password.trim().toLowerCase()
+      user.password === inputPass ||
+      userPassLower === inputPassLower ||
+      (user.role === 'ADMIN' && (inputPassLower === 'myg2026' || inputPassLower === 'mg2026')) ||
+      (user.role === 'ROUTE' && (inputPassLower === 'myg' || inputPassLower === 'mgyg' || inputPassLower === 'mmig'))
     );
 
     if (!user || !passwordMatches) {

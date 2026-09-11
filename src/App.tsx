@@ -158,10 +158,16 @@ export default function App() {
     }
   };
 
-  // Sync Claims with Google Sheets and Server
-  const fetchCloudRecords = useCallback(async (force = false) => {
+  // Refs for tracking real-time new claims across devices
+  const knownClaimKeysRef = useRef<Set<string>>(new Set());
+  const initialClaimsLoadedRef = useRef<boolean>(false);
+
+  // Sync Claims with Google Sheets and Server in Real Time
+  const fetchCloudRecords = useCallback(async (force = false, silent = false) => {
     try {
-      setIsSyncing(true);
+      if (!silent) {
+        setIsSyncing(true);
+      }
       // 1. Fetch from server which directly reads from Google Sheets (Webhook / Live / SA)
       const res = await fetch(`/api/records${force ? '?refresh=sheets' : ''}`);
       if (res.ok) {
@@ -178,6 +184,24 @@ export default function App() {
               vendorName: c.vendorName || matchedRoute?.vendorName || `Vendedor ${normalizedRoute}`
             };
           });
+
+          // If background polling detects a brand new claim, alert Admin with chime sound!
+          if (initialClaimsLoadedRef.current && currentUser?.role === 'ADMIN') {
+            const brandNew = synced.filter((c: ProductClaim) => {
+              const k = c.voucherNumber || c.id;
+              return k && !knownClaimKeysRef.current.has(k);
+            });
+            if (brandNew.length > 0) {
+              playNewClaimChime(0.85);
+            }
+          }
+
+          synced.forEach((c: ProductClaim) => {
+            const k = c.voucherNumber || c.id;
+            if (k) knownClaimKeysRef.current.add(k);
+          });
+          initialClaimsLoadedRef.current = true;
+
           setClaims(synced);
           try {
             localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(synced));
@@ -201,6 +225,23 @@ export default function App() {
             vendorName: c.vendorName || matchedRoute?.vendorName || `Vendedor ${normalizedRoute}`
           };
         });
+
+        if (initialClaimsLoadedRef.current && currentUser?.role === 'ADMIN') {
+          const brandNew = synced.filter((c: ProductClaim) => {
+            const k = c.voucherNumber || c.id;
+            return k && !knownClaimKeysRef.current.has(k);
+          });
+          if (brandNew.length > 0) {
+            playNewClaimChime(0.85);
+          }
+        }
+
+        synced.forEach((c: ProductClaim) => {
+          const k = c.voucherNumber || c.id;
+          if (k) knownClaimKeysRef.current.add(k);
+        });
+        initialClaimsLoadedRef.current = true;
+
         setClaims(synced);
         try {
           localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(synced));
@@ -228,9 +269,11 @@ export default function App() {
       console.warn('Could not sync cloud records:', err);
       setIsCloudSynced(false);
     } finally {
-      setIsSyncing(false);
+      if (!silent) {
+        setIsSyncing(false);
+      }
     }
-  }, []);
+  }, [currentUser]);
 
   // Fetch Alerts from Server
   const fetchAlerts = useCallback(async () => {
@@ -290,11 +333,13 @@ export default function App() {
       })
       .catch(() => {});
 
-    // Poll claims every 10 seconds
-    const claimsInterval = setInterval(fetchCloudRecords, 10000);
+    // 1. Recarga automática cada 5 segundos desde Google Sheets para sincronización en tiempo real
+    const claimsInterval = setInterval(() => {
+      fetchCloudRecords(true, true);
+    }, 5000);
 
-    // Poll alerts every 4 seconds for immediate admin notification
-    const alertsInterval = setInterval(fetchAlerts, 4000);
+    // Poll alerts every 3 seconds for immediate admin notification
+    const alertsInterval = setInterval(fetchAlerts, 3000);
 
     return () => {
       clearInterval(claimsInterval);
@@ -414,6 +459,13 @@ export default function App() {
       }
 
       // Update state and localStorage
+      if (newRecord.voucherNumber) {
+        knownClaimKeysRef.current.add(newRecord.voucherNumber);
+      }
+      if (newRecord.id) {
+        knownClaimKeysRef.current.add(newRecord.id);
+      }
+
       const updatedList = [newRecord, ...claims.filter((c) => c.id !== newRecord.id)];
       setClaims(updatedList);
       try {
@@ -421,6 +473,11 @@ export default function App() {
       } catch (storageErr) {
         console.warn('LocalStorage error:', storageErr);
       }
+
+      // Trigger immediate background sync with Google Sheets
+      setTimeout(() => {
+        fetchCloudRecords(true, true);
+      }, 1200);
 
       return newRecord;
     } catch (err: any) {
