@@ -140,20 +140,19 @@ export const Header: React.FC<HeaderProps> = ({
             >
               {isCloudSynced ? (
                 <>
-                  <span className="relative flex h-2 w-2">
+                  <span className="relative flex h-2.5 w-2.5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                   </span>
-                  <Wifi className="w-3.5 h-3.5 text-emerald-600 hidden sm:inline" />
-                  <span className="text-[11px] sm:text-xs font-semibold">
-                    En Tiempo Real
+                  <span className="text-[11px] sm:text-xs font-bold text-emerald-800 tracking-tight">
+                    🟢 En línea
                   </span>
                 </>
               ) : (
                 <>
-                  <WifiOff className="w-3.5 h-3.5 text-amber-600" />
-                  <span className="text-[11px] sm:text-xs font-semibold">
-                    Respaldo Local
+                  <span className="h-2 w-2 rounded-full bg-amber-500" />
+                  <span className="text-[11px] sm:text-xs font-semibold text-amber-800">
+                    🟡 Conectando...
                   </span>
                 </>
               )}
@@ -360,7 +359,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Receipt className="w-3.5 h-3.5" />
-            <span>{isAdmin ? 'Historial Global' : 'Mis Vouchers'}</span>
+            <span>{isAdmin ? 'Historial General' : 'Mis Reclamos'}</span>
           </button>
 
           {/* Admin Specific Tabs */}

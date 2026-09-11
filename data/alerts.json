@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "id": "alert-1789094378506-sup8f",
+    "claimId": "claim-1789094378506-dhwvr",
+    "voucherNumber": "MYG-REC-0005",
+    "routeId": "RUTA-1",
+    "productName": "Arroz Blanco 400g",
+    "clientName": "Tienda San José",
+    "timestamp": "2026-09-11T02:39:38.506Z",
+    "formattedDateTime": "10/09/2026 19:40",
+    "message": "NUEVO RECLAMO — RUTA-1 | Producto: Arroz Blanco 400g | Cliente: Tienda San José | Fecha: 10/09/2026 19:40",
+    "read": false
+  }
+]

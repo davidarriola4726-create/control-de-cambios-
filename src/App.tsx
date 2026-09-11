@@ -404,11 +404,10 @@ export default function App() {
         }
       } catch (networkErr) {
         setIsCloudSynced(false);
-        const currentYear = new Date().getFullYear();
         const existingNums = claims
           .map((c) => {
-            const m = c.voucherNumber.match(/VCH-(\d{4})-(\d+)/);
-            return m ? parseInt(m[2], 10) : 0;
+            const m = c.voucherNumber.match(/(?:MYG-REC-|VCH-)?(?:(\d{4})-)?(\d+)/i);
+            return m ? parseInt(m[2] || m[1], 10) : 0;
           })
           .filter((n) => !isNaN(n));
         const nextVal = existingNums.length > 0 ? Math.max(...existingNums) + 1 : 1;
@@ -417,7 +416,7 @@ export default function App() {
         newRecord = {
           ...claimData,
           id: `local-${Date.now()}`,
-          voucherNumber: `VCH-${currentYear}-${padded}`,
+          voucherNumber: `MYG-REC-${padded}`,
           syncedToCloud: false,
         };
 

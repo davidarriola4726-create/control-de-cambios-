@@ -791,12 +791,14 @@ export function parseRowToClaim(raw: any, index: number): any {
   const claimId = baseId ? `${baseId}_${index + 1}` : `claim-row-${index + 1}`;
   
   let voucherNumber = '';
-  if (baseId.startsWith('VCH-')) {
+  if (baseId.startsWith('MYG-REC-') || baseId.startsWith('VCH-')) {
     voucherNumber = baseId;
-  } else if (raw?.voucherNumber && String(raw.voucherNumber).startsWith('VCH-')) {
+  } else if (raw?.voucherNumber && (String(raw.voucherNumber).startsWith('MYG-REC-') || String(raw.voucherNumber).startsWith('VCH-'))) {
     voucherNumber = String(raw.voucherNumber);
+  } else if (baseId && !baseId.startsWith('claim-')) {
+    voucherNumber = baseId;
   } else {
-    voucherNumber = `VCH-2026-${String(index + 1).padStart(4, '0')}`;
+    voucherNumber = `MYG-REC-${String(index + 1).padStart(4, '0')}`;
   }
 
   return {

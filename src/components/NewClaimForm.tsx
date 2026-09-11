@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ProductClaim, ClaimReason, ClaimStatus, UserAccount } from '../types';
 import { DigitalSignaturePad } from './DigitalSignaturePad';
+import { playNewClaimChime } from '../utils/audioAlert';
 import {
   REASON_OPTIONS,
   COMMON_PILOTS,
@@ -184,7 +185,9 @@ export const NewClaimForm: React.FC<NewClaimFormProps> = ({
 
       const created = await onSaveClaim(claimPayload);
 
-      setSuccessMessage('✅ Guardado y sincronizado en tiempo real');
+      const voucherCode = created?.voucherNumber || 'MYG-REC-0001';
+      setSuccessMessage(`✅ Guardado y sincronizado en tiempo real — N°: ${voucherCode}`);
+      playNewClaimChime(0.8);
       
       // Clear signatures and form
       setClientName('');

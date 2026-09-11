@@ -1,5 +1,27 @@
 [
   {
+    "routeId": "RUTA-1",
+    "vendorName": "Brian Gómez",
+    "clientName": "Tienda San José",
+    "invoiceNumber": "FAC-9912",
+    "deliveryPerson": "Piloto Juan Carlos",
+    "productName": "Arroz Blanco 400g",
+    "reason": "Empaque dañado",
+    "reasonDetails": "Bolsa abierta",
+    "quantity": 2,
+    "unit": "Cajas",
+    "status": "Cambio Realizado",
+    "formattedDate": "10/09/2026",
+    "formattedTime": "19:40",
+    "vendorSignature": "data:image/png;base64,sig1",
+    "clientSignature": "data:image/png;base64,sig2",
+    "voucherNumber": "MYG-REC-0005",
+    "id": "claim-1789094378506-dhwvr",
+    "syncedToCloud": true,
+    "updatedAt": "2026-09-11T02:39:38.506Z",
+    "syncedToGoogleSheets": true
+  },
+  {
     "id": "claim-1788933631964-iryhe_1",
     "voucherNumber": "VCH-2026-0001",
     "createdAt": "2026-09-09T06:02:00.000Z",

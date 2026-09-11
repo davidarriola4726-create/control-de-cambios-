@@ -6,7 +6,7 @@
     "role": "ADMIN",
     "vendorName": "Administración Central",
     "password": "Mg2026",
-    "lastLogin": "10/09/2026, 19:06"
+    "lastLogin": "10/09/2026, 20:39"
   },
   {
     "id": "user-ruta-1",
@@ -16,7 +16,7 @@
     "routeId": "RUTA-1",
     "vendorName": "Brian Gómez",
     "password": "Mgyg",
-    "lastLogin": "10/09/2026, 19:06"
+    "lastLogin": "10/09/2026, 20:39"
   },
   {
     "id": "user-ruta-2",
@@ -25,7 +25,8 @@
     "role": "ROUTE",
     "routeId": "RUTA-2",
     "vendorName": "Melvin Sequeen",
-    "password": "Mgyg"
+    "password": "Mgyg",
+    "lastLogin": "10/09/2026, 20:39"
   },
   {
     "id": "user-ruta-3",
@@ -34,7 +35,8 @@
     "role": "ROUTE",
     "routeId": "RUTA-3",
     "vendorName": "Mel Marvin Gómez",
-    "password": "Mgyg"
+    "password": "Mgyg",
+    "lastLogin": "10/09/2026, 20:39"
   },
   {
     "id": "user-ruta-4",
@@ -43,7 +45,8 @@
     "role": "ROUTE",
     "routeId": "RUTA-4",
     "vendorName": "Marcos Juárez",
-    "password": "Mgyg"
+    "password": "Mgyg",
+    "lastLogin": "10/09/2026, 20:39"
   },
   {
     "id": "user-ruta-5",
@@ -52,7 +55,8 @@
     "role": "ROUTE",
     "routeId": "RUTA-5",
     "vendorName": "Vendedor Ruta 5",
-    "password": "Mgyg"
+    "password": "Mgyg",
+    "lastLogin": "10/09/2026, 20:39"
   },
   {
     "id": "user-ruta-6",
@@ -61,7 +65,8 @@
     "role": "ROUTE",
     "routeId": "RUTA-6",
     "vendorName": "Gustavo Gómez",
-    "password": "Mgyg"
+    "password": "Mgyg",
+    "lastLogin": "10/09/2026, 20:39"
   },
   {
     "id": "user-ruta-7",
@@ -70,7 +75,8 @@
     "role": "ROUTE",
     "routeId": "RUTA-7",
     "vendorName": "Ruta 7",
-    "password": "Mgyg"
+    "password": "Mgyg",
+    "lastLogin": "10/09/2026, 20:39"
   },
   {
     "id": "user-ruta-8",
@@ -79,7 +85,8 @@
     "role": "ROUTE",
     "routeId": "RUTA-8",
     "vendorName": "Marvin Otoniel",
-    "password": "Mgyg"
+    "password": "Mgyg",
+    "lastLogin": "10/09/2026, 20:39"
   },
   {
     "id": "user-ruta-9",
@@ -88,7 +95,8 @@
     "role": "ROUTE",
     "routeId": "RUTA-9",
     "vendorName": "Sergio Catú",
-    "password": "Mmig"
+    "password": "Mmig",
+    "lastLogin": "10/09/2026, 20:39"
   },
   {
     "id": "user-ruta-10",
@@ -97,7 +105,8 @@
     "role": "ROUTE",
     "routeId": "RUTA-10",
     "vendorName": "Edgar Guzmán",
-    "password": "Mgyg"
+    "password": "Mgyg",
+    "lastLogin": "10/09/2026, 20:39"
   },
   {
     "id": "user-ruta-11",
@@ -106,6 +115,7 @@
     "role": "ROUTE",
     "routeId": "RUTA-11",
     "vendorName": "Esaú Osorio",
-    "password": "Mgyg"
+    "password": "Mgyg",
+    "lastLogin": "10/09/2026, 20:39"
   }
 ]

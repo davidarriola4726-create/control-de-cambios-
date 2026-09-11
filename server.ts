@@ -497,19 +497,18 @@ app.post('/api/records', async (req, res) => {
     const claims = getStoredClaims();
     const newRecord = req.body;
 
-    // Calculate next consecutive voucher if not provided
+    // Calculate next consecutive voucher if not provided (Format: MYG-REC-XXXX)
     if (!newRecord.voucherNumber) {
-      const currentYear = new Date().getFullYear();
       const existingVouchers = claims
         .map((c: any) => {
-          const match = c.voucherNumber?.match(/VCH-(\d{4})-(\d+)/);
-          return match ? parseInt(match[2], 10) : 0;
+          const match = c.voucherNumber?.match(/(?:MYG-REC-|VCH-)?(?:(\d{4})-)?(\d+)/i);
+          return match ? parseInt(match[2] || match[1], 10) : 0;
         })
         .filter((n: number) => !isNaN(n));
 
       const maxNum = existingVouchers.length > 0 ? Math.max(...existingVouchers) : 0;
       const nextNum = String(maxNum + 1).padStart(4, '0');
-      newRecord.voucherNumber = `VCH-${currentYear}-${nextNum}`;
+      newRecord.voucherNumber = `MYG-REC-${nextNum}`;
     }
 
     if (!newRecord.id) {
