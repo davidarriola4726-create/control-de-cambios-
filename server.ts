@@ -27,10 +27,36 @@ const DATA_FILE = path.join(DATA_DIR, 'claims.json');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const ALERTS_FILE = path.join(DATA_DIR, 'alerts.json');
 const LOGO_FILE = path.join(DATA_DIR, 'logo.json');
+const DELETED_IDS_FILE = path.join(DATA_DIR, 'deleted_ids.json');
 
 // Ensure data directory exists
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+function getStoredDeletedIds(): string[] {
+  try {
+    if (fs.existsSync(DELETED_IDS_FILE)) {
+      const data = fs.readFileSync(DELETED_IDS_FILE, 'utf-8');
+      return JSON.parse(data);
+    }
+  } catch (err) {
+    console.error('Error reading deleted_ids.json:', err);
+  }
+  return [];
+}
+
+function saveDeletedId(id: string) {
+  try {
+    const list = getStoredDeletedIds();
+    const cleanId = id.trim().toUpperCase();
+    if (!list.includes(cleanId)) {
+      list.push(cleanId);
+      fs.writeFileSync(DELETED_IDS_FILE, JSON.stringify(list, null, 2), 'utf-8');
+    }
+  } catch (err) {
+    console.error('Error saving deleted ID:', err);
+  }
 }
 
 // Default initial users exactly as specified in the prompt
@@ -420,11 +446,21 @@ app.post('/api/users/reset-password', (req, res) => {
 // GET all records - automatically reads all records from Google Sheets (Webhook / Live / SA)
 app.get('/api/records', async (req, res) => {
   try {
-    const localClaims = getStoredClaims();
+    const deletedIds = new Set(getStoredDeletedIds());
+    const localClaims = getStoredClaims().filter((c: any) => {
+      const v = (c.voucherNumber || '').trim().toUpperCase();
+      const id = (c.id || '').trim().toUpperCase();
+      return !deletedIds.has(v) && !deletedIds.has(id);
+    });
+
     const sheetsResult = await readAllClaimsFromGoogleSheets();
 
     if (sheetsResult.success && Array.isArray(sheetsResult.data) && sheetsResult.data.length > 0) {
-      const sheetsClaims = sheetsResult.data;
+      const sheetsClaims = sheetsResult.data.filter((c: any) => {
+        const v = (c.voucherNumber || '').trim().toUpperCase();
+        const id = (c.id || '').trim().toUpperCase();
+        return !deletedIds.has(v) && !deletedIds.has(id);
+      });
 
       // Index local claims by ID and voucher to preserve full local base64 signatures
       const localMap = new Map<string, any>();
@@ -433,20 +469,26 @@ app.get('/api/records', async (req, res) => {
         if (c.id) localMap.set(c.id, c);
       });
 
-      // Claims read from Google Sheets are the definitive record list
-      const finalClaims = sheetsClaims.map((c: any) => {
-        const local = localMap.get(c.voucherNumber) || localMap.get(c.id);
-        return {
-          ...c,
-          vendorSignature: (c.vendorSignature && !c.vendorSignature.startsWith('['))
-            ? c.vendorSignature
-            : (local?.vendorSignature || c.vendorSignature),
-          clientSignature: (c.clientSignature && !c.clientSignature.startsWith('['))
-            ? c.clientSignature
-            : (local?.clientSignature || c.clientSignature),
-        };
+      // Claims read from Google Sheets are the definitive record list, deduplicated
+      const dedupeMap = new Map<string, any>();
+      sheetsClaims.forEach((c: any) => {
+        const key = (c.voucherNumber || c.id || '').trim().toUpperCase();
+        if (!key || deletedIds.has(key)) return;
+        if (!dedupeMap.has(key)) {
+          const local = localMap.get(c.voucherNumber) || localMap.get(c.id);
+          dedupeMap.set(key, {
+            ...c,
+            vendorSignature: (c.vendorSignature && !c.vendorSignature.startsWith('['))
+              ? c.vendorSignature
+              : (local?.vendorSignature || c.vendorSignature),
+            clientSignature: (c.clientSignature && !c.clientSignature.startsWith('['))
+              ? c.clientSignature
+              : (local?.clientSignature || c.clientSignature),
+          });
+        }
       });
 
+      const finalClaims = Array.from(dedupeMap.values());
       saveClaims(finalClaims);
 
       return res.json({
@@ -457,15 +499,31 @@ app.get('/api/records', async (req, res) => {
       });
     }
 
+    // Deduplicate local claims as fallback
+    const dedupeLocalMap = new Map<string, any>();
+    localClaims.forEach((c: any) => {
+      const key = (c.voucherNumber || c.id || '').trim().toUpperCase();
+      if (!key || deletedIds.has(key)) return;
+      if (!dedupeLocalMap.has(key)) {
+        dedupeLocalMap.set(key, c);
+      }
+    });
+    const finalLocalClaims = Array.from(dedupeLocalMap.values());
+
     res.json({
       success: true,
-      count: localClaims.length,
-      data: localClaims,
+      count: finalLocalClaims.length,
+      data: finalLocalClaims,
       source: 'local-cache'
     });
   } catch (err: any) {
     console.error('[GET /api/records] Error reading records:', err);
-    const localClaims = getStoredClaims();
+    const deletedIds = new Set(getStoredDeletedIds());
+    const localClaims = getStoredClaims().filter((c: any) => {
+      const v = (c.voucherNumber || '').trim().toUpperCase();
+      const id = (c.id || '').trim().toUpperCase();
+      return !deletedIds.has(v) && !deletedIds.has(id);
+    });
     res.json({
       success: true,
       count: localClaims.length,
@@ -496,6 +554,25 @@ app.post('/api/records', async (req, res) => {
   try {
     const claims = getStoredClaims();
     const newRecord = req.body;
+
+    // Check if ID or voucher number already exists (prevent duplicates)
+    const targetVoucher = (newRecord.voucherNumber || '').trim().toUpperCase();
+    const targetId = (newRecord.id || '').trim().toUpperCase();
+
+    if (targetVoucher || targetId) {
+      const alreadyExists = claims.some((c: any) => {
+        const cVouch = (c.voucherNumber || '').trim().toUpperCase();
+        const cId = (c.id || '').trim().toUpperCase();
+        return (targetVoucher && cVouch === targetVoucher) || (targetId && cId === targetId);
+      });
+
+      if (alreadyExists) {
+        return res.status(409).json({
+          success: false,
+          message: '⚠️ Ya existe'
+        });
+      }
+    }
 
     // Calculate next consecutive voucher if not provided (Format: MYG-REC-XXXX)
     if (!newRecord.voucherNumber) {
@@ -657,6 +734,11 @@ app.delete('/api/records/:id', async (req, res) => {
   try {
     const rawId = req.params.id;
     const decodedId = decodeURIComponent(rawId);
+
+    // Track permanently deleted ID to avoid re-adding or duplicating from sheets cache
+    saveDeletedId(rawId);
+    saveDeletedId(decodedId);
+
     let claims = getStoredClaims();
     claims = claims.filter((c: any) => {
       const matchId = c.id === rawId || c.id === decodedId;
@@ -674,28 +756,28 @@ app.delete('/api/records/:id', async (req, res) => {
     });
     saveAlerts(alerts);
 
-    // Forward doDelete to Google Apps Script Webhook
+    // Forward doDelete to Google Apps Script Webhook with POST
     const webhookUrl = getWebhookUrl();
     if (webhookUrl) {
       try {
-        const queryUrl = `${webhookUrl}?action=doDelete&method=doDelete&idReclamo=${encodeURIComponent(decodedId)}`;
+        const queryUrl = `${webhookUrl}?action=delete&method=doDelete&idReclamo=${encodeURIComponent(decodedId)}`;
         await fetch(queryUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             idReclamo: decodedId,
-            action: 'doDelete',
+            action: 'delete',
             method: 'doDelete',
             ID_Reclamo: decodedId
           }),
           redirect: 'follow'
         });
       } catch (scriptErr) {
-        console.warn('Apps Script doDelete server warning:', scriptErr);
+        console.warn('Apps Script delete server warning:', scriptErr);
       }
     }
 
-    res.json({ success: true, message: '🗑️ Borrado correctamente' });
+    res.json({ success: true, message: '✅ Borrado' });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }

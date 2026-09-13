@@ -799,7 +799,7 @@ export async function fetchClaimsFromGoogleSheetsCSV(spreadsheetId = DEFAULT_SPR
 }
 
 export const DEFAULT_APPS_SCRIPT_WEBHOOK_URL =
-  'https://script.google.com/macros/s/AKfycby4fNAiDUyGMJBxA3omfgJygFwfT7mGUN9ZVHmPGnrcB7MMsXQm9FL7QKt2w8tBWtFN/exec';
+  'https://script.google.com/macros/s/AKfycbzpwpGxWlwMwDPd2SUu6uIJCvlSluyCqRx0YHzgRcJWggzkWMVWtCMy1WwWL5xlfmz2/exec';
 
 /**
  * Direct POST to Google Apps Script Webhook.
@@ -869,18 +869,18 @@ export async function sendClaimToGoogleAppsScript(claim: any): Promise<boolean> 
 }
 
 /**
- * Deletes a claim via Google Apps Script Webhook using method doDelete.
+ * Deletes a claim via Google Apps Script Webhook using method POST.
  * Sends { idReclamo } to the webhook link.
  */
 export async function deleteClaimFromGoogleAppsScript(idReclamo: string): Promise<boolean> {
   const webhookUrl = DEFAULT_APPS_SCRIPT_WEBHOOK_URL;
-  const queryUrl = `${webhookUrl}?action=doDelete&method=doDelete&idReclamo=${encodeURIComponent(idReclamo)}`;
+  const queryUrl = `${webhookUrl}?action=delete&method=doDelete&idReclamo=${encodeURIComponent(idReclamo)}`;
 
   const payload = {
     idReclamo,
-    method: 'doDelete',
-    action: 'doDelete',
-    ID_Reclamo: idReclamo
+    ID_Reclamo: idReclamo,
+    action: 'delete',
+    method: 'doDelete'
   };
 
   try {
@@ -893,7 +893,7 @@ export async function deleteClaimFromGoogleAppsScript(idReclamo: string): Promis
     });
     return true;
   } catch (err) {
-    console.warn('Direct Apps Script doDelete warning:', err);
+    console.warn('Direct Apps Script delete warning:', err);
     return false;
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ProductClaim, ClaimReason, ClaimStatus, UserAccount } from '../types';
 import { DigitalSignaturePad } from './DigitalSignaturePad';
 import { playNewClaimChime } from '../utils/audioAlert';
@@ -24,12 +24,14 @@ import {
   ShieldAlert,
   Printer,
   Trash2,
-  LogOut
+  LogOut,
+  RefreshCw
 } from 'lucide-react';
 
 interface NewClaimFormProps {
   currentUser: UserAccount;
-  onSaveClaim: (claim: Omit<ProductClaim, 'id' | 'voucherNumber' | 'syncedToCloud'>) => Promise<ProductClaim | null>;
+  existingClaims?: ProductClaim[];
+  onSaveClaim: (claim: Omit<ProductClaim, 'syncedToCloud'>) => Promise<ProductClaim | null>;
   onClaimCreated: (claim: ProductClaim) => void;
   onGoToFolders: () => void;
   onPrintVoucher?: (claim: ProductClaim) => void;
@@ -37,6 +39,7 @@ interface NewClaimFormProps {
 
 export const NewClaimForm: React.FC<NewClaimFormProps> = ({
   currentUser,
+  existingClaims = [],
   onSaveClaim,
   onClaimCreated,
   onGoToFolders,
@@ -111,6 +114,31 @@ export const NewClaimForm: React.FC<NewClaimFormProps> = ({
   const [vendorSignature, setVendorSignature] = useState('');
   const [clientSignature, setClientSignature] = useState('');
 
+  // Consecutive voucher calculation & ID verification
+  const nextConsecutiveVoucher = useMemo(() => {
+    const existingNums = (existingClaims || [])
+      .map((c) => {
+        const m = c.voucherNumber?.match(/(?:MYG-REC-|VCH-)?(?:(\d{4})-)?(\d+)/i);
+        return m ? parseInt(m[2] || m[1], 10) : 0;
+      })
+      .filter((n) => !isNaN(n));
+    const nextVal = existingNums.length > 0 ? Math.max(...existingNums) + 1 : 1;
+    return `MYG-REC-${String(nextVal).padStart(4, '0')}`;
+  }, [existingClaims]);
+
+  const [customVoucherId, setCustomVoucherId] = useState('');
+  const activeVoucherId = (customVoucherId.trim() || nextConsecutiveVoucher).toUpperCase();
+
+  // Check duplicate ID
+  const isDuplicateId = useMemo(() => {
+    if (!activeVoucherId) return false;
+    return (existingClaims || []).some((c) => {
+      const v = (c.voucherNumber || '').trim().toUpperCase();
+      const id = (c.id || '').trim().toUpperCase();
+      return v === activeVoucherId || id === activeVoucherId;
+    });
+  }, [activeVoucherId, existingClaims]);
+
   // Form State
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -124,7 +152,15 @@ export const NewClaimForm: React.FC<NewClaimFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return; // Prevent double submission!
     setErrorMessage(null);
+
+    // Duplicate ID validation (Requirement 4)
+    if (isDuplicateId) {
+      setErrorMessage('⚠️ Ya existe');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
 
     // 8 CAMPOS OBLIGATORIOS ESTRICTOS
     if (!clientName.trim()) {
@@ -163,7 +199,9 @@ export const NewClaimForm: React.FC<NewClaimFormProps> = ({
 
     setSubmitting(true);
     try {
-      const claimPayload: Omit<ProductClaim, 'id' | 'voucherNumber' | 'syncedToCloud'> = {
+      const claimPayload: Omit<ProductClaim, 'syncedToCloud'> = {
+        id: activeVoucherId,
+        voucherNumber: activeVoucherId,
         createdAt: currentDateTime.isoStr || new Date().toISOString(),
         formattedDate: currentDateTime.dateStr,
         formattedTime: currentDateTime.timeStr,
@@ -185,11 +223,11 @@ export const NewClaimForm: React.FC<NewClaimFormProps> = ({
 
       const created = await onSaveClaim(claimPayload);
 
-      const voucherCode = created?.voucherNumber || 'MYG-REC-0001';
-      setSuccessMessage(`✅ Guardado y sincronizado — N°: ${voucherCode}`);
+      setSuccessMessage('✅ Guardado');
       playNewClaimChime(0.8);
       
       // Clear signatures and form
+      setCustomVoucherId('');
       setClientName('');
       setInvoiceNumber('');
       setDeliveryPerson('');
@@ -204,7 +242,12 @@ export const NewClaimForm: React.FC<NewClaimFormProps> = ({
         onClaimCreated(created);
       }
     } catch (err: any) {
-      setErrorMessage('Error al guardar el reclamo: ' + (err.message || 'Intente nuevamente'));
+      const msg = err.message || '';
+      if (msg.includes('Ya existe')) {
+        setErrorMessage('⚠️ Ya existe');
+      } else {
+        setErrorMessage(msg || 'Error al guardar el reclamo: Intente nuevamente');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -351,6 +394,47 @@ export const NewClaimForm: React.FC<NewClaimFormProps> = ({
                   <Lock className="w-3 h-3" /> Fijo
                 </span>
               </div>
+            </div>
+
+            {/* ID del Reclamo / Voucher */}
+            <div className="sm:col-span-2 pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                  ID de Reclamo / Consecutivo Oficial
+                </label>
+                <span className="text-[10px] text-slate-400">
+                  {customVoucherId ? 'Personalizado' : 'Automático sin duplicados'}
+                </span>
+              </div>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={customVoucherId || nextConsecutiveVoucher}
+                  onChange={(e) => setCustomVoucherId(e.target.value)}
+                  disabled={submitting}
+                  className={`w-full px-3 py-2 border rounded-lg text-xs sm:text-sm font-mono font-bold transition-all ${
+                    isDuplicateId
+                      ? 'bg-rose-50 border-rose-400 text-rose-800 focus:ring-2 focus:ring-rose-500'
+                      : 'bg-slate-50 border-slate-300 text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:bg-white'
+                  }`}
+                  placeholder={nextConsecutiveVoucher}
+                />
+                {customVoucherId && (
+                  <button
+                    type="button"
+                    onClick={() => setCustomVoucherId('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-emerald-600 hover:underline font-bold"
+                  >
+                    Restablecer
+                  </button>
+                )}
+              </div>
+              {isDuplicateId && (
+                <p className="text-[11px] font-bold text-rose-600 mt-1 flex items-center gap-1">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  ⚠️ Ya existe: Este ID de reclamo ya existe en el sistema. Modifíquelo para continuar.
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -603,14 +687,21 @@ export const NewClaimForm: React.FC<NewClaimFormProps> = ({
             {/* Botón 1: Guardar Reclamo */}
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || isDuplicateId}
               id="btn-guardar-reclamo"
-              className="flex-1 min-w-[150px] px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="flex-1 min-w-[150px] px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Send className="w-4 h-4" />
-              <span>
-                {submitting ? 'Guardando...' : 'Guardar Reclamo'}
-              </span>
+              {submitting ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                  <span>Guardando...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  <span>Guardar Reclamo</span>
+                </>
+              )}
             </button>
 
             {/* Botón 2: Imprimir */}

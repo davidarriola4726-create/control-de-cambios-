@@ -135,6 +135,57 @@ export default function App() {
   // Refs for tracking real-time new claims across devices
   const knownClaimKeysRef = useRef<Set<string>>(new Set());
   const initialClaimsLoadedRef = useRef<boolean>(false);
+  const deletedClaimIdsRef = useRef<Set<string>>((() => {
+    try {
+      const saved = localStorage.getItem('myg_deleted_claim_ids_v2');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return new Set(parsed.map((s: string) => String(s).trim().toUpperCase()));
+      }
+    } catch (e) {}
+    return new Set<string>();
+  })());
+
+  // Helper to deduplicate records and exclude deleted records
+  const processAndDeduplicateClaims = (rawClaims: ProductClaim[]): ProductClaim[] => {
+    const dedupeMap = new Map<string, ProductClaim>();
+    rawClaims.forEach((c) => {
+      const normalizedRoute = normalizeRouteId(c.routeId, c.vendorName);
+      const matchedRoute = DEFAULT_USERS.find(
+        (u) => u.routeId === normalizedRoute || (c.vendorName && u.vendorName?.toLowerCase() === c.vendorName.toLowerCase())
+      );
+      const enriched: ProductClaim = {
+        ...c,
+        routeId: normalizedRoute,
+        vendorName: c.vendorName || matchedRoute?.vendorName || `Vendedor ${normalizedRoute}`
+      };
+
+      const v = (enriched.voucherNumber || '').trim().toUpperCase();
+      const id = (enriched.id || '').trim().toUpperCase();
+      const key = v || id;
+      if (!key) return;
+
+      // Filter out deleted records
+      if (
+        deletedClaimIdsRef.current.has(key) ||
+        (id && deletedClaimIdsRef.current.has(id)) ||
+        (v && deletedClaimIdsRef.current.has(v))
+      ) {
+        return;
+      }
+
+      if (!dedupeMap.has(key)) {
+        dedupeMap.set(key, enriched);
+      } else {
+        const existing = dedupeMap.get(key)!;
+        if (!existing.vendorSignature && enriched.vendorSignature) {
+          dedupeMap.set(key, enriched);
+        }
+      }
+    });
+
+    return Array.from(dedupeMap.values());
+  };
 
   // Sync Claims with Google Sheets and Server in Real Time (Bidirectional across all devices)
   const fetchCloudRecords = useCallback(async (force = false, silent = false) => {
@@ -147,17 +198,7 @@ export default function App() {
       try {
         const csvClaims = await fetchClaimsFromGoogleSheetsCSV();
         if (Array.isArray(csvClaims)) {
-          const synced = csvClaims.map((c: ProductClaim) => {
-            const normalizedRoute = normalizeRouteId(c.routeId, c.vendorName);
-            const matchedRoute = DEFAULT_USERS.find(
-              (u) => u.routeId === normalizedRoute || (c.vendorName && u.vendorName?.toLowerCase() === c.vendorName.toLowerCase())
-            );
-            return {
-              ...c,
-              routeId: normalizedRoute,
-              vendorName: c.vendorName || matchedRoute?.vendorName || `Vendedor ${normalizedRoute}`
-            };
-          });
+          const synced = processAndDeduplicateClaims(csvClaims);
 
           // Detect brand new claims and alert Admin with chime sound automatically
           if (initialClaimsLoadedRef.current && currentUser?.role === 'ADMIN') {
@@ -189,17 +230,7 @@ export default function App() {
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.data)) {
-          const synced = data.data.map((c: ProductClaim) => {
-            const normalizedRoute = normalizeRouteId(c.routeId, c.vendorName);
-            const matchedRoute = DEFAULT_USERS.find(
-              (u) => u.routeId === normalizedRoute || (c.vendorName && u.vendorName?.toLowerCase() === c.vendorName.toLowerCase())
-            );
-            return {
-              ...c,
-              routeId: normalizedRoute,
-              vendorName: c.vendorName || matchedRoute?.vendorName || `Vendedor ${normalizedRoute}`
-            };
-          });
+          const synced = processAndDeduplicateClaims(data.data);
 
           if (initialClaimsLoadedRef.current && currentUser?.role === 'ADMIN') {
             const brandNew = synced.filter((c: ProductClaim) => {
@@ -338,20 +369,37 @@ export default function App() {
 
   // Save Claim Handler - Direct Google Sheets Write & Real-Time Sync
   const handleSaveClaim = async (
-    claimData: Omit<ProductClaim, 'id' | 'voucherNumber' | 'syncedToCloud'>
+    claimData: Omit<ProductClaim, 'syncedToCloud'>
   ): Promise<ProductClaim | null> => {
     try {
-      // 1. Calculate consecutive voucher number MYG-REC-XXXX
-      const existingNums = claims
-        .map((c) => {
-          const m = c.voucherNumber?.match(/(?:MYG-REC-|VCH-)?(?:(\d{4})-)?(\d+)/i);
-          return m ? parseInt(m[2] || m[1], 10) : 0;
-        })
-        .filter((n) => !isNaN(n));
-      const nextVal = existingNums.length > 0 ? Math.max(...existingNums) + 1 : 1;
-      const padded = String(nextVal).padStart(4, '0');
-      const voucherNumber = `MYG-REC-${padded}`;
-      const claimId = `claim-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+      // 1. Calculate consecutive voucher number MYG-REC-XXXX or use custom
+      let voucherNumber = (claimData.voucherNumber || '').trim();
+      if (!voucherNumber) {
+        const existingNums = claims
+          .map((c) => {
+            const m = c.voucherNumber?.match(/(?:MYG-REC-|VCH-)?(?:(\d{4})-)?(\d+)/i);
+            return m ? parseInt(m[2] || m[1], 10) : 0;
+          })
+          .filter((n) => !isNaN(n));
+        const nextVal = existingNums.length > 0 ? Math.max(...existingNums) + 1 : 1;
+        const padded = String(nextVal).padStart(4, '0');
+        voucherNumber = `MYG-REC-${padded}`;
+      }
+
+      const claimId = (claimData.id || '').trim() || `claim-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+
+      // Requirement 4: NO PERMITIR guardar si el ID ya existe → mostrar error
+      const targetVoucher = voucherNumber.toUpperCase();
+      const targetId = claimId.toUpperCase();
+      const alreadyExists = claims.some((c) => {
+        const cV = (c.voucherNumber || '').trim().toUpperCase();
+        const cId = (c.id || '').trim().toUpperCase();
+        return (targetVoucher && cV === targetVoucher) || (targetId && cId === targetId);
+      });
+
+      if (alreadyExists) {
+        throw new Error('⚠️ Ya existe');
+      }
 
       let newRecord: ProductClaim = {
         ...claimData,
@@ -366,22 +414,30 @@ export default function App() {
       });
 
       // 3. Post to backend server (synchronizes admin alerts and fallback storage)
-      try {
-        const res = await fetch('/api/records', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newRecord),
-        });
-        if (res.ok) {
-          const result = await res.json();
-          if (result.data?.voucherNumber) {
-            newRecord.voucherNumber = result.data.voucherNumber;
-          }
-          fetchAlerts();
-        }
-      } catch (backendErr) {
-        console.warn('Backend record sync notice:', backendErr);
+      const res = await fetch('/api/records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newRecord),
+      });
+
+      if (res.status === 409) {
+        throw new Error('⚠️ Ya existe');
       }
+
+      if (res.ok) {
+        const result = await res.json();
+        if (result.data?.voucherNumber) {
+          newRecord.voucherNumber = result.data.voucherNumber;
+        }
+        fetchAlerts();
+      }
+
+      // If this ID was previously marked deleted, un-delete it
+      deletedClaimIdsRef.current.delete(newRecord.voucherNumber.trim().toUpperCase());
+      deletedClaimIdsRef.current.delete(newRecord.id.trim().toUpperCase());
+      try {
+        localStorage.setItem('myg_deleted_claim_ids_v2', JSON.stringify(Array.from(deletedClaimIdsRef.current)));
+      } catch (e) {}
 
       // 4. Update memory state so user sees voucher immediately
       if (newRecord.voucherNumber) {
@@ -391,7 +447,7 @@ export default function App() {
         knownClaimKeysRef.current.add(newRecord.id);
       }
 
-      setClaims((prev) => [newRecord, ...prev.filter((c) => c.id !== newRecord.id)]);
+      setClaims((prev) => [newRecord, ...prev.filter((c) => c.id !== newRecord.id && c.voucherNumber !== newRecord.voucherNumber)]);
       setIsCloudSynced(true);
 
       // 5. Trigger cloud sync from Google Sheets after short delay
@@ -478,7 +534,16 @@ export default function App() {
       console.warn('Could not delete claim from backend:', e);
     }
 
-    // 4. Remove from knownClaimKeysRef so it doesn't trigger new claim alert
+    // 4. Mark permanently in deletedClaimIdsRef so auto-sync never brings it back
+    deletedClaimIdsRef.current.add(claimId.trim().toUpperCase());
+    deletedClaimIdsRef.current.add(idToDelete.trim().toUpperCase());
+    if (targetClaim?.id) deletedClaimIdsRef.current.add(targetClaim.id.trim().toUpperCase());
+    if (targetClaim?.voucherNumber) deletedClaimIdsRef.current.add(targetClaim.voucherNumber.trim().toUpperCase());
+    try {
+      localStorage.setItem('myg_deleted_claim_ids_v2', JSON.stringify(Array.from(deletedClaimIdsRef.current)));
+    } catch (e) {}
+
+    // 4b. Remove from knownClaimKeysRef so it doesn't trigger new claim alert
     if (knownClaimKeysRef.current) {
       knownClaimKeysRef.current.delete(claimId);
       knownClaimKeysRef.current.delete(idToDelete);
@@ -517,8 +582,8 @@ export default function App() {
       setIsVoucherModalOpen(false);
     }
 
-    // 7. Show required confirmation message: "🗑️ Borrado correctamente"
-    setDeleteToast('🗑️ Borrado correctamente');
+    // 7. Show required confirmation message: "✅ Borrado"
+    setDeleteToast('✅ Borrado');
     setTimeout(() => {
       setDeleteToast(null);
     }, 4000);
@@ -703,6 +768,7 @@ export default function App() {
               >
                 <NewClaimForm
                   currentUser={currentUser}
+                  existingClaims={claims}
                   onSaveClaim={handleSaveClaim}
                   onClaimCreated={handleClaimCreated}
                   onGoToFolders={() => setActiveTab('vendor-folders')}

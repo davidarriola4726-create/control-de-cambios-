@@ -136,7 +136,7 @@ export const VendorFoldersView: React.FC<VendorFoldersViewProps> = ({
     try {
       await onDeleteClaim(claimToDelete.id);
       setClaimToDelete(null);
-      setDeleteSuccess('🗑️ Borrado correctamente');
+      setDeleteSuccess('✅ Borrado');
       setTimeout(() => setDeleteSuccess(null), 4000);
     } catch (err: any) {
       setDeleteError(err.message || 'No se pudo eliminar. Verifica los permisos de la base de datos.');
