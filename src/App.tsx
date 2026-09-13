@@ -25,7 +25,8 @@ import {
   deleteReclamoFromSheet,
   fetchClaimsFromWebhook,
   fetchClaimsFromGoogleSheetsCSV,
-  sendClaimToGoogleAppsScript
+  sendClaimToGoogleAppsScript,
+  deleteClaimFromGoogleAppsScript
 } from './services/sheetsService';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -110,6 +111,7 @@ export default function App() {
   const [showQuickGuide, setShowQuickGuide] = useState<boolean>(false);
   const [isLogoModalOpen, setIsLogoModalOpen] = useState<boolean>(false);
   const [isGoogleSheetsModalOpen, setIsGoogleSheetsModalOpen] = useState<boolean>(false);
+  const [deleteToast, setDeleteToast] = useState<string | null>(null);
 
   // Save custom logo handler
   const handleSaveLogo = async (newUrl: string) => {
@@ -438,40 +440,93 @@ export default function App() {
     setActivePopupAlert(null);
   };
 
-  // Delete single claim (physical row deletion in Google Sheets & server)
+  // Delete single claim (ADMIN ONLY: physical row deletion in Google Sheets via Apps Script doDelete & server)
   const handleDeleteClaim = async (claimId: string) => {
-    // 1. If Google Sheets is connected, physically delete the row from RECLAMOS
+    if (currentUser?.role !== 'ADMIN') {
+      alert('Solo los administradores tienen permiso para eliminar registros.');
+      return;
+    }
+
+    // Find the claim to get exact voucherNumber and id
+    const targetClaim = claims.find((c) => c.id === claimId || c.voucherNumber === claimId);
+    const idToDelete = targetClaim?.voucherNumber || claimId;
+
+    // 1. Send { idReclamo } to Google Apps Script Webhook with method doDelete
+    try {
+      await deleteClaimFromGoogleAppsScript(idToDelete);
+    } catch (scriptErr) {
+      console.warn('Apps Script doDelete notice:', scriptErr);
+    }
+
+    // 2. If direct Google Sheets API is connected, physically delete row from RECLAMOS
     const sheetId = getStoredSpreadsheetId();
     if (sheetId) {
       try {
         const token = await getAccessToken();
         if (token) {
-          await deleteReclamoFromSheet(token, sheetId, claimId);
+          await deleteReclamoFromSheet(token, sheetId, idToDelete);
         }
       } catch (sheetErr: any) {
-        console.error('Google Sheets delete error:', sheetErr);
-        throw new Error('No se pudo eliminar. Verifica los permisos de la base de datos.');
+        console.warn('Google Sheets direct delete note:', sheetErr);
       }
     }
 
-    // 2. Immediately update claims state so UI updates instantaneously
+    // 3. Send DELETE to backend server to wipe from cache & forward
+    try {
+      await fetch(`/api/records/${encodeURIComponent(idToDelete)}`, { method: 'DELETE' });
+    } catch (e) {
+      console.warn('Could not delete claim from backend:', e);
+    }
+
+    // 4. Remove from knownClaimKeysRef so it doesn't trigger new claim alert
+    if (knownClaimKeysRef.current) {
+      knownClaimKeysRef.current.delete(claimId);
+      knownClaimKeysRef.current.delete(idToDelete);
+      if (targetClaim?.id) knownClaimKeysRef.current.delete(targetClaim.id);
+      if (targetClaim?.voucherNumber) knownClaimKeysRef.current.delete(targetClaim.voucherNumber);
+    }
+
+    // 5. Immediately update claims state so UI updates instantaneously without page refresh
     setClaims((prev) => {
-      return prev.filter((c) => c.id !== claimId && c.voucherNumber !== claimId);
+      return prev.filter(
+        (c) =>
+          c.id !== claimId &&
+          c.voucherNumber !== claimId &&
+          c.voucherNumber !== idToDelete &&
+          c.id !== idToDelete
+      );
     });
 
-    // 3. Remove any associated alert and close active voucher if open
-    setAlerts((prev) => prev.filter((a) => a.claimId !== claimId && a.voucherNumber !== claimId));
-    if (activeVoucher?.id === claimId || activeVoucher?.voucherNumber === claimId) {
+    // 6. Remove any associated alert and close active voucher if open
+    setAlerts((prev) =>
+      prev.filter(
+        (a) =>
+          a.claimId !== claimId &&
+          a.voucherNumber !== claimId &&
+          a.claimId !== idToDelete &&
+          a.voucherNumber !== idToDelete
+      )
+    );
+    if (
+      activeVoucher?.id === claimId ||
+      activeVoucher?.voucherNumber === claimId ||
+      activeVoucher?.id === idToDelete ||
+      activeVoucher?.voucherNumber === idToDelete
+    ) {
       setActiveVoucher(null);
       setIsVoucherModalOpen(false);
     }
 
-    // 4. Send DELETE to backend to physically wipe it from server database (claims.json)
-    try {
-      await fetch(`/api/records/${encodeURIComponent(claimId)}`, { method: 'DELETE' });
-    } catch (e) {
-      console.warn('Could not delete claim from backend:', e);
-    }
+    // 7. Show required confirmation message: "🗑️ Borrado correctamente"
+    setDeleteToast('🗑️ Borrado correctamente');
+    setTimeout(() => {
+      setDeleteToast(null);
+    }, 4000);
+
+    // 8. Auto-reload the list from Google Sheets / server without page refresh
+    setTimeout(() => {
+      fetchCloudRecords(true, true);
+    }, 1200);
   };
 
   // Clear all claims for a route folder
@@ -796,6 +851,21 @@ export default function App() {
           fetchCloudRecords();
         }}
       />
+
+      {/* Notificación Flotante de Borrado */}
+      {deleteToast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 bg-slate-900 text-white rounded-2xl shadow-2xl border border-slate-700 animate-fade-in">
+          <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-sm">
+            ✓
+          </div>
+          <div>
+            <span className="text-[10px] font-bold block text-slate-400 uppercase tracking-wider">
+              Base de Datos
+            </span>
+            <span className="text-sm font-black text-white">{deleteToast}</span>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="no-print bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">

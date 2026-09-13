@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { ProductClaim, ClaimReason, UserAccount } from '../types';
 import { REASON_OPTIONS } from '../data/initialData';
 import { DEFAULT_USERS, ALL_ROUTES } from '../data/usersData';
+import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 import {
   Folder,
   FolderOpen,
@@ -121,6 +122,28 @@ export const VendorFoldersView: React.FC<VendorFoldersViewProps> = ({
   const [selectedReason, setSelectedReason] = useState<string>('ALL');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+
+  // Delete modal state
+  const [claimToDelete, setClaimToDelete] = useState<ProductClaim | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
+
+  const handleConfirmDelete = async () => {
+    if (!claimToDelete || !onDeleteClaim) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await onDeleteClaim(claimToDelete.id);
+      setClaimToDelete(null);
+      setDeleteSuccess('🗑️ Borrado correctamente');
+      setTimeout(() => setDeleteSuccess(null), 4000);
+    } catch (err: any) {
+      setDeleteError(err.message || 'No se pudo eliminar. Verifica los permisos de la base de datos.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Active route claims
   const activeRouteClaims = useMemo(() => {
@@ -443,7 +466,7 @@ export const VendorFoldersView: React.FC<VendorFoldersViewProps> = ({
               <span>Imprimir</span>
             </button>
 
-            {clearFolderAction && (currentUser.role === 'ADMIN' || selectedRoute === currentUser.routeId) && filteredClaims.length > 0 && (
+            {clearFolderAction && currentUser.role === 'ADMIN' && filteredClaims.length > 0 && (
               <button
                 type="button"
                 onClick={() => {
@@ -597,6 +620,13 @@ export const VendorFoldersView: React.FC<VendorFoldersViewProps> = ({
         </div>
       </div>
 
+      {/* Mensaje de Confirmación de Borrado */}
+      {deleteSuccess && (
+        <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-950 rounded-xl text-xs font-black flex items-center gap-2 shadow-xs animate-fade-in">
+          <span>{deleteSuccess}</span>
+        </div>
+      )}
+
       {/* Claims Records Table */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
         <div className="px-4 py-2.5 border-b border-slate-200 flex items-center justify-between">
@@ -679,17 +709,12 @@ export const VendorFoldersView: React.FC<VendorFoldersViewProps> = ({
                         >
                           Voucher
                         </button>
-                        {onDeleteClaim && (currentUser.role === 'ADMIN' || claim.routeId === currentUser.routeId) && (
+                        {onDeleteClaim && currentUser.role === 'ADMIN' && (
                           <button
                             type="button"
                             onClick={() => {
-                              if (
-                                window.confirm(
-                                  '⚠️ ¿Seguro que desea eliminar este reclamo del historial? Esta acción no se puede deshacer.'
-                                )
-                              ) {
-                                onDeleteClaim(claim.id);
-                              }
+                              setDeleteError(null);
+                              setClaimToDelete(claim);
                             }}
                             className="p-1 bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-800 rounded-lg border border-rose-200 transition-colors cursor-pointer"
                             title="Eliminar este registro permanentemente"
@@ -706,6 +731,26 @@ export const VendorFoldersView: React.FC<VendorFoldersViewProps> = ({
           </div>
         )}
       </div>
+
+      {/* Modal de Confirmación de Borrado */}
+      {claimToDelete && (
+        <DeleteConfirmationModal
+          isOpen={!!claimToDelete}
+          onClose={() => {
+            if (!isDeleting) {
+              setClaimToDelete(null);
+              setDeleteError(null);
+            }
+          }}
+          onConfirm={handleConfirmDelete}
+          claimId={claimToDelete.id}
+          voucherNumber={claimToDelete.voucherNumber}
+          clientName={claimToDelete.clientName}
+          productName={claimToDelete.productName}
+          isDeleting={isDeleting}
+          errorMessage={deleteError}
+        />
+      )}
     </div>
   );
 };

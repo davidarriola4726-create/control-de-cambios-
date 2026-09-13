@@ -26,7 +26,7 @@ export const RECLAMOS_COLUMNS = [
 ];
 
 export const DEFAULT_WEBHOOK_URL =
-  'https://script.google.com/macros/s/AKfycbywmUm9Op8JukKtTjNgdh5uvp-3jNctTIh5zN75IGhngT7gFbrwOuBM4EsqqELQyfXIUQ/exec';
+  'https://script.google.com/macros/s/AKfycby4fNAiDUyGMJBxA3omfgJygFwfT7mGUN9ZVHmPGnrcB7MMsXQm9FL7QKt2w8tBWtFN/exec';
 
 /**
  * Retrieves the configured Google Sheets Webhook URL, if any.

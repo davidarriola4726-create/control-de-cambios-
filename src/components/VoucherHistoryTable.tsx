@@ -57,6 +57,7 @@ export const VoucherHistoryTable: React.FC<VoucherHistoryTableProps> = ({
   const [claimToDelete, setClaimToDelete] = useState<ProductClaim | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
 
   const handleConfirmDelete = async () => {
     if (!claimToDelete || !onDeleteClaim) return;
@@ -65,6 +66,8 @@ export const VoucherHistoryTable: React.FC<VoucherHistoryTableProps> = ({
     try {
       await onDeleteClaim(claimToDelete.id);
       setClaimToDelete(null);
+      setDeleteSuccess('🗑️ Borrado correctamente');
+      setTimeout(() => setDeleteSuccess(null), 4000);
     } catch (err: any) {
       setDeleteError(err.message || 'No se pudo eliminar. Verifica los permisos de la base de datos.');
     } finally {
@@ -314,6 +317,13 @@ export const VoucherHistoryTable: React.FC<VoucherHistoryTableProps> = ({
         </div>
       </div>
 
+      {/* Mensaje de Confirmación de Borrado */}
+      {deleteSuccess && (
+        <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-950 rounded-xl text-xs font-black flex items-center gap-2 shadow-xs animate-fade-in">
+          <span>{deleteSuccess}</span>
+        </div>
+      )}
+
       {/* Tabla de Vouchers */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
         {filteredClaims.length === 0 ? (
@@ -387,7 +397,7 @@ export const VoucherHistoryTable: React.FC<VoucherHistoryTableProps> = ({
                         >
                           Voucher
                         </button>
-                        {(isAdmin || claim.routeId === currentUser.routeId) && onDeleteClaim && (
+                        {isAdmin && onDeleteClaim && (
                           <button
                             type="button"
                             onClick={() => {

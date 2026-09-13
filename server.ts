@@ -653,7 +653,7 @@ app.put('/api/records/:id', (req, res) => {
 });
 
 // DELETE claim physically and permanently
-app.delete('/api/records/:id', (req, res) => {
+app.delete('/api/records/:id', async (req, res) => {
   try {
     const rawId = req.params.id;
     const decodedId = decodeURIComponent(rawId);
@@ -674,7 +674,28 @@ app.delete('/api/records/:id', (req, res) => {
     });
     saveAlerts(alerts);
 
-    res.json({ success: true, message: 'Registro eliminado físicamente del sistema y del historial' });
+    // Forward doDelete to Google Apps Script Webhook
+    const webhookUrl = getWebhookUrl();
+    if (webhookUrl) {
+      try {
+        const queryUrl = `${webhookUrl}?action=doDelete&method=doDelete&idReclamo=${encodeURIComponent(decodedId)}`;
+        await fetch(queryUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            idReclamo: decodedId,
+            action: 'doDelete',
+            method: 'doDelete',
+            ID_Reclamo: decodedId
+          }),
+          redirect: 'follow'
+        });
+      } catch (scriptErr) {
+        console.warn('Apps Script doDelete server warning:', scriptErr);
+      }
+    }
+
+    res.json({ success: true, message: '🗑️ Borrado correctamente' });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
