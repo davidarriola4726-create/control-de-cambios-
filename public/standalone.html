@@ -24,77 +24,81 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
         body { background: linear-gradient(135deg, var(--fondo) 0%, #e8eaf6 100%); min-height: 100vh; color: var(--texto); position: relative; }
         
-        .cabecera { background: linear-gradient(135deg, var(--primario) 0%, var(--secundario) 100%); color: white; padding: 16px 28px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(26, 35, 126, 0.3); position: sticky; top: 0; z-index: 100; transition: all 0.3s ease; }
-        .logo-contenedor { display: flex; align-items: center; gap: 15px; }
-        .logo-img { height: 54px; width: auto; border-radius: 8px; box-shadow: 0 2px 10px rgba(255,255,255,0.2); background: white; padding: 4px; object-fit: contain; }
-        .titulo-sistema { font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+        .cabecera { background: linear-gradient(135deg, var(--primario) 0%, var(--secundario) 100%); color: white; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(26, 35, 126, 0.3); position: sticky; top: 0; z-index: 100; transition: all 0.3s ease; }
+        .logo-contenedor { display: flex; align-items: center; gap: 14px; }
+        .logo-img { height: 52px; width: auto; border-radius: 8px; box-shadow: 0 2px 10px rgba(255,255,255,0.2); background: white; padding: 4px; object-fit: contain; }
+        .titulo-sistema { font-size: 21px; font-weight: 700; letter-spacing: 0.5px; }
         
         .cabecera-derecha { display: flex; align-items: center; gap: 16px; }
         
-        /* 🔔 CONTENEDOR DE CAMPANITA EN LA CABECERA */
-        .campana-contenedor {
+        /* 🔔 CAMPANITA PARPADEANTE EN LA CABECERA (SIEMPRE VISIBLE) */
+        .campana-boton {
             position: relative;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             user-select: none;
-            padding: 8px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.25);
             transition: all 0.25s ease;
         }
-        .campana-contenedor:hover {
-            background: rgba(255, 255, 255, 0.25);
-            transform: scale(1.05);
+        .campana-boton:hover {
+            background: rgba(255, 255, 255, 0.28);
+            transform: scale(1.08);
         }
         .campana-icono {
-            font-size: 24px;
+            font-size: 22px;
             display: inline-block;
-            transition: transform 0.3s ease;
+            transition: transform 0.25s ease;
         }
 
-        /* NÚMERO ROJO ENCIMA DE LA CAMPANITA */
+        /* NÚMERO ROJO CON RECLAMOS NUEVOS */
         .campana-badge {
             position: absolute;
             top: -4px;
             right: -4px;
-            background: #d32f2f;
+            background: #d50000;
             color: #ffffff;
             font-size: 11px;
-            font-weight: 800;
-            min-width: 20px;
-            height: 20px;
+            font-weight: 900;
+            min-width: 22px;
+            height: 22px;
             line-height: 20px;
             text-align: center;
-            border-radius: 10px;
+            border-radius: 11px;
             padding: 0 5px;
             border: 2px solid #ffffff;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            animation: popBadge 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+            animation: bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        @keyframes popBadge {
+        @keyframes bounceIn {
             0% { transform: scale(0); }
             100% { transform: scale(1); }
         }
 
-        /* 🚨 ANIMACIÓN PARPADEO EN NARANJA/AMARILLO + ESCALA POR 8 SEGUNDOS */
-        @keyframes parpadeoCampana {
+        /* 🚨 PARPADEO ROJO/NARANJA BRILLANTE + ESCALA 1.2 POR 10 SEGUNDOS */
+        @keyframes parpadeoCampanaAdmin {
             0%, 100% {
-                background: #ff6f00;
-                box-shadow: 0 0 25px #ff9800, 0 0 50px rgba(255, 111, 0, 0.6);
-                transform: scale(1.22) rotate(-8deg);
+                background: #d50000;
+                border-color: #ff1744;
+                box-shadow: 0 0 25px #ff1744, 0 0 50px rgba(255, 23, 68, 0.7);
+                transform: scale(1.20) rotate(-10deg);
             }
             50% {
-                background: #ffeb3b;
-                box-shadow: 0 0 35px #ffd600, 0 0 70px rgba(255, 235, 59, 0.8);
-                transform: scale(1.30) rotate(8deg);
+                background: #ff6d00;
+                border-color: #ffd600;
+                box-shadow: 0 0 35px #ff9100, 0 0 65px rgba(255, 145, 0, 0.9);
+                transform: scale(1.22) rotate(10deg);
             }
         }
 
-        .campana-activa {
-            animation: parpadeoCampana 0.6s infinite ease-in-out !important;
+        .campana-parpadeo-activa {
+            animation: parpadeoCampanaAdmin 0.5s infinite ease-in-out !important;
         }
 
         .estado-sincro { display: flex; align-items: center; gap: 8px; font-size: 13px; background: rgba(255,255,255,0.15); padding: 7px 14px; border-radius: 20px; font-weight: 600; }
@@ -128,6 +132,27 @@
         textarea:focus { outline: none; border-color: var(--primario); }
         .botones-form { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
 
+        /* 🚨 ALERTA VISUAL GRANDE ENCIMA DE LA TABLA */
+        .alerta-banner-admin {
+            background: linear-gradient(135deg, #d50000 0%, #ff6d00 100%);
+            color: #ffffff;
+            padding: 14px 22px;
+            border-radius: 12px;
+            margin-bottom: 18px;
+            font-size: 17px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 6px 25px rgba(213, 0, 0, 0.45);
+            border: 2px solid #ffffff;
+            animation: aparecerBanner 0.4s ease;
+        }
+        @keyframes aparecerBanner {
+            from { opacity: 0; transform: translateY(-12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .tabla-contenedor { overflow-x: auto; border-radius: 12px; border: 1px solid var(--borde); }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--borde); font-size: 13px; }
@@ -137,13 +162,19 @@
         .acciones-btns { display: flex; gap: 6px; }
         .btn-sm { padding: 6px 10px; font-size: 12px; border-radius: 6px; text-transform: none; }
 
-        /* PARPADEO VISUAL EN LA FILA DE LA TABLA */
-        @keyframes parpadeoFila {
-            0%, 100% { background-color: #ff9800 !important; color: #ffffff !important; }
-            50% { background-color: #fff3e0 !important; color: #e65100 !important; }
+        /* 🚨 FILA RESALTADA EN AMARILLO/NARANJA BRILLANTE POR 8 SEGUNDOS */
+        @keyframes parpadeoFilaAmarilloNaranja {
+            0%, 100% {
+                background-color: #ff9800 !important;
+                color: #ffffff !important;
+            }
+            50% {
+                background-color: #fff3e0 !important;
+                color: #b71c1c !important;
+            }
         }
-        .fila-parpadeante {
-            animation: parpadeoFila 0.6s infinite ease-in-out !important;
+        .fila-nueva-resaltada {
+            animation: parpadeoFilaAmarilloNaranja 0.7s infinite ease-in-out !important;
             font-weight: 800 !important;
         }
 
@@ -156,31 +187,6 @@
         .mensaje-exito { background: #e8f5e9; color: var(--exito); border-left: 4px solid var(--exito); display: block; }
         .mensaje-error { background: #ffebee; color: var(--peligro); border-left: 4px solid var(--peligro); display: block; }
 
-        /* BANNER TEMPORAL DE ALERTA */
-        .alerta-flotante {
-            position: fixed;
-            top: 78px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 9999;
-            background: linear-gradient(135deg, #e65100, #ff6f00);
-            color: #ffffff;
-            padding: 12px 24px;
-            border-radius: 30px;
-            box-shadow: 0 8px 30px rgba(230, 81, 0, 0.55);
-            font-size: 16px;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border: 2px solid #ffffff;
-            animation: popIn 0.3s ease;
-        }
-        @keyframes popIn {
-            0% { opacity: 0; transform: translate(-50%, -20px); }
-            100% { opacity: 1; transform: translate(-50%, 0); }
-        }
-
         .oculto { display: none !important; }
 
         @media (max-width: 768px) {
@@ -190,6 +196,7 @@
             .contenedor { padding: 14px; }
             .botones-form { flex-direction: column; }
             .btn { width: 100%; }
+            .alerta-banner-admin { font-size: 14px; flex-direction: column; gap: 8px; text-align: center; }
         }
 
         .modal-fondo { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.25s ease; backdrop-filter: blur(2px); }
@@ -203,12 +210,6 @@
 </head>
 <body>
 
-<!-- AVISO FLOTANTE DE NOTIFICACIÓN -->
-<div id="alertaFlotante" class="alerta-flotante oculto">
-    <span>🔔</span>
-    <span id="textoAlertaFlotante">¡Nuevo reclamo recibido!</span>
-</div>
-
 <header class="cabecera" id="cabeceraPrincipal" style="display: none;">
     <div class="logo-contenedor">
         <img src="https://drive.google.com/uc?id=1CXYEzIMay6FRiYLLww9hjbc9xeMk82xi" alt="Logo MYG" class="logo-img" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>MYG</text></svg>'">
@@ -216,13 +217,12 @@
     </div>
     
     <div class="cabecera-derecha">
-        <!-- 🔔 CAMPANITA PARPADEANTE CON CONTADOR ROJO -->
-        <div class="campana-contenedor" id="contenedorCampana" onclick="clickEnCampanita()" title="Reclamos nuevos — Clic para marcar como leídos">
-            <span class="campana-icono" id="iconoCampana">🔔</span>
-            <span class="campana-badge oculto" id="badgeCampana">0</span>
+        <!-- 🔔 CAMPANITA PARPADEANTE CON CONTADOR ROJO (SIEMPRE VISIBLE) -->
+        <div class="campana-boton" id="btnCampanita" onclick="hacerClickCampanita()" title="Notificaciones — Clic para marcar como leído">
+            <span class="campana-icono">🔔</span>
+            <span class="campana-badge oculto" id="badgeCampanita">0</span>
         </div>
 
-        <!-- Indicador de sincronización -->
         <div class="estado-sincro" id="indicadorSincro">
             <span class="punto-verde"></span>
             <span id="textoSincro">En línea</span>
@@ -318,6 +318,12 @@
     </div>
 
     <div class="lista-card" id="cardHistorial">
+        <!-- 🚨 TEXTO GRANDE ENCIMA DE LA TABLA AL RECIBIR RECLAMO NUEVO -->
+        <div id="bannerAlertaAdmin" class="alerta-banner-admin oculto">
+            <span id="textoBannerAlerta">🚨 RECLAMO NUEVO DE: Ruta — Vendedor</span>
+            <button class="btn btn-sm" style="background:rgba(255,255,255,0.25); color:white; border:none;" onclick="cerrarBannerAlerta()">✕ Cerrar</button>
+        </div>
+
         <h2 style="color:var(--primario); margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; font-size:18px;">
             <span>📋 Historial de Reclamos en Tiempo Real</span>
             <button class="btn btn-exito btn-sm" onclick="imprimirLista()">🖨️ Imprimir Lista</button>
@@ -382,18 +388,19 @@ let reclamos = [];
 let idBorrar = null;
 let contadorReclamo = 1;
 
-// 🔔 NOTIFICACIÓN CON CAMPANITA + SONIDO
+// 🔔 NOTIFICACIÓN TOTAL: SONIDO 3 TONOS + CAMPANITA + FILA RESALTADA
 let idsConocidos = new Set();
 let idsBorradosLocales = new Set();
 let primeraCarga = true;
 let audioContextInstance = null;
 let cantidadReclamosAnterior = 0;
-let reclamosNuevosSinLeer = 0;
-let idsNuevosParpadeo = new Set();
-let temporizadorCampana = null;
+let reclamosSinLeerAdmin = 0;
+let idsResaltadosActivos = new Set();
+let temporizadorCampanita = null;
+let temporizadorResaltadoFila = null;
 
-// 1. Desbloqueo del AudioContext al interactuar (regla del navegador)
-function desbloquearAudioContext() {
+// 🔊 DESBLOQUEAR AUDIOCONTEXT GARANTIZADO
+function inicializarAudioContext() {
     try {
         if (!audioContextInstance) {
             const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -405,125 +412,146 @@ function desbloquearAudioContext() {
             audioContextInstance.resume();
         }
     } catch (e) {
-        console.warn("AudioContext init:", e);
+        console.warn("AudioContext init error:", e);
     }
 }
 
-['click', 'touchstart', 'keydown'].forEach(evento => {
-    document.addEventListener(evento, desbloquearAudioContext, { passive: true });
+// Escuchar eventos en todo el documento para desbloquear audio
+['click', 'touchstart', 'keydown'].forEach(evt => {
+    document.addEventListener(evt, inicializarAudioContext, { passive: true });
 });
 
-// 🔔 Web Audio API: 2 tonos consecutivos, claros y fuertes
-function reproducirAlarma() {
+// 🔔 SONIDO FUERTE Y CLARO: 3 TONOS CORTOS Y DISTINTOS (Web Audio API)
+function reproducirSonidoTresTonos() {
     try {
-        desbloquearAudioContext();
+        inicializarAudioContext();
         if (!audioContextInstance) return;
 
         const ctx = audioContextInstance;
         const ahora = ctx.currentTime;
 
-        // Tono 1 (880 Hz - Nota La alta)
+        // Tono 1: 659.25 Hz (Mi 5) - Corto y claro
         const osc1 = ctx.createOscillator();
         const gain1 = ctx.createGain();
-        osc1.type = 'sine';
-        osc1.frequency.setValueAtTime(880, ahora);
-        
+        osc1.type = 'triangle';
+        osc1.frequency.setValueAtTime(659.25, ahora);
         gain1.gain.setValueAtTime(0.001, ahora);
-        gain1.gain.exponentialRampToValueAtTime(0.65, ahora + 0.03);
-        gain1.gain.exponentialRampToValueAtTime(0.001, ahora + 0.20);
-
+        gain1.gain.exponentialRampToValueAtTime(0.70, ahora + 0.02);
+        gain1.gain.exponentialRampToValueAtTime(0.001, ahora + 0.13);
         osc1.connect(gain1);
         gain1.connect(ctx.destination);
         osc1.start(ahora);
-        osc1.stop(ahora + 0.21);
+        osc1.stop(ahora + 0.14);
 
-        // Tono 2 (1200 Hz - Tono agudo de atención)
-        const t2 = ahora + 0.22;
+        // Tono 2: 880 Hz (La 5) - Segundo tono
+        const t2 = ahora + 0.15;
         const osc2 = ctx.createOscillator();
         const gain2 = ctx.createGain();
-        osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(1200, t2);
-
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(880, t2);
         gain2.gain.setValueAtTime(0.001, t2);
-        gain2.gain.exponentialRampToValueAtTime(0.70, t2 + 0.03);
-        gain2.gain.exponentialRampToValueAtTime(0.001, t2 + 0.32);
-
+        gain2.gain.exponentialRampToValueAtTime(0.75, t2 + 0.02);
+        gain2.gain.exponentialRampToValueAtTime(0.001, t2 + 0.13);
         osc2.connect(gain2);
         gain2.connect(ctx.destination);
         osc2.start(t2);
-        osc2.stop(t2 + 0.33);
+        osc2.stop(t2 + 0.14);
+
+        // Tono 3: 1174.66 Hz (Re 6) - Tono final agudo llamativo
+        const t3 = ahora + 0.30;
+        const osc3 = ctx.createOscillator();
+        const gain3 = ctx.createGain();
+        osc3.type = 'triangle';
+        osc3.frequency.setValueAtTime(1174.66, t3);
+        gain3.gain.setValueAtTime(0.001, t3);
+        gain3.gain.exponentialRampToValueAtTime(0.80, t3 + 0.02);
+        gain3.gain.exponentialRampToValueAtTime(0.001, t3 + 0.22);
+        osc3.connect(gain3);
+        gain3.connect(ctx.destination);
+        osc3.start(t3);
+        osc3.stop(t3 + 0.23);
+
     } catch (e) {
-        console.warn("Audio no desbloqueado todavía:", e);
+        console.warn("Aviso al reproducir audio:", e);
     }
 }
 
-// 🔔 ACTIVAR NOTIFICACIÓN VISUAL (CAMPANITA + PARPADEO 8 SEGUNDOS)
-function activarNotificacionVisual(nuevosIds, textoMensaje) {
-    // 1. Reproducir sonido fuerte
-    reproducirAlarma();
+// 🚨 ACTIVAR NOTIFICACIÓN COMPLETA PARA ADMINISTRADOR Y RUTAS
+function dispararNotificacionCompleta(nuevosReclamos) {
+    if (!nuevosReclamos || nuevosReclamos.length === 0) return;
 
-    // 2. Incrementar contador en la campanita
-    reclamosNuevosSinLeer += nuevosIds.length;
-    const badge = document.getElementById("badgeCampana");
+    // 1. SONIDO INMEDIATO OBLIGATORIO (3 tonos)
+    reproducirSonidoTresTonos();
+
+    // 2. INCREMENTAR CONTADOR EN LA CAMPANITA
+    reclamosSinLeerAdmin += nuevosReclamos.length;
+    const badge = document.getElementById("badgeCampanita");
     if (badge) {
-        badge.textContent = reclamosNuevosSinLeer > 99 ? '99+' : reclamosNuevosSinLeer;
+        badge.textContent = reclamosSinLeerAdmin > 99 ? '99+' : reclamosSinLeerAdmin;
         badge.classList.remove("oculto");
     }
 
-    // 3. Activar animación parpadeante en naranja/amarillo con escala
-    const contenedorCampana = document.getElementById("contenedorCampana");
-    if (contenedorCampana) {
-        contenedorCampana.classList.add("campana-activa");
+    // 3. PARPADEO LLAMATIVO ROJO/NARANJA EN LA CAMPANITA (10 SEGUNDOS)
+    const btnCampana = document.getElementById("btnCampanita");
+    if (btnCampana) {
+        btnCampana.classList.add("campana-parpadeo-activa");
+    }
+    if (temporizadorCampanita) clearTimeout(temporizadorCampanita);
+    temporizadorCampanita = setTimeout(() => {
+        if (btnCampana) btnCampana.classList.remove("campana-parpadeo-activa");
+    }, 10000);
+
+    // 4. MOSTRAR TEXTO GRANDE ENCIMA DE LA TABLA
+    const banner = document.getElementById("bannerAlertaAdmin");
+    const textoBanner = document.getElementById("textoBannerAlerta");
+    const primer = nuevosReclamos[0];
+    if (banner && textoBanner) {
+        const rutaTxt = primer.ruta || 'Ruta';
+        const vendTxt = primer.vendedor || 'Vendedor';
+        const idTxt = primer.idReclamo ? `[${primer.idReclamo}] ` : '';
+        textoBanner.textContent = `🚨 RECLAMO NUEVO DE: ${rutaTxt} — ${vendTxt} ${idTxt}`;
+        banner.classList.remove("oculto");
     }
 
-    // 4. Marcar filas para que parpadeen en la tabla
-    nuevosIds.forEach(id => idsNuevosParpadeo.add(id.toUpperCase()));
+    // 5. RESALTAR FILA DE LA TABLA POR 8 SEGUNDOS
+    nuevosReclamos.forEach(r => {
+        const id = String(r.idReclamo || '').trim().toUpperCase();
+        if (id) idsResaltadosActivos.add(id);
+    });
     actualizarTabla();
 
-    // 5. Mostrar aviso temporal flotante
-    const alerta = document.getElementById("alertaFlotante");
-    const textoAlerta = document.getElementById("textoAlertaFlotante");
-    if (alerta && textoAlerta) {
-        textoAlerta.textContent = textoMensaje || `¡${nuevosIds.length} reclamo(s) nuevo(s) recibido(s)!`;
-        alerta.classList.remove("oculto");
-    }
-
-    // 6. El parpadeo dura 8 segundos
-    if (temporizadorCampana) clearTimeout(temporizadorCampana);
-    temporizadorCampana = setTimeout(() => {
-        detenerParpadeoVisual();
+    if (temporizadorResaltadoFila) clearTimeout(temporizadorResaltadoFila);
+    temporizadorResaltadoFila = setTimeout(() => {
+        idsResaltadosActivos.clear();
+        actualizarTabla();
+        if (banner) banner.classList.add("oculto");
     }, 8000);
 }
 
-// Detener parpadeo visual pero mantener el contador si no se ha hecho clic
-function detenerParpadeoVisual() {
-    const contenedorCampana = document.getElementById("contenedorCampana");
-    if (contenedorCampana) {
-        contenedorCampana.classList.remove("campana-activa");
-    }
-    const alerta = document.getElementById("alertaFlotante");
-    if (alerta) {
-        alerta.classList.add("oculto");
-    }
-    idsNuevosParpadeo.clear();
-    actualizarTabla();
-}
-
-// Clic en la campanita: reinicia el parpadeo y el contador rojo a 0
-function clickEnCampanita() {
-    reclamosNuevosSinLeer = 0;
-    const badge = document.getElementById("badgeCampana");
+// Clic en la campanita: detiene el parpadeo y reinicia el contador
+function hacerClickCampanita() {
+    reclamosSinLeerAdmin = 0;
+    const badge = document.getElementById("badgeCampanita");
     if (badge) {
         badge.classList.add("oculto");
         badge.textContent = "0";
     }
-    detenerParpadeoVisual();
+    const btnCampana = document.getElementById("btnCampanita");
+    if (btnCampana) {
+        btnCampana.classList.remove("campana-parpadeo-activa");
+    }
+    cerrarBannerAlerta();
     
-    // Desplazar suavemente a la tabla de reclamos
+    // Desplazar la vista suavemente al Historial de Reclamos
     const cardHistorial = document.getElementById("cardHistorial");
     if (cardHistorial) {
         cardHistorial.scrollIntoView({ behavior: 'smooth' });
     }
+}
+
+function cerrarBannerAlerta() {
+    const banner = document.getElementById("bannerAlertaAdmin");
+    if (banner) banner.classList.add("oculto");
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -535,7 +563,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // 🔐 INICIO DE SESIÓN
 function iniciarSesion() {
-    desbloquearAudioContext();
+    inicializarAudioContext();
     const userRaw = document.getElementById("usuario").value.trim();
     const passRaw = document.getElementById("contrasena").value.trim();
     const msg = document.getElementById("msgLogin");
@@ -559,14 +587,14 @@ function iniciarSesion() {
     document.getElementById("ruta").value = usuarioActual.ruta;
     document.getElementById("vendedor").value = usuarioActual.nombre;
     
-    // Carga inicial y refresco automático cada 2 segundos
+    // Carga inicial y sondeo automático cada 2 segundos
     cargarReclamos();
     setInterval(cargarReclamos, 2000);
     
     msg.style.display = "none";
 }
 
-// 🔄 CARGAR RECLAMOS Y DETECTAR NUEVOS CADA 2 SEGUNDOS
+// 🔄 DETECCIÓN AUTOMÁTICA CADA 2 SEGUNDOS
 let estaCargando = false;
 async function cargarReclamos() {
     if (estaCargando) return;
@@ -588,9 +616,9 @@ async function cargarReclamos() {
                 return id && !idsBorradosLocales.has(id.toUpperCase());
             });
 
-            // 2. DETECCIÓN: COMPARAR CANTIDAD ACTUAL VS. ANTERIOR Y DETECTAR IDs NUEVOS
+            // 2. COMPARAR CANTIDAD ACTUAL VS. ANTERIOR Y DETECTAR NUEVOS
             if (primeraCarga) {
-                // Primera carga: registrar existentes sin emitir sonido ni parpadeo
+                // Primera carga: registrar existentes sin disparar alarma
                 listaLimpia.forEach(r => {
                     const id = String(r.idReclamo || r.ID_Reclamo || '').trim().toUpperCase();
                     if (id) idsConocidos.add(id);
@@ -598,29 +626,25 @@ async function cargarReclamos() {
                 cantidadReclamosAnterior = listaLimpia.length;
                 primeraCarga = false;
             } else {
-                const nuevosIds = [];
+                const reclamosNuevosDetectados = [];
                 listaLimpia.forEach(r => {
                     const id = String(r.idReclamo || r.ID_Reclamo || '').trim().toUpperCase();
                     if (id && !idsConocidos.has(id)) {
-                        nuevosIds.push(id);
+                        reclamosNuevosDetectados.push(r);
                         idsConocidos.add(id);
                     }
                 });
 
-                // Si hay más reclamos que antes o IDs desconocidos:
-                if (nuevosIds.length > 0 || listaLimpia.length > cantidadReclamosAnterior) {
-                    const idsParaNotificar = nuevosIds.length > 0 ? nuevosIds : ['NUEVO'];
-                    const primerReclamo = listaLimpia.find(r => String(r.idReclamo || '').toUpperCase() === nuevosIds[0]);
-                    const infoRuta = primerReclamo ? ` de ${primerReclamo.ruta || 'Ruta'}` : '';
-                    
-                    activarNotificacionVisual(idsParaNotificar, `¡Nuevo Reclamo ${nuevosIds[0] || ''}${infoRuta}!`);
+                // Si hay MÁS reclamos que antes o reclamos desconocidos:
+                if (reclamosNuevosDetectados.length > 0 || listaLimpia.length > cantidadReclamosAnterior) {
+                    const listaParaDisparar = reclamosNuevosDetectados.length > 0 ? reclamosNuevosDetectados : [listaLimpia[listaLimpia.length - 1]];
+                    dispararNotificacionCompleta(listaParaDisparar);
                 }
 
                 cantidadReclamosAnterior = listaLimpia.length;
             }
 
-            // 3. SINCRONIZACIÓN DE BORRADO EN TIEMPO REAL:
-            // Desaparece en todas las pantallas
+            // 3. SINCRONIZACIÓN DE RECLAMOS
             reclamos = listaLimpia.map(r => ({
                 idReclamo: r.idReclamo || r.ID_Reclamo || '',
                 ruta: r.ruta || r.Ruta || '',
@@ -639,14 +663,14 @@ async function cargarReclamos() {
             document.getElementById("textoSincro").textContent = "En línea — " + horaActual;
         }
     } catch (error) {
-        console.warn("Sincronización en proceso:", error);
+        console.warn("Sincronización en curso:", error);
         document.getElementById("textoSincro").textContent = "⚠️ Sincronizando...";
     } finally {
         estaCargando = false;
     }
 }
 
-// 📊 ACTUALIZAR TABLA DE RECLAMOS
+// 📊 ACTUALIZAR TABLA CON FILA RESALTADA
 function actualizarTabla() {
     const cuerpo = document.getElementById("cuerpoTabla");
     let listaFiltrada = reclamos;
@@ -666,10 +690,10 @@ function actualizarTabla() {
     cuerpo.innerHTML = listaFiltrada.map(r => {
         const esAdmin = usuarioActual && usuarioActual.tipo === "admin";
         const id = r.idReclamo || '-';
-        const parpadea = idsNuevosParpadeo.has(id.trim().toUpperCase());
+        const estaResaltado = idsResaltadosActivos.has(id.trim().toUpperCase());
 
         return `
-            <tr class="${parpadea ? 'fila-parpadeante' : ''}">
+            <tr class="${estaResaltado ? 'fila-nueva-resaltada' : ''}">
                 <td><strong style="color:var(--primario); font-family:monospace;">${id}</strong></td>
                 <td><span style="background:#e8eaf6; padding:3px 8px; border-radius:12px; font-weight:600; font-size:12px;">${r.ruta || '-'}</span></td>
                 <td>${r.vendedor || '-'}</td>
@@ -706,7 +730,7 @@ function generarIdReclamo() {
 
 // 💾 GUARDAR RECLAMO
 async function guardarReclamo() {
-    desbloquearAudioContext();
+    inicializarAudioContext();
     const btn = document.getElementById("btnGuardar");
     btn.disabled = true;
     btn.innerHTML = '⏳ Guardando...';
@@ -756,20 +780,18 @@ async function guardarReclamo() {
         if (resultado.ok || resultado.success) {
             mostrarMensaje("✅ Guardado correctamente", "exito");
             
-            // Disparar notificación visual y sonora localmente
             idsConocidos.add(idGenerado.toUpperCase());
-            activarNotificacionVisual([idGenerado], `¡Reclamo ${idGenerado} registrado con éxito!`);
-            
+            dispararNotificacionCompleta([datos]);
+
             limpiarFormulario();
             await cargarReclamos();
         } else {
             mostrarMensaje("⚠️ " + (resultado.error || resultado.message || "Error al registrar reclamo"), "error");
         }
     } catch (error) {
-        // En caso de modo no-cors o redirección
         mostrarMensaje("✅ Guardado correctamente", "exito");
         idsConocidos.add(idGenerado.toUpperCase());
-        activarNotificacionVisual([idGenerado], `¡Reclamo ${idGenerado} registrado con éxito!`);
+        dispararNotificacionCompleta([datos]);
         limpiarFormulario();
         setTimeout(cargarReclamos, 1000);
     } finally {
@@ -800,12 +822,27 @@ async function confirmarBorrado() {
     const idEliminar = idBorrar;
     idBorrar = null;
 
-    // 1. Desaparece INMEDIATAMENTE en 0 ms de la pantalla sin recargar
+    // 1. Borrado instantáneo (desaparece inmediatamente en 0 ms)
     idsBorradosLocales.add(idEliminar.toUpperCase());
     idsConocidos.delete(idEliminar.toUpperCase());
-    idsNuevosParpadeo.delete(idEliminar.toUpperCase());
+    idsResaltadosActivos.delete(idEliminar.toUpperCase());
     reclamos = reclamos.filter(r => (r.idReclamo || '').trim().toUpperCase() !== idEliminar.toUpperCase());
     cantidadReclamosAnterior = reclamos.length;
+    
+    // Actualizar campanita si se borra un reclamo no leído
+    if (reclamosSinLeerAdmin > 0) {
+        reclamosSinLeerAdmin--;
+        const badge = document.getElementById("badgeCampanita");
+        if (badge) {
+            if (reclamosSinLeerAdmin <= 0) {
+                badge.classList.add("oculto");
+                badge.textContent = "0";
+            } else {
+                badge.textContent = reclamosSinLeerAdmin;
+            }
+        }
+    }
+
     actualizarTabla();
     mostrarMensaje("✅ Borrado", "exito");
 
@@ -826,7 +863,7 @@ async function confirmarBorrado() {
         console.warn("Aviso en petición de borrado:", error);
     }
 
-    // 3. Forzar sincronización en segundo plano sin recargar la página
+    // 3. Forzar refresco en segundo plano
     setTimeout(cargarReclamos, 500);
 }
 
@@ -862,7 +899,9 @@ function cerrarSesion() {
     document.getElementById("areaLogin").classList.remove("oculto");
     document.getElementById("usuario").value = "";
     document.getElementById("contrasena").value = "";
-    detenerParpadeoVisual();
+    const btnCampana = document.getElementById("btnCampanita");
+    if (btnCampana) btnCampana.classList.remove("campana-parpadeo-activa");
+    cerrarBannerAlerta();
     limpiarFormulario();
 }
 
