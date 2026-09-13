@@ -799,7 +799,7 @@ export async function fetchClaimsFromGoogleSheetsCSV(spreadsheetId = DEFAULT_SPR
 }
 
 export const DEFAULT_APPS_SCRIPT_WEBHOOK_URL =
-  'https://script.google.com/macros/s/AKfycbzpwpGxWlwMwDPd2SUu6uIJCvlSluyCqRx0YHzgRcJWggzkWMVWtCMy1WwWL5xlfmz2/exec';
+  'https://script.google.com/macros/s/AKfycbyxx75EDsHJ0VcorrpG8-RlT5aHMVqaGe7yFE6C1BxXSTpyW0hGLp_X4KiIbICXVj1tkA/exec';
 
 /**
  * Direct POST to Google Apps Script Webhook.
