@@ -22,16 +22,17 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
-        body { background: linear-gradient(135deg, var(--fondo) 0%, #e8eaf6 100%); min-height: 100vh; color: var(--texto); }
+        body { background: linear-gradient(135deg, var(--fondo) 0%, #e8eaf6 100%); min-height: 100vh; color: var(--texto); position: relative; }
         
-        .cabecera { background: linear-gradient(135deg, var(--primario) 0%, var(--secundario) 100%); color: white; padding: 18px 30px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(26, 35, 126, 0.3); position: sticky; top: 0; z-index: 100; }
+        .cabecera { background: linear-gradient(135deg, var(--primario) 0%, var(--secundario) 100%); color: white; padding: 18px 30px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(26, 35, 126, 0.3); position: sticky; top: 0; z-index: 100; transition: all 0.3s ease; }
         .logo-contenedor { display: flex; align-items: center; gap: 15px; }
         .logo-img { height: 56px; width: auto; border-radius: 8px; box-shadow: 0 2px 10px rgba(255,255,255,0.2); background: white; padding: 4px; object-fit: contain; }
         .titulo-sistema { font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
         .cabecera-derecha { display: flex; align-items: center; gap: 12px; }
-        .estado-sincro { display: flex; align-items: center; gap: 8px; font-size: 13px; background: rgba(255,255,255,0.15); padding: 7px 14px; border-radius: 20px; font-weight: 500; }
+        .estado-sincro { display: flex; align-items: center; gap: 8px; font-size: 13px; background: rgba(255,255,255,0.15); padding: 7px 14px; border-radius: 20px; font-weight: 600; transition: all 0.3s ease; }
         .punto-verde { width: 10px; height: 10px; background: #4caf50; border-radius: 50%; animation: parpadeo 2s infinite; }
-        .audio-badge { background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 12px; font-size: 12px; cursor: pointer; user-select: none; }
+        .audio-badge { background: rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; user-select: none; transition: background 0.3s; }
+        .audio-badge:hover { background: rgba(255,255,255,0.35); }
         @keyframes parpadeo { 0%,100% {opacity:1} 50% {opacity:0.4} }
 
         .contenedor { max-width: 1400px; margin: 0 auto; padding: 25px; }
@@ -53,7 +54,7 @@
         .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-        .form-card, .lista-card { background: var(--tarjeta); padding: 25px; border-radius: 16px; box-shadow: var(--sombra); margin-bottom: 25px; transition: all 0.3s; }
+        .form-card, .lista-card { background: var(--tarjeta); padding: 25px; border-radius: 16px; box-shadow: var(--sombra); margin-bottom: 25px; transition: all 0.3s; border: 2px solid transparent; }
         .form-card:hover, .lista-card:hover { box-shadow: var(--sombraHover); }
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
         .campo-completo { grid-column: 1 / -1; }
@@ -65,6 +66,7 @@
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--borde); font-size: 13px; }
         th { background: linear-gradient(135deg, var(--primario), var(--secundario)); color: white; font-weight: 600; position: sticky; top: 0; }
+        tr { transition: background-color 0.3s ease; }
         tr:hover { background: #f8fafc; }
         .acciones-btns { display: flex; gap: 6px; }
         .btn-sm { padding: 6px 10px; font-size: 12px; border-radius: 6px; text-transform: none; }
@@ -78,6 +80,85 @@
         .mensaje-exito { background: #e8f5e9; color: var(--exito); border-left: 4px solid var(--exito); display: block; }
         .mensaje-error { background: #ffebee; color: var(--peligro); border-left: 4px solid var(--peligro); display: block; }
 
+        /* 🚨 EFECTOS VISUALES DE PARPADEO BRILLANTE (5 SEGUNDOS) */
+        @keyframes parpadeoFilaNueva {
+            0%, 100% {
+                background-color: #ff9800 !important;
+                color: #ffffff !important;
+            }
+            50% {
+                background-color: #fff3e0 !important;
+                color: #e65100 !important;
+            }
+        }
+
+        .fila-parpadeo-nueva {
+            animation: parpadeoFilaNueva 0.6s infinite ease-in-out !important;
+            font-weight: 800 !important;
+        }
+
+        @keyframes parpadeoAlertaCaja {
+            0%, 100% {
+                border-color: #ff6f00 !important;
+                box-shadow: 0 0 25px rgba(255, 111, 0, 0.65) !important;
+            }
+            50% {
+                border-color: #ffd54f !important;
+                box-shadow: 0 0 10px rgba(255, 213, 79, 0.3) !important;
+            }
+        }
+
+        .seccion-parpadeo-nueva {
+            animation: parpadeoAlertaCaja 0.6s infinite ease-in-out !important;
+        }
+
+        @keyframes parpadeoIndicador {
+            0%, 100% {
+                background: #ff6f00 !important;
+                color: #ffffff !important;
+                transform: scale(1.05);
+                box-shadow: 0 0 15px #ff6f00;
+            }
+            50% {
+                background: #ffb300 !important;
+                color: #000000 !important;
+                transform: scale(1);
+            }
+        }
+
+        .indicador-parpadeo-nuevo {
+            animation: parpadeoIndicador 0.5s infinite ease-in-out !important;
+        }
+
+        /* BANNER GIGANTE TEMPORAL */
+        .banner-alerta-nuevo {
+            position: fixed;
+            top: 85px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            background: linear-gradient(135deg, #d84315, #ff6f00);
+            color: #ffffff;
+            padding: 16px 32px;
+            border-radius: 50px;
+            box-shadow: 0 10px 40px rgba(216, 67, 21, 0.7);
+            font-size: 18px;
+            font-weight: 900;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 3px solid #ffffff;
+            animation: bounceBanner 0.6s infinite alternate ease-in-out;
+            pointer-events: none;
+        }
+
+        @keyframes bounceBanner {
+            from { transform: translateX(-50%) scale(0.97); }
+            to { transform: translateX(-50%) scale(1.03); }
+        }
+
         .oculto { display: none !important; }
 
         @media (max-width: 768px) {
@@ -87,6 +168,7 @@
             .contenedor { padding: 14px; }
             .botones-form { flex-direction: column; }
             .btn { width: 100%; }
+            .banner-alerta-nuevo { font-size: 14px; padding: 12px 20px; top: 120px; width: 92%; justify-content: center; }
         }
 
         .modal-fondo { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.25s ease; backdrop-filter: blur(2px); }
@@ -100,17 +182,23 @@
 </head>
 <body>
 
+<!-- BANNER GIGANTE DE NOTIFICACIÓN TEMPORAL (5 SEGUNDOS) -->
+<div id="bannerNuevoReclamo" class="banner-alerta-nuevo oculto">
+    <span>🚨</span>
+    <span id="textoBannerNuevo">RECLAMO NUEVO RECIBIDO</span>
+</div>
+
 <header class="cabecera" id="cabeceraPrincipal" style="display: none;">
     <div class="logo-contenedor">
         <img src="https://drive.google.com/uc?id=1CXYEzIMay6FRiYLLww9hjbc9xeMk82xi" alt="Logo MYG" class="logo-img" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>MYG</text></svg>'">
         <h1 class="titulo-sistema">Sistema de Reclamos MYG</h1>
     </div>
     <div class="cabecera-derecha">
-        <div class="estado-sincro">
+        <div class="estado-sincro" id="indicadorSincro">
             <span class="punto-verde"></span>
-            <span id="textoSincro">En línea — Actualizando...</span>
+            <span id="textoSincro">En línea — Conectando...</span>
         </div>
-        <div class="audio-badge" id="btnAudioToggle" onclick="reproducirAlarma()" title="Sonido de alerta habilitado">🔔 Audio Activo</div>
+        <div class="audio-badge" id="btnAudioToggle" onclick="reproducirAlarma()" title="Probar sonido de notificación">🔔 Audio Activo</div>
     </div>
 </header>
 
@@ -201,9 +289,9 @@
         </div>
     </div>
 
-    <div class="lista-card">
+    <div class="lista-card" id="cardHistorial">
         <h2 style="color:var(--primario); margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; font-size:18px;">
-            <span>📋 Historial de Reclamos en Tiempo Real</span>
+            <span id="tituloHistorial">📋 Historial de Reclamos en Tiempo Real</span>
             <button class="btn btn-exito btn-sm" onclick="imprimirLista()">🖨️ Imprimir Lista</button>
         </h2>
         <div class="tabla-contenedor">
@@ -249,7 +337,6 @@ const USUARIOS = {
     "Admin": { pass: "MYG2026", nombre: "Administrador", tipo: "admin", ruta: "Todas" },
     "Ruta1": { pass: "myg", nombre: "Brian Gómez", tipo: "ruta", ruta: "Ruta 1" },
     "Ruta2": { pass: "myg", nombre: "Melvin Sequeen", tipo: "ruta", ruta: "Ruta 2" },
-    "Ruta3": { pass: "myg", nombre: "Melvin Sequeen", tipo: "ruta", ruta: "Ruta 2" },
     "Ruta3": { pass: "myg", nombre: "Marvin Gómez", tipo: "ruta", ruta: "Ruta 3" },
     "Ruta4": { pass: "myg", nombre: "Marcos Juárez", tipo: "ruta", ruta: "Ruta 4" },
     "Ruta5": { pass: "myg", nombre: "Ruta 5", tipo: "ruta", ruta: "Ruta 5" },
@@ -267,13 +354,15 @@ let reclamos = [];
 let idBorrar = null;
 let contadorReclamo = 1;
 
-// 🔔 SISTEMA DE DETECCIÓN Y ALARMA SONORA EN TIEMPO REAL
+// 🔔 NOTIFICACIÓN DOBLE: SONIDO + PARPADEO VISUAL
 let idsConocidos = new Set();
 let idsBorradosLocales = new Set();
 let primeraCarga = true;
 let audioContextInstance = null;
+let idsParpadeoActivo = new Set(); // Conjunto de IDs que están parpadeando actualmente
+let temporizadorParpadeo = null;
 
-// Desbloquear audio automáticamente con la primera interacción del usuario en el navegador
+// 1. Desbloqueo del AudioContext tras la primera interacción del usuario (política del navegador)
 function desbloquearAudioContext() {
     try {
         if (!audioContextInstance) {
@@ -286,16 +375,15 @@ function desbloquearAudioContext() {
             audioContextInstance.resume();
         }
     } catch (e) {
-        console.warn("AudioContext unlock note:", e);
+        console.warn("AudioContext init:", e);
     }
 }
 
-// Escuchar primeras interacciones del usuario
 ['click', 'touchstart', 'keydown'].forEach(evento => {
     document.addEventListener(evento, desbloquearAudioContext, { passive: true });
 });
 
-// 🔔 Web Audio API: 2 pitidos claros, agradables y profesionales
+// 🔔 Web Audio API: 2 tonos claros, fuertes y audibles consecutivos
 function reproducirAlarma() {
     try {
         desbloquearAudioContext();
@@ -304,39 +392,72 @@ function reproducirAlarma() {
         const ctx = audioContextInstance;
         const ahora = ctx.currentTime;
 
-        // Pitido 1 (Nota La 880 Hz - Suave y elegante)
+        // Tono 1: 880 Hz (Nota La alta) - Volumen claro y potente
         const osc1 = ctx.createOscillator();
         const gain1 = ctx.createGain();
         osc1.type = 'sine';
         osc1.frequency.setValueAtTime(880, ahora);
         
         gain1.gain.setValueAtTime(0.001, ahora);
-        gain1.gain.exponentialRampToValueAtTime(0.35, ahora + 0.025);
-        gain1.gain.exponentialRampToValueAtTime(0.001, ahora + 0.16);
+        gain1.gain.exponentialRampToValueAtTime(0.60, ahora + 0.03);
+        gain1.gain.exponentialRampToValueAtTime(0.001, ahora + 0.20);
 
         osc1.connect(gain1);
         gain1.connect(ctx.destination);
         osc1.start(ahora);
-        osc1.stop(ahora + 0.17);
+        osc1.stop(ahora + 0.21);
 
-        // Pitido 2 (Nota Re 1174.66 Hz - Tono armónico ascendente)
-        const t2 = ahora + 0.20;
+        // Tono 2: 1200 Hz (Tono ascendente llamativo)
+        const t2 = ahora + 0.22;
         const osc2 = ctx.createOscillator();
         const gain2 = ctx.createGain();
         osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(1174.66, t2);
+        osc2.frequency.setValueAtTime(1200, t2);
 
         gain2.gain.setValueAtTime(0.001, t2);
-        gain2.gain.exponentialRampToValueAtTime(0.4, t2 + 0.025);
-        gain2.gain.exponentialRampToValueAtTime(0.001, t2 + 0.24);
+        gain2.gain.exponentialRampToValueAtTime(0.65, t2 + 0.03);
+        gain2.gain.exponentialRampToValueAtTime(0.001, t2 + 0.30);
 
         osc2.connect(gain2);
         gain2.connect(ctx.destination);
         osc2.start(t2);
-        osc2.stop(t2 + 0.25);
+        osc2.stop(t2 + 0.31);
     } catch (e) {
-        console.warn("No se pudo reproducir la alarma sonora:", e);
+        console.warn("Alarma sonora esperando interacción:", e);
     }
+}
+
+// 🚨 ACTIVAR PARPADEO VISUAL POR 5 SEGUNDOS
+function activarParpadeoVisual(idNuevo) {
+    if (!idNuevo) return;
+    idsParpadeoActivo.add(idNuevo.toUpperCase());
+
+    // 1. Mostrar banner grande temporal
+    const banner = document.getElementById("bannerNuevoReclamo");
+    const textoBanner = document.getElementById("textoBannerNuevo");
+    if (banner && textoBanner) {
+        textoBanner.textContent = `🚨 RECLAMO NUEVO RECIBIDO (${idNuevo})`;
+        banner.classList.remove("oculto");
+    }
+
+    // 2. Parpadear tarjeta de historial y cabecera de sincronización
+    const cardHistorial = document.getElementById("cardHistorial");
+    const indicadorSincro = document.getElementById("indicadorSincro");
+    if (cardHistorial) cardHistorial.classList.add("seccion-parpadeo-nueva");
+    if (indicadorSincro) indicadorSincro.classList.add("indicador-parpadeo-nuevo");
+
+    // 3. Renderizar tabla con la clase de parpadeo aplicada a la fila
+    actualizarTabla();
+
+    // 4. Temporizador de 5 segundos para detener el parpadeo
+    if (temporizadorParpadeo) clearTimeout(temporizadorParpadeo);
+    temporizadorParpadeo = setTimeout(() => {
+        idsParpadeoActivo.clear();
+        if (banner) banner.classList.add("oculto");
+        if (cardHistorial) cardHistorial.classList.remove("seccion-parpadeo-nueva");
+        if (indicadorSincro) indicadorSincro.classList.remove("indicador-parpadeo-nuevo");
+        actualizarTabla();
+    }, 5000);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -353,7 +474,6 @@ function iniciarSesion() {
     const passRaw = document.getElementById("contrasena").value.trim();
     const msg = document.getElementById("msgLogin");
 
-    // Búsqueda insensible a mayúsculas/minúsculas
     const claveUsuario = Object.keys(USUARIOS).find(u => u.toUpperCase() === userRaw.toUpperCase());
     const userConfig = claveUsuario ? USUARIOS[claveUsuario] : null;
 
@@ -373,7 +493,7 @@ function iniciarSesion() {
     document.getElementById("ruta").value = usuarioActual.ruta;
     document.getElementById("vendedor").value = usuarioActual.nombre;
     
-    // Carga inicial y sondeo en tiempo real cada 2 segundos
+    // Carga inicial y refresco automático cada 2 segundos
     cargarReclamos();
     setInterval(cargarReclamos, 2000);
     
@@ -402,32 +522,33 @@ async function cargarReclamos() {
                 return id && !idsBorradosLocales.has(id.toUpperCase());
             });
 
-            // 2. DETECCIÓN DE RECLAMOS NUEVOS PARA ALARMA SONORA
+            // 2. DETECCIÓN DE RECLAMO NUEVO: SONIDO + PARPADEO VISUAL
             if (primeraCarga) {
-                // Primera carga: registrar existentes sin emitir sonido
+                // Primera carga: registrar existentes sin emitir sonido ni parpadeo
                 listaLimpia.forEach(r => {
                     const id = String(r.idReclamo || r.ID_Reclamo || '').trim().toUpperCase();
                     if (id) idsConocidos.add(id);
                 });
                 primeraCarga = false;
             } else {
-                let hayReclamoNuevo = false;
+                let idNuevoDetectado = null;
                 listaLimpia.forEach(r => {
                     const id = String(r.idReclamo || r.ID_Reclamo || '').trim().toUpperCase();
                     if (id && !idsConocidos.has(id)) {
-                        hayReclamoNuevo = true;
+                        idNuevoDetectado = id;
                         idsConocidos.add(id);
                     }
                 });
 
-                // Si hay reclamo nuevo, reproducir alarma de dos pitidos
-                if (hayReclamoNuevo) {
+                // Si se detectó un reclamo nuevo: DISPARAR NOTIFICACIÓN DOBLE
+                if (idNuevoDetectado) {
                     reproducirAlarma();
+                    activarParpadeoVisual(idNuevoDetectado);
                 }
             }
 
             // 3. SINCRONIZACIÓN DE BORRADO EN TIEMPO REAL:
-            // Si un reclamo fue borrado en la nube por el Admin, se actualiza la lista localmente al instante
+            // Si un reclamo fue eliminado en Admin, desaparece en todas las rutas
             reclamos = listaLimpia.map(r => ({
                 idReclamo: r.idReclamo || r.ID_Reclamo || '',
                 ruta: r.ruta || r.Ruta || '',
@@ -453,7 +574,7 @@ async function cargarReclamos() {
     }
 }
 
-// 📊 ACTUALIZAR TABLA DE RECLAMOS
+// 📊 ACTUALIZAR TABLA DE RECLAMOS CON FILA PARPADEANTE
 function actualizarTabla() {
     const cuerpo = document.getElementById("cuerpoTabla");
     let listaFiltrada = reclamos;
@@ -473,8 +594,10 @@ function actualizarTabla() {
     cuerpo.innerHTML = listaFiltrada.map(r => {
         const esAdmin = usuarioActual && usuarioActual.tipo === "admin";
         const id = r.idReclamo || '-';
+        const estaParpadeando = idsParpadeoActivo.has(id.trim().toUpperCase());
+
         return `
-            <tr>
+            <tr class="${estaParpadeando ? 'fila-parpadeo-nueva' : ''}">
                 <td><strong style="color:var(--primario); font-family:monospace;">${id}</strong></td>
                 <td><span style="background:#e8eaf6; padding:3px 8px; border-radius:12px; font-weight:600; font-size:12px;">${r.ruta || '-'}</span></td>
                 <td>${r.vendedor || '-'}</td>
@@ -551,7 +674,6 @@ async function guardarReclamo() {
     }
 
     try {
-        // Enviar por POST a Google Apps Script
         const respuesta = await fetch(ENLACE_SCRIPT, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -562,21 +684,21 @@ async function guardarReclamo() {
         if (resultado.ok || resultado.success) {
             mostrarMensaje("✅ Guardado correctamente", "exito");
             
-            // Sonido de confirmación inmediato
+            // Notificación doble inmediata en el emisor
             reproducirAlarma();
-            
-            // Agregar a conocidos para evitar duplicar alarma al recargar
+            activarParpadeoVisual(idGenerado);
             idsConocidos.add(idGenerado.toUpperCase());
-            
+
             limpiarFormulario();
             await cargarReclamos();
         } else {
             mostrarMensaje("⚠️ " + (resultado.error || resultado.message || "Error al registrar reclamo"), "error");
         }
     } catch (error) {
-        // En caso de modo no-cors o fallo en parseo
+        // En caso de modo no-cors o redirección
         mostrarMensaje("✅ Guardado correctamente", "exito");
         reproducirAlarma();
+        activarParpadeoVisual(idGenerado);
         idsConocidos.add(idGenerado.toUpperCase());
         limpiarFormulario();
         setTimeout(cargarReclamos, 1000);
@@ -586,7 +708,7 @@ async function guardarReclamo() {
     }
 }
 
-// 🗑️ BORRADO SINCRONIZADO EN TIEMPO REAL (SOLO ADMINISTRADOR)
+// 🗑️ BORRADO EN TIEMPO REAL (SOLO ADMINISTRADOR)
 function preguntarBorrar(id) {
     if (!usuarioActual || usuarioActual.tipo !== "admin") {
         alert("Solo el Administrador tiene permiso para eliminar reclamos.");
@@ -608,14 +730,15 @@ async function confirmarBorrado() {
     const idEliminar = idBorrar;
     idBorrar = null;
 
-    // 1. Borrado instantáneo local (Optimistic Update: desaparece en 0 ms sin recargar)
+    // 1. Desaparece INMEDIATAMENTE en 0 ms de la pantalla sin recargar
     idsBorradosLocales.add(idEliminar.toUpperCase());
     idsConocidos.delete(idEliminar.toUpperCase());
+    idsParpadeoActivo.delete(idEliminar.toUpperCase());
     reclamos = reclamos.filter(r => (r.idReclamo || '').trim().toUpperCase() !== idEliminar.toUpperCase());
     actualizarTabla();
     mostrarMensaje("✅ Borrado", "exito");
 
-    // 2. Enviar orden de eliminación al Google Apps Script
+    // 2. Enviar orden de eliminación física al Apps Script
     try {
         await fetch(ENLACE_SCRIPT, {
             method: "POST",
@@ -632,8 +755,8 @@ async function confirmarBorrado() {
         console.warn("Aviso en petición de borrado:", error);
     }
 
-    // 3. Forzar sincronización en tiempo real sin recargar la página
-    setTimeout(cargarReclamos, 600);
+    // 3. Forzar sincronización de fondo para actualizar todas las pantallas
+    setTimeout(cargarReclamos, 500);
 }
 
 function limpiarFormulario() {
