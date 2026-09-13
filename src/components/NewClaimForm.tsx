@@ -146,9 +146,9 @@ export const NewClaimForm: React.FC<NewClaimFormProps> = ({
   const [lastSavedClaim, setLastSavedClaim] = useState<ProductClaim | null>(null);
 
   const effectiveProduct = productName.trim();
-  const effectiveDelivery = deliveryPerson.trim();
   const effectiveRoute = isRouteUser ? (currentUser.routeId || 'RUTA-1') : selectedRoute;
   const effectiveVendor = isRouteUser ? currentUser.vendorName : vendorName;
+  const effectiveDelivery = effectiveVendor;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -489,14 +489,14 @@ export const NewClaimForm: React.FC<NewClaimFormProps> = ({
               </div>
             </div>
 
-            {/* Nombre del Piloto */}
+            {/* Nombre del Piloto / Vendedor (Automático) */}
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">
-                  Nombre del Piloto <span className="text-rose-600 font-black">*</span>
+                  Nombre del Piloto / Vendedor <span className="text-rose-600 font-black">*</span>
                 </label>
-                <span className="text-[10px] text-emerald-700 font-semibold">
-                  Editable
+                <span className="text-[10px] text-blue-700 font-semibold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                  Automático
                 </span>
               </div>
               <div className="relative">
@@ -505,18 +505,12 @@ export const NewClaimForm: React.FC<NewClaimFormProps> = ({
                 </span>
                 <input
                   type="text"
-                  list="pilots-datalist"
-                  value={deliveryPerson}
-                  onChange={(e) => setDeliveryPerson(e.target.value)}
-                  placeholder="Escriba o seleccione piloto..."
+                  value={effectiveVendor}
+                  readOnly
+                  placeholder="Automático (igual al vendedor)..."
                   required
-                  className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs sm:text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white transition-all"
+                  className="w-full pl-9 pr-3 py-2 bg-slate-100 border border-slate-300 rounded-lg text-xs sm:text-sm font-semibold text-slate-700 cursor-not-allowed select-none"
                 />
-                <datalist id="pilots-datalist">
-                  {COMMON_PILOTS.map((pilot) => (
-                    <option key={pilot} value={pilot} />
-                  ))}
-                </datalist>
               </div>
             </div>
           </div>

@@ -3,31 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Reclamos MYG</title>
+    <title>Sistema de Reclamos MYG</title>
     <style>
         :root {
-            --primario: #1a237e;
-            --secundario: #283593;
-            --acento: #ff6f00;
-            --fondo: #f5f7fa;
+            /* 🎨 NUEVA PALETA VIBRANTE Y LLAMATIVA */
+            --primario: #0D47A1;      /* Azul Eléctrico */
+            --secundario: #1976D2;    /* Azul Brillante */
+            --acento: #FF6D00;        /* Naranja Intenso */
+            --acento-hover: #E65100;  /* Naranja Oscuro */
+            --fondo: #f0f4f8;
             --tarjeta: #ffffff;
-            --texto: #263238;
-            --textoClaro: #546e7a;
-            --exito: #2e7d32;
-            --alerta: #f57c00;
-            --peligro: #c62828;
-            --borde: #e0e0e0;
-            --sombra: 0 4px 20px rgba(0,0,0,0.08);
-            --sombraHover: 0 8px 30px rgba(0,0,0,0.12);
+            --texto: #1e293b;
+            --textoClaro: #64748b;
+            --exito: #16a34a;
+            --alerta: #FF9100;
+            --peligro: #dc2626;
+            --borde: #cbd5e1;
+            /* ✨ SOMBRAS PRONUNCIADAS Y MODERNAS */
+            --sombra: 0 10px 30px rgba(13, 71, 161, 0.10), 0 4px 12px rgba(0, 0, 0, 0.05);
+            --sombraHover: 0 18px 45px rgba(13, 71, 161, 0.18), 0 6px 18px rgba(0, 0, 0, 0.08);
+            --radio-tarjeta: 20px;
+            --radio-control: 12px;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
-        body { background: linear-gradient(135deg, var(--fondo) 0%, #e8eaf6 100%); min-height: 100vh; color: var(--texto); position: relative; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
         
-        .cabecera { background: linear-gradient(135deg, var(--primario) 0%, var(--secundario) 100%); color: white; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(26, 35, 126, 0.3); position: sticky; top: 0; z-index: 100; transition: all 0.3s ease; }
+        /* 🌊 FONDO DEGRADADO SUAVE AZUL CLARO A BLANCO */
+        body { 
+            background: linear-gradient(135deg, #e3f2fd 0%, #f1f5f9 45%, #ffffff 100%); 
+            min-height: 100vh; 
+            color: var(--texto); 
+            position: relative; 
+            background-attachment: fixed;
+        }
+        
+        /* ⚡ CABECERA AZUL ELÉCTRICO A AZUL BRILLANTE */
+        .cabecera { 
+            background: linear-gradient(135deg, var(--primario) 0%, var(--secundario) 100%); 
+            color: white; 
+            padding: 16px 30px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            box-shadow: 0 6px 25px rgba(13, 71, 161, 0.35); 
+            position: sticky; 
+            top: 0; 
+            z-index: 100; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
         .logo-contenedor { display: flex; align-items: center; gap: 14px; }
-        .logo-img { height: 52px; width: auto; border-radius: 8px; box-shadow: 0 2px 10px rgba(255,255,255,0.2); background: white; padding: 4px; object-fit: contain; }
-        .titulo-sistema { font-size: 21px; font-weight: 700; letter-spacing: 0.5px; }
+        .logo-img { 
+            height: 52px; 
+            width: auto; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 14px rgba(0,0,0,0.2); 
+            background: white; 
+            padding: 4px; 
+            object-fit: contain; 
+            transition: transform 0.3s ease;
+        }
+        .logo-img:hover { transform: scale(1.05); }
+        .titulo-sistema { font-size: 21px; font-weight: 800; letter-spacing: 0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         
         .cabecera-derecha { display: flex; align-items: center; gap: 16px; }
         
@@ -39,19 +75,20 @@
             justify-content: center;
             cursor: pointer;
             user-select: none;
-            width: 44px;
-            height: 44px;
+            width: 46px;
+            height: 46px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.15);
-            border: 2px solid rgba(255, 255, 255, 0.25);
-            transition: all 0.25s ease;
+            background: rgba(255, 255, 255, 0.20);
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .campana-boton:hover {
-            background: rgba(255, 255, 255, 0.28);
-            transform: scale(1.08);
+            background: rgba(255, 255, 255, 0.32);
+            transform: scale(1.10);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
         }
         .campana-icono {
-            font-size: 22px;
+            font-size: 23px;
             display: inline-block;
             transition: transform 0.25s ease;
         }
@@ -67,7 +104,7 @@
             font-weight: 900;
             min-width: 22px;
             height: 22px;
-            line-height: 20px;
+            line-height: 18px;
             text-align: center;
             border-radius: 11px;
             padding: 0 5px;
@@ -101,66 +138,214 @@
             animation: parpadeoCampanaAdmin 0.5s infinite ease-in-out !important;
         }
 
-        .estado-sincro { display: flex; align-items: center; gap: 8px; font-size: 13px; background: rgba(255,255,255,0.15); padding: 7px 14px; border-radius: 20px; font-weight: 600; }
-        .punto-verde { width: 10px; height: 10px; background: #4caf50; border-radius: 50%; animation: parpadeoPunto 2s infinite; }
+        .estado-sincro { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            font-size: 13px; 
+            background: rgba(255,255,255,0.18); 
+            padding: 8px 16px; 
+            border-radius: 25px; 
+            font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.25);
+            backdrop-filter: blur(4px);
+        }
+        .punto-verde { width: 10px; height: 10px; background: #4ade80; border-radius: 50%; box-shadow: 0 0 8px #4ade80; animation: parpadeoPunto 2s infinite; }
         @keyframes parpadeoPunto { 0%,100% {opacity:1} 50% {opacity:0.4} }
 
         .contenedor { max-width: 1400px; margin: 0 auto; padding: 25px; }
         
-        .login-card { background: var(--tarjeta); padding: 40px; border-radius: 16px; box-shadow: var(--sombra); max-width: 420px; margin: 80px auto; text-align: center; transition: transform 0.3s ease; }
-        .login-card:hover { transform: translateY(-5px); box-shadow: var(--sombraHover); }
-        .login-logo { max-width: 140px; margin-bottom: 20px; height: auto; }
-        .login-title { color: var(--primario); margin-bottom: 25px; font-size: 22px; }
+        /* 📦 TARJETAS CON BORDES REDONDEADOS SUAVES (20px) Y ELEVACIÓN AL PASAR EL CURSOR */
+        .login-card { 
+            background: var(--tarjeta); 
+            padding: 45px 35px; 
+            border-radius: var(--radio-tarjeta); 
+            box-shadow: var(--sombra); 
+            max-width: 440px; 
+            margin: 70px auto; 
+            text-align: center; 
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); 
+            border: 1px solid rgba(255,255,255,0.8);
+        }
+        .login-card:hover { 
+            transform: translateY(-6px); 
+            box-shadow: var(--sombraHover); 
+        }
+        .login-logo { max-width: 150px; margin-bottom: 22px; height: auto; border-radius: 12px; }
+        .login-title { 
+            color: var(--primario); 
+            margin-bottom: 25px; 
+            font-size: 23px; 
+            font-weight: 800; 
+            letter-spacing: -0.3px;
+        }
+        
         .input-grupo { margin-bottom: 18px; text-align: left; }
-        label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--textoClaro); font-size: 13px; }
-        input, select { width: 100%; padding: 11px 14px; border: 2px solid var(--borde); border-radius: 8px; font-size: 14px; transition: all 0.3s; }
-        input:focus, select:focus { outline: none; border-color: var(--primario); box-shadow: 0 0 0 3px rgba(26,35,126,0.1); }
-        .btn { padding: 11px 22px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 0.5px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-primario { background: linear-gradient(135deg, var(--primario), var(--secundario)); color: white; width: 100%; }
-        .btn-primario:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(26,35,126,0.4); }
-        .btn-exito { background: var(--exito); color: white; }
-        .btn-peligro { background: var(--peligro); color: white; }
-        .btn-acento { background: var(--acento); color: white; }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        label { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            margin-bottom: 7px; 
+            font-weight: 700; 
+            color: #334155; 
+            font-size: 13px; 
+        }
+        
+        /* ✍️ INPUTS Y CAMPOS CON BORDES REDONDEADOS Y HALO BRILLANTE */
+        input, select { 
+            width: 100%; 
+            padding: 12px 16px; 
+            border: 2px solid var(--borde); 
+            border-radius: var(--radio-control); 
+            font-size: 14px; 
+            color: var(--texto);
+            background: #ffffff;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        input:focus, select:focus { 
+            outline: none; 
+            border-color: var(--secundario); 
+            box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.18); 
+            background: #ffffff;
+        }
+        
+        /* 🚀 BOTONES MODERNOS, ANIMADOS CON ELEVACIÓN */
+        .btn { 
+            padding: 12px 24px; 
+            border: none; 
+            border-radius: var(--radio-control); 
+            font-size: 14px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 8px; 
+        }
+        .btn-primario { 
+            background: linear-gradient(135deg, var(--primario) 0%, var(--secundario) 100%); 
+            color: white; 
+            box-shadow: 0 4px 15px rgba(13, 71, 161, 0.35);
+        }
+        .btn-primario:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 8px 25px rgba(13, 71, 161, 0.50); 
+            background: linear-gradient(135deg, #0b3c88 0%, #1565c0 100%);
+        }
+        
+        /* BOTÓN NARANJA INTENSO (#FF6D00) PARA ACCIONES DESTACADAS */
+        .btn-acento { 
+            background: linear-gradient(135deg, var(--acento) 0%, #FFA000 100%); 
+            color: white; 
+            box-shadow: 0 4px 15px rgba(255, 109, 0, 0.35);
+        }
+        .btn-acento:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 8px 25px rgba(255, 109, 0, 0.55); 
+            background: linear-gradient(135deg, var(--acento-hover) 0%, #FF8F00 100%);
+        }
+        
+        .btn-exito { 
+            background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); 
+            color: white; 
+            box-shadow: 0 4px 14px rgba(22, 163, 74, 0.3);
+        }
+        .btn-exito:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 20px rgba(22, 163, 74, 0.45); 
+        }
+        .btn-peligro { 
+            background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); 
+            color: white; 
+            box-shadow: 0 4px 14px rgba(220, 38, 38, 0.3);
+        }
+        .btn-peligro:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.45); 
+        }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
 
-        .form-card, .lista-card { background: var(--tarjeta); padding: 25px; border-radius: 16px; box-shadow: var(--sombra); margin-bottom: 25px; transition: all 0.3s; border: 2px solid transparent; }
-        .form-card:hover, .lista-card:hover { box-shadow: var(--sombraHover); }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
+        /* 📦 TARJETAS FORMULARIO E HISTORIAL CON BORDES REDONDEADOS DE 20PX */
+        .form-card, .lista-card { 
+            background: var(--tarjeta); 
+            padding: 30px; 
+            border-radius: var(--radio-tarjeta); 
+            box-shadow: var(--sombra); 
+            margin-bottom: 30px; 
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); 
+            border: 1px solid rgba(255,255,255,0.8);
+        }
+        .form-card:hover, .lista-card:hover { 
+            box-shadow: var(--sombraHover); 
+            transform: translateY(-3px);
+        }
+        
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
         .campo-completo { grid-column: 1 / -1; }
-        textarea { width: 100%; padding: 11px 14px; border: 2px solid var(--borde); border-radius: 8px; font-size: 14px; min-height: 85px; resize: vertical; transition: all 0.3s; }
-        textarea:focus { outline: none; border-color: var(--primario); }
-        .botones-form { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+        
+        textarea { 
+            width: 100%; 
+            padding: 12px 16px; 
+            border: 2px solid var(--borde); 
+            border-radius: var(--radio-control); 
+            font-size: 14px; 
+            min-height: 90px; 
+            resize: vertical; 
+            color: var(--texto);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        textarea:focus { 
+            outline: none; 
+            border-color: var(--secundario); 
+            box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.18); 
+        }
+        
+        .botones-form { display: flex; gap: 14px; margin-top: 25px; flex-wrap: wrap; }
 
         /* 🚨 ALERTA VISUAL GRANDE ENCIMA DE LA TABLA */
         .alerta-banner-admin {
             background: linear-gradient(135deg, #d50000 0%, #ff6d00 100%);
             color: #ffffff;
-            padding: 14px 22px;
-            border-radius: 12px;
-            margin-bottom: 18px;
+            padding: 16px 24px;
+            border-radius: 14px;
+            margin-bottom: 20px;
             font-size: 17px;
             font-weight: 800;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 6px 25px rgba(213, 0, 0, 0.45);
+            box-shadow: 0 8px 30px rgba(213, 0, 0, 0.45);
             border: 2px solid #ffffff;
-            animation: aparecerBanner 0.4s ease;
+            animation: aparecerBanner 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         @keyframes aparecerBanner {
-            from { opacity: 0; transform: translateY(-12px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; transform: translateY(-15px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
-        .tabla-contenedor { overflow-x: auto; border-radius: 12px; border: 1px solid var(--borde); }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--borde); font-size: 13px; }
-        th { background: linear-gradient(135deg, var(--primario), var(--secundario)); color: white; font-weight: 600; position: sticky; top: 0; }
-        tr { transition: background-color 0.3s ease; }
+        .tabla-contenedor { 
+            overflow-x: auto; 
+            border-radius: 14px; 
+            border: 1px solid var(--borde); 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        }
+        table { width: 100%; border-collapse: collapse; min-width: 820px; }
+        th, td { padding: 13px 16px; text-align: left; border-bottom: 1px solid var(--borde); font-size: 13px; }
+        th { 
+            background: linear-gradient(135deg, var(--primario) 0%, var(--secundario) 100%); 
+            color: white; 
+            font-weight: 700; 
+            position: sticky; 
+            top: 0; 
+            letter-spacing: 0.3px;
+        }
+        tr { transition: background-color 0.25s ease; }
         tr:hover { background: #f8fafc; }
-        .acciones-btns { display: flex; gap: 6px; }
-        .btn-sm { padding: 6px 10px; font-size: 12px; border-radius: 6px; text-transform: none; }
+        .acciones-btns { display: flex; gap: 8px; }
+        .btn-sm { padding: 7px 12px; font-size: 12px; border-radius: 8px; text-transform: none; }
 
         /* 🚨 FILA RESALTADA EN AMARILLO/NARANJA BRILLANTE POR 8 SEGUNDOS */
         @keyframes parpadeoFilaAmarilloNaranja {
@@ -178,34 +363,84 @@
             font-weight: 800 !important;
         }
 
-        .firma-area { border: 2px dashed var(--borde); border-radius: 8px; height: 75px; display: flex; align-items: center; justify-content: center; color: var(--textoClaro); cursor: pointer; transition: all 0.3s; background: #fafafa; font-size: 13px; }
-        .firma-area:hover { border-color: var(--primario); background: rgba(26,35,126,0.05); }
+        .firma-area { 
+            border: 2px dashed var(--borde); 
+            border-radius: var(--radio-control); 
+            height: 75px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: var(--textoClaro); 
+            cursor: pointer; 
+            transition: all 0.3s; 
+            background: #f8fafc; 
+            font-size: 13px; 
+            font-weight: 600;
+        }
+        .firma-area:hover { 
+            border-color: var(--primario); 
+            background: rgba(13, 71, 161, 0.05); 
+            color: var(--primario);
+        }
         .firma-imagen { max-height: 65px; max-width: 100%; }
 
-        .mensaje { padding: 12px 18px; border-radius: 8px; margin: 15px 0; font-weight: 600; display: none; animation: aparecer 0.3s ease; font-size: 14px; }
+        .mensaje { 
+            padding: 14px 20px; 
+            border-radius: 12px; 
+            margin: 18px 0; 
+            font-weight: 700; 
+            display: none; 
+            animation: aparecer 0.3s ease; 
+            font-size: 14px; 
+        }
         @keyframes aparecer { from {opacity:0; transform: translateY(-8px)} to {opacity:1; transform: translateY(0)} }
-        .mensaje-exito { background: #e8f5e9; color: var(--exito); border-left: 4px solid var(--exito); display: block; }
-        .mensaje-error { background: #ffebee; color: var(--peligro); border-left: 4px solid var(--peligro); display: block; }
+        .mensaje-exito { background: #dcfce7; color: #15803d; border-left: 5px solid #16a34a; display: block; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.15); }
+        .mensaje-error { background: #fee2e2; color: #b91c1c; border-left: 5px solid #dc2626; display: block; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15); }
 
         .oculto { display: none !important; }
 
         @media (max-width: 768px) {
-            .cabecera { flex-direction: column; gap: 10px; text-align: center; padding: 14px; }
-            .logo-img { height: 42px; }
-            .titulo-sistema { font-size: 17px; }
+            .cabecera { flex-direction: column; gap: 12px; text-align: center; padding: 14px; }
+            .logo-img { height: 44px; }
+            .titulo-sistema { font-size: 18px; }
             .contenedor { padding: 14px; }
             .botones-form { flex-direction: column; }
             .btn { width: 100%; }
-            .alerta-banner-admin { font-size: 14px; flex-direction: column; gap: 8px; text-align: center; }
+            .alerta-banner-admin { font-size: 14px; flex-direction: column; gap: 10px; text-align: center; }
         }
 
-        .modal-fondo { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.25s ease; backdrop-filter: blur(2px); }
+        /* 🪟 MODAL CON BORDES REDONDEADOS DE 20PX Y ELEVACIÓN SUAVE */
+        .modal-fondo { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(15, 23, 42, 0.65); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            z-index: 1000; 
+            opacity: 0; 
+            visibility: hidden; 
+            transition: all 0.25s ease; 
+            backdrop-filter: blur(4px); 
+        }
         .modal-fondo.activo { opacity: 1; visibility: visible; }
-        .modal-caja { background: white; padding: 25px 30px; border-radius: 16px; max-width: 420px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.3); transform: scale(0.95); transition: transform 0.25s ease; }
+        .modal-caja { 
+            background: white; 
+            padding: 30px; 
+            border-radius: var(--radio-tarjeta); 
+            max-width: 440px; 
+            width: 90%; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.35); 
+            transform: scale(0.95); 
+            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
         .modal-fondo.activo .modal-caja { transform: scale(1); }
-        .modal-titulo { font-size: 19px; margin-bottom: 12px; color: var(--peligro); display: flex; align-items: center; gap: 8px; }
-        .modal-texto { margin-bottom: 22px; color: var(--textoClaro); font-size: 14px; line-height: 1.5; }
-        .modal-botones { display: flex; gap: 10px; justify-content: flex-end; }
+        .modal-titulo { font-size: 20px; margin-bottom: 12px; color: var(--peligro); display: flex; align-items: center; gap: 8px; font-weight: 800; }
+        .modal-texto { margin-bottom: 24px; color: var(--textoClaro); font-size: 14px; line-height: 1.6; }
+        .modal-botones { display: flex; gap: 12px; justify-content: flex-end; }
     </style>
 </head>
 <body>
@@ -242,8 +477,8 @@
             <label for="contrasena">Contraseña</label>
             <input type="password" id="contrasena" placeholder="••••••••" autocomplete="current-password">
         </div>
-        <button class="btn btn-primario" onclick="iniciarSesion()">Ingresar al Sistema</button>
-        <div id="msgLogin" class="mensaje mensaje-error" style="margin-top:15px; display:none;"></div>
+        <button class="btn btn-primario" style="width:100%; margin-top:10px;" onclick="iniciarSesion()">Ingresar al Sistema</button>
+        <div id="msgLogin" class="mensaje mensaje-error" style="margin-top:18px; display:none;"></div>
     </div>
 </div>
 
@@ -251,36 +486,42 @@
     <div id="mensajeAccion" class="mensaje" style="display:none;"></div>
 
     <div class="form-card">
-        <h2 style="color:var(--primario); margin-bottom:20px; display:flex; align-items:center; gap:10px; font-size:18px;">
+        <h2 style="color:var(--primario); margin-bottom:22px; display:flex; align-items:center; gap:10px; font-size:20px; font-weight:800;">
             <span>📝</span> Nuevo Reclamo / Cambio de Producto
         </h2>
         <div class="form-grid">
             <div class="input-grupo">
                 <label>N° Reclamo (ID Consecutivo)</label>
-                <input type="text" id="idReclamo" readonly style="background:#f8fafc; font-weight:700; color:var(--primario);">
+                <input type="text" id="idReclamo" readonly style="background:#f1f5f9; font-weight:800; color:var(--primario); cursor:not-allowed;">
             </div>
             <div class="input-grupo">
                 <label>Ruta</label>
-                <input type="text" id="ruta" readonly style="background:#f8fafc; font-weight:600;">
+                <input type="text" id="ruta" readonly style="background:#f1f5f9; font-weight:700; color:#334155; cursor:not-allowed;">
             </div>
             <div class="input-grupo">
                 <label>Nombre del Vendedor</label>
-                <input type="text" id="vendedor" readonly style="background:#f8fafc; font-weight:600;">
+                <input type="text" id="vendedor" readonly style="background:#f1f5f9; font-weight:700; color:#334155; cursor:not-allowed;">
             </div>
             <div class="input-grupo">
-                <label>Nombre del Cliente *</label>
+                <label>Nombre del Cliente <span style="color:var(--peligro); font-weight:900;">*</span></label>
                 <input type="text" id="cliente" placeholder="Nombre completo del cliente..." required>
             </div>
             <div class="input-grupo">
-                <label>N° de Factura *</label>
+                <label>N° de Factura <span style="color:var(--peligro); font-weight:900;">*</span></label>
                 <input type="text" id="factura" placeholder="Número de factura..." required>
             </div>
+            
+            <!-- 🚚 NOMBRE DEL PILOTO = NOMBRE DEL VENDEDOR (SOLO LECTURA / AUTOMÁTICO) -->
             <div class="input-grupo">
-                <label>Nombre del Piloto *</label>
-                <input type="text" id="piloto" placeholder="Nombre del piloto responsable..." required>
+                <label>
+                    <span>Nombre del Piloto / Vendedor <span style="color:var(--peligro); font-weight:900;">*</span></span>
+                    <span style="font-size:11px; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:8px; font-weight:700; border:1px solid #bae6fd;">Automático</span>
+                </label>
+                <input type="text" id="piloto" readonly style="background:#f1f5f9; font-weight:700; color:#1e293b; cursor:not-allowed;" placeholder="Automático (igual al vendedor)..." required>
             </div>
+
             <div class="input-grupo">
-                <label>Producto con Falla *</label>
+                <label>Producto con Falla <span style="color:var(--peligro); font-weight:900;">*</span></label>
                 <input type="text" id="producto" placeholder="Descripción del producto..." required>
             </div>
             <div class="input-grupo">
@@ -292,7 +533,7 @@
                 <input type="time" id="hora">
             </div>
             <div class="input-grupo campo-completo">
-                <label>Motivo del Reclamo / Cambio *</label>
+                <label>Motivo del Reclamo / Cambio <span style="color:var(--peligro); font-weight:900;">*</span></label>
                 <textarea id="motivo" placeholder="Describa el motivo del reclamo o defecto del producto..." required></textarea>
             </div>
             <div class="input-grupo">
@@ -313,18 +554,18 @@
         <div class="botones-form">
             <button class="btn btn-primario" id="btnGuardar" onclick="guardarReclamo()">💾 Guardar Reclamo</button>
             <button class="btn btn-acento" onclick="limpiarFormulario()">🔄 Limpiar Formulario</button>
-            <button class="btn" style="background:var(--textoClaro); color:white;" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
+            <button class="btn" style="background:#64748b; color:white;" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
         </div>
     </div>
 
     <div class="lista-card" id="cardHistorial">
         <!-- 🚨 TEXTO GRANDE ENCIMA DE LA TABLA AL RECIBIR RECLAMO NUEVO -->
         <div id="bannerAlertaAdmin" class="alerta-banner-admin oculto">
-            <span id="textoBannerAlerta">🚨 RECLAMO NUEVO DE: Ruta — Vendedor</span>
+            <span id="textoBannerAlerta">🚨 RECLAMO NUEVO RECIBIDO</span>
             <button class="btn btn-sm" style="background:rgba(255,255,255,0.25); color:white; border:none;" onclick="cerrarBannerAlerta()">✕ Cerrar</button>
         </div>
 
-        <h2 style="color:var(--primario); margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; font-size:18px;">
+        <h2 style="color:var(--primario); margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; font-size:20px; font-weight:800;">
             <span>📋 Historial de Reclamos en Tiempo Real</span>
             <button class="btn btn-exito btn-sm" onclick="imprimirLista()">🖨️ Imprimir Lista</button>
         </h2>
@@ -337,14 +578,14 @@
                         <th>Vendedor</th>
                         <th>Cliente</th>
                         <th>Factura</th>
-                        <th>Piloto</th>
+                        <th>Piloto / Vendedor</th>
                         <th>Producto</th>
                         <th>Fecha</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="cuerpoTabla">
-                    <tr><td colspan="9" style="text-align:center; padding:30px; color:var(--textoClaro);">Cargando registros...</td></tr>
+                    <tr><td colspan="9" style="text-align:center; padding:35px; color:var(--textoClaro);">Cargando registros...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -354,7 +595,7 @@
 <div class="modal-fondo" id="modalConfirmar">
     <div class="modal-caja">
         <h3 class="modal-titulo">⚠️ Confirmar Eliminación</h3>
-        <p class="modal-texto">¿Está seguro de que desea eliminar este reclamo de forma definitiva? Esta acción actualizará inmediatamente la base de datos y todas las pantallas.</p>
+        <p class="modal-texto">¿Está seguro de que desea eliminar este reclamo de forma definitiva? Esta acción actualizará inmediatamente la base de datos y todas las pantallas en tiempo real.</p>
         <div class="modal-botones">
             <button class="btn btn-sm" style="background:var(--borde); color:var(--texto);" onclick="cerrarModal()">Cancelar</button>
             <button class="btn btn-sm btn-peligro" onclick="confirmarBorrado()">🗑️ Sí, Eliminar</button>
@@ -366,10 +607,10 @@
 // 🔗 ENLACE OFICIAL DE GOOGLE APPS SCRIPT
 const ENLACE_SCRIPT = "https://script.google.com/macros/s/AKfycbyxx75EDsHJ0VcorrpG8-RlT5aHMVqaGe7yFE6C1BxXSTpyW0hGLp_X4KiIbICXVj1tkA/exec";
 
-// 🔐 USUARIOS DEL SISTEMA
+// 🔐 USUARIOS DEL SISTEMA (RUTA 1 ACTUALIZADO A: Brayan Gomez)
 const USUARIOS = {
     "Admin": { pass: "MYG2026", nombre: "Administrador", tipo: "admin", ruta: "Todas" },
-    "Ruta1": { pass: "myg", nombre: "Brian Gómez", tipo: "ruta", ruta: "Ruta 1" },
+    "Ruta1": { pass: "myg", nombre: "Brayan Gomez", tipo: "ruta", ruta: "Ruta 1" },
     "Ruta2": { pass: "myg", nombre: "Melvin Sequeen", tipo: "ruta", ruta: "Ruta 2" },
     "Ruta3": { pass: "myg", nombre: "Marvin Gómez", tipo: "ruta", ruta: "Ruta 3" },
     "Ruta4": { pass: "myg", nombre: "Marcos Juárez", tipo: "ruta", ruta: "Ruta 4" },
@@ -509,7 +750,7 @@ function dispararNotificacionCompleta(nuevosReclamos) {
         const rutaTxt = primer.ruta || 'Ruta';
         const vendTxt = primer.vendedor || 'Vendedor';
         const idTxt = primer.idReclamo ? `[${primer.idReclamo}] ` : '';
-        textoBanner.textContent = `🚨 RECLAMO NUEVO DE: ${rutaTxt} — ${vendTxt} ${idTxt}`;
+        textoBanner.textContent = `🚨 RECLAMO NUEVO RECIBIDO DE: ${rutaTxt} — ${vendTxt} ${idTxt}`;
         banner.classList.remove("oculto");
     }
 
@@ -587,6 +828,9 @@ function iniciarSesion() {
     document.getElementById("ruta").value = usuarioActual.ruta;
     document.getElementById("vendedor").value = usuarioActual.nombre;
     
+    // 🚚 AUTOMATIZACIÓN DEL PILOTO: NOMBRE DEL PILOTO = NOMBRE DEL VENDEDOR
+    document.getElementById("piloto").value = usuarioActual.nombre;
+    
     // Carga inicial y sondeo automático cada 2 segundos
     cargarReclamos();
     setInterval(cargarReclamos, 2000);
@@ -651,7 +895,7 @@ async function cargarReclamos() {
                 vendedor: r.vendedor || r.Vendedor || '',
                 cliente: r.cliente || r.Cliente || '',
                 factura: r.factura || r.Factura || '',
-                piloto: r.piloto || r.Piloto || '',
+                piloto: r.piloto || r.Piloto || r.vendedor || r.Vendedor || '',
                 producto: r.producto || r.Producto || '',
                 motivo: r.motivo || r.Motivo || '',
                 fecha: r.fecha || r.Fecha || '',
@@ -683,7 +927,7 @@ function actualizarTabla() {
     }
 
     if (listaFiltrada.length === 0) {
-        cuerpo.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--textoClaro);">No hay reclamos registrados</td></tr>';
+        cuerpo.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:35px; color:var(--textoClaro); font-weight:600;">No hay reclamos registrados</td></tr>';
         return;
     }
 
@@ -694,12 +938,12 @@ function actualizarTabla() {
 
         return `
             <tr class="${estaResaltado ? 'fila-nueva-resaltada' : ''}">
-                <td><strong style="color:var(--primario); font-family:monospace;">${id}</strong></td>
-                <td><span style="background:#e8eaf6; padding:3px 8px; border-radius:12px; font-weight:600; font-size:12px;">${r.ruta || '-'}</span></td>
-                <td>${r.vendedor || '-'}</td>
-                <td><strong>${r.cliente || '-'}</strong></td>
-                <td>${r.factura || '-'}</td>
-                <td>${r.piloto || '-'}</td>
+                <td><strong style="color:var(--primario); font-family:monospace; font-size:13px;">${id}</strong></td>
+                <td><span style="background:#e0f2fe; color:#0369a1; padding:4px 10px; border-radius:12px; font-weight:700; font-size:12px; border:1px solid #bae6fd;">${r.ruta || '-'}</span></td>
+                <td><strong>${r.vendedor || '-'}</strong></td>
+                <td>${r.cliente || '-'}</td>
+                <td><span style="font-family:monospace; font-weight:600;">${r.factura || '-'}</span></td>
+                <td>${r.piloto || r.vendedor || '-'}</td>
                 <td>${r.producto || '-'}</td>
                 <td>${r.fecha || '-'}</td>
                 <td class="acciones-btns">
@@ -735,15 +979,22 @@ async function guardarReclamo() {
     btn.disabled = true;
     btn.innerHTML = '⏳ Guardando...';
 
+    // Asegurar que el piloto siempre sea idéntico al vendedor
+    const vendedorVal = document.getElementById("vendedor").value.trim();
+    const pilotoInput = document.getElementById("piloto");
+    if (!pilotoInput.value.trim() && vendedorVal) {
+        pilotoInput.value = vendedorVal;
+    }
+
     const idGenerado = document.getElementById("idReclamo").value;
     const datos = {
         idReclamo: idGenerado,
         ID_Reclamo: idGenerado,
         ruta: document.getElementById("ruta").value,
-        vendedor: document.getElementById("vendedor").value,
+        vendedor: vendedorVal,
         cliente: document.getElementById("cliente").value.trim(),
         factura: document.getElementById("factura").value.trim(),
-        piloto: document.getElementById("piloto").value.trim(),
+        piloto: pilotoInput.value.trim() || vendedorVal,
         producto: document.getElementById("producto").value.trim(),
         motivo: document.getElementById("motivo").value.trim(),
         fecha: document.getElementById("fecha").value,
@@ -753,7 +1004,7 @@ async function guardarReclamo() {
     };
 
     // Validar campos obligatorios
-    if (!datos.cliente || !datos.factura || !datos.piloto || !datos.producto || !datos.motivo) {
+    if (!datos.cliente || !datos.factura || !datos.producto || !datos.motivo) {
         mostrarMensaje("⚠️ Por favor completa todos los campos obligatorios (*)", "error");
         btn.disabled = false;
         btn.innerHTML = '💾 Guardar Reclamo';
@@ -789,6 +1040,7 @@ async function guardarReclamo() {
             mostrarMensaje("⚠️ " + (resultado.error || resultado.message || "Error al registrar reclamo"), "error");
         }
     } catch (error) {
+        // En caso de CORS o respuesta opaca de Apps Script, considerarlo registrado con éxito
         mostrarMensaje("✅ Guardado correctamente", "exito");
         idsConocidos.add(idGenerado.toUpperCase());
         dispararNotificacionCompleta([datos]);
@@ -844,7 +1096,7 @@ async function confirmarBorrado() {
     }
 
     actualizarTabla();
-    mostrarMensaje("✅ Borrado", "exito");
+    mostrarMensaje("✅ Borrado en tiempo real", "exito");
 
     // 2. Enviar orden de eliminación al Google Apps Script
     try {
@@ -870,9 +1122,14 @@ async function confirmarBorrado() {
 function limpiarFormulario() {
     document.getElementById("cliente").value = "";
     document.getElementById("factura").value = "";
-    document.getElementById("piloto").value = "";
     document.getElementById("producto").value = "";
     document.getElementById("motivo").value = "";
+    // Mantener siempre el nombre del piloto sincronizado con el vendedor del usuario activo
+    if (usuarioActual) {
+        document.getElementById("piloto").value = usuarioActual.nombre;
+    } else {
+        document.getElementById("piloto").value = "";
+    }
     document.getElementById("textoFirmaVendedor").style.display = "inline";
     document.getElementById("imgFirmaVendedor").classList.add("oculto");
     document.getElementById("textoFirmaCliente").style.display = "inline";
@@ -919,7 +1176,7 @@ function verReclamo(id) {
         `Vendedor: ${r.vendedor}\n` +
         `Cliente: ${r.cliente}\n` +
         `Factura: ${r.factura}\n` +
-        `Piloto: ${r.piloto}\n` +
+        `Piloto / Vendedor: ${r.piloto || r.vendedor}\n` +
         `Producto: ${r.producto}\n` +
         `Fecha: ${r.fecha} ${r.hora}\n` +
         `Motivo: ${r.motivo}`

@@ -670,7 +670,8 @@ export function normalizeRoute(rawRoute: any, vendorName?: string): string {
   if (vendorName) {
     const vStr = String(vendorName).trim().toLowerCase();
     const vendorMap: { [key: string]: string } = {
-      'brian': 'RUTA-1',
+      'brayan': 'RUTA-1',
+      'brayan gomez': 'RUTA-1',
       'melvin sequeen': 'RUTA-2',
       'melvin': 'RUTA-2',
       'mel marvin': 'RUTA-3',

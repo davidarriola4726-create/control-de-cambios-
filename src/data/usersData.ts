@@ -13,10 +13,10 @@ export const DEFAULT_USERS: UserAccount[] = [
   {
     id: 'user-ruta-1',
     username: 'RUTA-1',
-    displayName: 'Brian Gómez',
+    displayName: 'Brayan Gomez',
     role: 'ROUTE',
     routeId: 'RUTA-1',
-    vendorName: 'Brian Gómez',
+    vendorName: 'Brayan Gomez',
     password: 'Mgyg'
   },
   {
