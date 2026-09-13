@@ -24,16 +24,82 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
         body { background: linear-gradient(135deg, var(--fondo) 0%, #e8eaf6 100%); min-height: 100vh; color: var(--texto); position: relative; }
         
-        .cabecera { background: linear-gradient(135deg, var(--primario) 0%, var(--secundario) 100%); color: white; padding: 18px 30px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(26, 35, 126, 0.3); position: sticky; top: 0; z-index: 100; transition: all 0.3s ease; }
+        .cabecera { background: linear-gradient(135deg, var(--primario) 0%, var(--secundario) 100%); color: white; padding: 16px 28px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(26, 35, 126, 0.3); position: sticky; top: 0; z-index: 100; transition: all 0.3s ease; }
         .logo-contenedor { display: flex; align-items: center; gap: 15px; }
-        .logo-img { height: 56px; width: auto; border-radius: 8px; box-shadow: 0 2px 10px rgba(255,255,255,0.2); background: white; padding: 4px; object-fit: contain; }
+        .logo-img { height: 54px; width: auto; border-radius: 8px; box-shadow: 0 2px 10px rgba(255,255,255,0.2); background: white; padding: 4px; object-fit: contain; }
         .titulo-sistema { font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
-        .cabecera-derecha { display: flex; align-items: center; gap: 12px; }
-        .estado-sincro { display: flex; align-items: center; gap: 8px; font-size: 13px; background: rgba(255,255,255,0.15); padding: 7px 14px; border-radius: 20px; font-weight: 600; transition: all 0.3s ease; }
-        .punto-verde { width: 10px; height: 10px; background: #4caf50; border-radius: 50%; animation: parpadeo 2s infinite; }
-        .audio-badge { background: rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; user-select: none; transition: background 0.3s; }
-        .audio-badge:hover { background: rgba(255,255,255,0.35); }
-        @keyframes parpadeo { 0%,100% {opacity:1} 50% {opacity:0.4} }
+        
+        .cabecera-derecha { display: flex; align-items: center; gap: 16px; }
+        
+        /* 🔔 CONTENEDOR DE CAMPANITA EN LA CABECERA */
+        .campana-contenedor {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            padding: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+            transition: all 0.25s ease;
+        }
+        .campana-contenedor:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.05);
+        }
+        .campana-icono {
+            font-size: 24px;
+            display: inline-block;
+            transition: transform 0.3s ease;
+        }
+
+        /* NÚMERO ROJO ENCIMA DE LA CAMPANITA */
+        .campana-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #d32f2f;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 800;
+            min-width: 20px;
+            height: 20px;
+            line-height: 20px;
+            text-align: center;
+            border-radius: 10px;
+            padding: 0 5px;
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            animation: popBadge 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popBadge {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+
+        /* 🚨 ANIMACIÓN PARPADEO EN NARANJA/AMARILLO + ESCALA POR 8 SEGUNDOS */
+        @keyframes parpadeoCampana {
+            0%, 100% {
+                background: #ff6f00;
+                box-shadow: 0 0 25px #ff9800, 0 0 50px rgba(255, 111, 0, 0.6);
+                transform: scale(1.22) rotate(-8deg);
+            }
+            50% {
+                background: #ffeb3b;
+                box-shadow: 0 0 35px #ffd600, 0 0 70px rgba(255, 235, 59, 0.8);
+                transform: scale(1.30) rotate(8deg);
+            }
+        }
+
+        .campana-activa {
+            animation: parpadeoCampana 0.6s infinite ease-in-out !important;
+        }
+
+        .estado-sincro { display: flex; align-items: center; gap: 8px; font-size: 13px; background: rgba(255,255,255,0.15); padding: 7px 14px; border-radius: 20px; font-weight: 600; }
+        .punto-verde { width: 10px; height: 10px; background: #4caf50; border-radius: 50%; animation: parpadeoPunto 2s infinite; }
+        @keyframes parpadeoPunto { 0%,100% {opacity:1} 50% {opacity:0.4} }
 
         .contenedor { max-width: 1400px; margin: 0 auto; padding: 25px; }
         
@@ -71,6 +137,16 @@
         .acciones-btns { display: flex; gap: 6px; }
         .btn-sm { padding: 6px 10px; font-size: 12px; border-radius: 6px; text-transform: none; }
 
+        /* PARPADEO VISUAL EN LA FILA DE LA TABLA */
+        @keyframes parpadeoFila {
+            0%, 100% { background-color: #ff9800 !important; color: #ffffff !important; }
+            50% { background-color: #fff3e0 !important; color: #e65100 !important; }
+        }
+        .fila-parpadeante {
+            animation: parpadeoFila 0.6s infinite ease-in-out !important;
+            font-weight: 800 !important;
+        }
+
         .firma-area { border: 2px dashed var(--borde); border-radius: 8px; height: 75px; display: flex; align-items: center; justify-content: center; color: var(--textoClaro); cursor: pointer; transition: all 0.3s; background: #fafafa; font-size: 13px; }
         .firma-area:hover { border-color: var(--primario); background: rgba(26,35,126,0.05); }
         .firma-imagen { max-height: 65px; max-width: 100%; }
@@ -80,83 +156,29 @@
         .mensaje-exito { background: #e8f5e9; color: var(--exito); border-left: 4px solid var(--exito); display: block; }
         .mensaje-error { background: #ffebee; color: var(--peligro); border-left: 4px solid var(--peligro); display: block; }
 
-        /* 🚨 EFECTOS VISUALES DE PARPADEO BRILLANTE (5 SEGUNDOS) */
-        @keyframes parpadeoFilaNueva {
-            0%, 100% {
-                background-color: #ff9800 !important;
-                color: #ffffff !important;
-            }
-            50% {
-                background-color: #fff3e0 !important;
-                color: #e65100 !important;
-            }
-        }
-
-        .fila-parpadeo-nueva {
-            animation: parpadeoFilaNueva 0.6s infinite ease-in-out !important;
-            font-weight: 800 !important;
-        }
-
-        @keyframes parpadeoAlertaCaja {
-            0%, 100% {
-                border-color: #ff6f00 !important;
-                box-shadow: 0 0 25px rgba(255, 111, 0, 0.65) !important;
-            }
-            50% {
-                border-color: #ffd54f !important;
-                box-shadow: 0 0 10px rgba(255, 213, 79, 0.3) !important;
-            }
-        }
-
-        .seccion-parpadeo-nueva {
-            animation: parpadeoAlertaCaja 0.6s infinite ease-in-out !important;
-        }
-
-        @keyframes parpadeoIndicador {
-            0%, 100% {
-                background: #ff6f00 !important;
-                color: #ffffff !important;
-                transform: scale(1.05);
-                box-shadow: 0 0 15px #ff6f00;
-            }
-            50% {
-                background: #ffb300 !important;
-                color: #000000 !important;
-                transform: scale(1);
-            }
-        }
-
-        .indicador-parpadeo-nuevo {
-            animation: parpadeoIndicador 0.5s infinite ease-in-out !important;
-        }
-
-        /* BANNER GIGANTE TEMPORAL */
-        .banner-alerta-nuevo {
+        /* BANNER TEMPORAL DE ALERTA */
+        .alerta-flotante {
             position: fixed;
-            top: 85px;
+            top: 78px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 9999;
-            background: linear-gradient(135deg, #d84315, #ff6f00);
+            background: linear-gradient(135deg, #e65100, #ff6f00);
             color: #ffffff;
-            padding: 16px 32px;
-            border-radius: 50px;
-            box-shadow: 0 10px 40px rgba(216, 67, 21, 0.7);
-            font-size: 18px;
-            font-weight: 900;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
+            padding: 12px 24px;
+            border-radius: 30px;
+            box-shadow: 0 8px 30px rgba(230, 81, 0, 0.55);
+            font-size: 16px;
+            font-weight: 800;
             display: flex;
             align-items: center;
-            gap: 12px;
-            border: 3px solid #ffffff;
-            animation: bounceBanner 0.6s infinite alternate ease-in-out;
-            pointer-events: none;
+            gap: 10px;
+            border: 2px solid #ffffff;
+            animation: popIn 0.3s ease;
         }
-
-        @keyframes bounceBanner {
-            from { transform: translateX(-50%) scale(0.97); }
-            to { transform: translateX(-50%) scale(1.03); }
+        @keyframes popIn {
+            0% { opacity: 0; transform: translate(-50%, -20px); }
+            100% { opacity: 1; transform: translate(-50%, 0); }
         }
 
         .oculto { display: none !important; }
@@ -168,7 +190,6 @@
             .contenedor { padding: 14px; }
             .botones-form { flex-direction: column; }
             .btn { width: 100%; }
-            .banner-alerta-nuevo { font-size: 14px; padding: 12px 20px; top: 120px; width: 92%; justify-content: center; }
         }
 
         .modal-fondo { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.25s ease; backdrop-filter: blur(2px); }
@@ -182,10 +203,10 @@
 </head>
 <body>
 
-<!-- BANNER GIGANTE DE NOTIFICACIÓN TEMPORAL (5 SEGUNDOS) -->
-<div id="bannerNuevoReclamo" class="banner-alerta-nuevo oculto">
-    <span>🚨</span>
-    <span id="textoBannerNuevo">RECLAMO NUEVO RECIBIDO</span>
+<!-- AVISO FLOTANTE DE NOTIFICACIÓN -->
+<div id="alertaFlotante" class="alerta-flotante oculto">
+    <span>🔔</span>
+    <span id="textoAlertaFlotante">¡Nuevo reclamo recibido!</span>
 </div>
 
 <header class="cabecera" id="cabeceraPrincipal" style="display: none;">
@@ -193,12 +214,19 @@
         <img src="https://drive.google.com/uc?id=1CXYEzIMay6FRiYLLww9hjbc9xeMk82xi" alt="Logo MYG" class="logo-img" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>MYG</text></svg>'">
         <h1 class="titulo-sistema">Sistema de Reclamos MYG</h1>
     </div>
+    
     <div class="cabecera-derecha">
+        <!-- 🔔 CAMPANITA PARPADEANTE CON CONTADOR ROJO -->
+        <div class="campana-contenedor" id="contenedorCampana" onclick="clickEnCampanita()" title="Reclamos nuevos — Clic para marcar como leídos">
+            <span class="campana-icono" id="iconoCampana">🔔</span>
+            <span class="campana-badge oculto" id="badgeCampana">0</span>
+        </div>
+
+        <!-- Indicador de sincronización -->
         <div class="estado-sincro" id="indicadorSincro">
             <span class="punto-verde"></span>
-            <span id="textoSincro">En línea — Conectando...</span>
+            <span id="textoSincro">En línea</span>
         </div>
-        <div class="audio-badge" id="btnAudioToggle" onclick="reproducirAlarma()" title="Probar sonido de notificación">🔔 Audio Activo</div>
     </div>
 </header>
 
@@ -291,7 +319,7 @@
 
     <div class="lista-card" id="cardHistorial">
         <h2 style="color:var(--primario); margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; font-size:18px;">
-            <span id="tituloHistorial">📋 Historial de Reclamos en Tiempo Real</span>
+            <span>📋 Historial de Reclamos en Tiempo Real</span>
             <button class="btn btn-exito btn-sm" onclick="imprimirLista()">🖨️ Imprimir Lista</button>
         </h2>
         <div class="tabla-contenedor">
@@ -354,15 +382,17 @@ let reclamos = [];
 let idBorrar = null;
 let contadorReclamo = 1;
 
-// 🔔 NOTIFICACIÓN DOBLE: SONIDO + PARPADEO VISUAL
+// 🔔 NOTIFICACIÓN CON CAMPANITA + SONIDO
 let idsConocidos = new Set();
 let idsBorradosLocales = new Set();
 let primeraCarga = true;
 let audioContextInstance = null;
-let idsParpadeoActivo = new Set(); // Conjunto de IDs que están parpadeando actualmente
-let temporizadorParpadeo = null;
+let cantidadReclamosAnterior = 0;
+let reclamosNuevosSinLeer = 0;
+let idsNuevosParpadeo = new Set();
+let temporizadorCampana = null;
 
-// 1. Desbloqueo del AudioContext tras la primera interacción del usuario (política del navegador)
+// 1. Desbloqueo del AudioContext al interactuar (regla del navegador)
 function desbloquearAudioContext() {
     try {
         if (!audioContextInstance) {
@@ -383,7 +413,7 @@ function desbloquearAudioContext() {
     document.addEventListener(evento, desbloquearAudioContext, { passive: true });
 });
 
-// 🔔 Web Audio API: 2 tonos claros, fuertes y audibles consecutivos
+// 🔔 Web Audio API: 2 tonos consecutivos, claros y fuertes
 function reproducirAlarma() {
     try {
         desbloquearAudioContext();
@@ -392,14 +422,14 @@ function reproducirAlarma() {
         const ctx = audioContextInstance;
         const ahora = ctx.currentTime;
 
-        // Tono 1: 880 Hz (Nota La alta) - Volumen claro y potente
+        // Tono 1 (880 Hz - Nota La alta)
         const osc1 = ctx.createOscillator();
         const gain1 = ctx.createGain();
         osc1.type = 'sine';
         osc1.frequency.setValueAtTime(880, ahora);
         
         gain1.gain.setValueAtTime(0.001, ahora);
-        gain1.gain.exponentialRampToValueAtTime(0.60, ahora + 0.03);
+        gain1.gain.exponentialRampToValueAtTime(0.65, ahora + 0.03);
         gain1.gain.exponentialRampToValueAtTime(0.001, ahora + 0.20);
 
         osc1.connect(gain1);
@@ -407,7 +437,7 @@ function reproducirAlarma() {
         osc1.start(ahora);
         osc1.stop(ahora + 0.21);
 
-        // Tono 2: 1200 Hz (Tono ascendente llamativo)
+        // Tono 2 (1200 Hz - Tono agudo de atención)
         const t2 = ahora + 0.22;
         const osc2 = ctx.createOscillator();
         const gain2 = ctx.createGain();
@@ -415,49 +445,85 @@ function reproducirAlarma() {
         osc2.frequency.setValueAtTime(1200, t2);
 
         gain2.gain.setValueAtTime(0.001, t2);
-        gain2.gain.exponentialRampToValueAtTime(0.65, t2 + 0.03);
-        gain2.gain.exponentialRampToValueAtTime(0.001, t2 + 0.30);
+        gain2.gain.exponentialRampToValueAtTime(0.70, t2 + 0.03);
+        gain2.gain.exponentialRampToValueAtTime(0.001, t2 + 0.32);
 
         osc2.connect(gain2);
         gain2.connect(ctx.destination);
         osc2.start(t2);
-        osc2.stop(t2 + 0.31);
+        osc2.stop(t2 + 0.33);
     } catch (e) {
-        console.warn("Alarma sonora esperando interacción:", e);
+        console.warn("Audio no desbloqueado todavía:", e);
     }
 }
 
-// 🚨 ACTIVAR PARPADEO VISUAL POR 5 SEGUNDOS
-function activarParpadeoVisual(idNuevo) {
-    if (!idNuevo) return;
-    idsParpadeoActivo.add(idNuevo.toUpperCase());
+// 🔔 ACTIVAR NOTIFICACIÓN VISUAL (CAMPANITA + PARPADEO 8 SEGUNDOS)
+function activarNotificacionVisual(nuevosIds, textoMensaje) {
+    // 1. Reproducir sonido fuerte
+    reproducirAlarma();
 
-    // 1. Mostrar banner grande temporal
-    const banner = document.getElementById("bannerNuevoReclamo");
-    const textoBanner = document.getElementById("textoBannerNuevo");
-    if (banner && textoBanner) {
-        textoBanner.textContent = `🚨 RECLAMO NUEVO RECIBIDO (${idNuevo})`;
-        banner.classList.remove("oculto");
+    // 2. Incrementar contador en la campanita
+    reclamosNuevosSinLeer += nuevosIds.length;
+    const badge = document.getElementById("badgeCampana");
+    if (badge) {
+        badge.textContent = reclamosNuevosSinLeer > 99 ? '99+' : reclamosNuevosSinLeer;
+        badge.classList.remove("oculto");
     }
 
-    // 2. Parpadear tarjeta de historial y cabecera de sincronización
-    const cardHistorial = document.getElementById("cardHistorial");
-    const indicadorSincro = document.getElementById("indicadorSincro");
-    if (cardHistorial) cardHistorial.classList.add("seccion-parpadeo-nueva");
-    if (indicadorSincro) indicadorSincro.classList.add("indicador-parpadeo-nuevo");
+    // 3. Activar animación parpadeante en naranja/amarillo con escala
+    const contenedorCampana = document.getElementById("contenedorCampana");
+    if (contenedorCampana) {
+        contenedorCampana.classList.add("campana-activa");
+    }
 
-    // 3. Renderizar tabla con la clase de parpadeo aplicada a la fila
+    // 4. Marcar filas para que parpadeen en la tabla
+    nuevosIds.forEach(id => idsNuevosParpadeo.add(id.toUpperCase()));
     actualizarTabla();
 
-    // 4. Temporizador de 5 segundos para detener el parpadeo
-    if (temporizadorParpadeo) clearTimeout(temporizadorParpadeo);
-    temporizadorParpadeo = setTimeout(() => {
-        idsParpadeoActivo.clear();
-        if (banner) banner.classList.add("oculto");
-        if (cardHistorial) cardHistorial.classList.remove("seccion-parpadeo-nueva");
-        if (indicadorSincro) indicadorSincro.classList.remove("indicador-parpadeo-nuevo");
-        actualizarTabla();
-    }, 5000);
+    // 5. Mostrar aviso temporal flotante
+    const alerta = document.getElementById("alertaFlotante");
+    const textoAlerta = document.getElementById("textoAlertaFlotante");
+    if (alerta && textoAlerta) {
+        textoAlerta.textContent = textoMensaje || `¡${nuevosIds.length} reclamo(s) nuevo(s) recibido(s)!`;
+        alerta.classList.remove("oculto");
+    }
+
+    // 6. El parpadeo dura 8 segundos
+    if (temporizadorCampana) clearTimeout(temporizadorCampana);
+    temporizadorCampana = setTimeout(() => {
+        detenerParpadeoVisual();
+    }, 8000);
+}
+
+// Detener parpadeo visual pero mantener el contador si no se ha hecho clic
+function detenerParpadeoVisual() {
+    const contenedorCampana = document.getElementById("contenedorCampana");
+    if (contenedorCampana) {
+        contenedorCampana.classList.remove("campana-activa");
+    }
+    const alerta = document.getElementById("alertaFlotante");
+    if (alerta) {
+        alerta.classList.add("oculto");
+    }
+    idsNuevosParpadeo.clear();
+    actualizarTabla();
+}
+
+// Clic en la campanita: reinicia el parpadeo y el contador rojo a 0
+function clickEnCampanita() {
+    reclamosNuevosSinLeer = 0;
+    const badge = document.getElementById("badgeCampana");
+    if (badge) {
+        badge.classList.add("oculto");
+        badge.textContent = "0";
+    }
+    detenerParpadeoVisual();
+    
+    // Desplazar suavemente a la tabla de reclamos
+    const cardHistorial = document.getElementById("cardHistorial");
+    if (cardHistorial) {
+        cardHistorial.scrollIntoView({ behavior: 'smooth' });
+    }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -500,7 +566,7 @@ function iniciarSesion() {
     msg.style.display = "none";
 }
 
-// 🔄 CARGAR RECLAMOS EN TIEMPO REAL DESDE GOOGLE APPS SCRIPT
+// 🔄 CARGAR RECLAMOS Y DETECTAR NUEVOS CADA 2 SEGUNDOS
 let estaCargando = false;
 async function cargarReclamos() {
     if (estaCargando) return;
@@ -516,39 +582,45 @@ async function cargarReclamos() {
         if (datos && (datos.ok || Array.isArray(datos.reclamos) || Array.isArray(datos))) {
             const rawLista = datos.reclamos || (Array.isArray(datos) ? datos : []);
             
-            // 1. Filtrar registros borrados localmente para evitar parpadeos
+            // 1. Filtrar registros borrados localmente
             const listaLimpia = rawLista.filter(r => {
                 const id = String(r.idReclamo || r.ID_Reclamo || '').trim();
                 return id && !idsBorradosLocales.has(id.toUpperCase());
             });
 
-            // 2. DETECCIÓN DE RECLAMO NUEVO: SONIDO + PARPADEO VISUAL
+            // 2. DETECCIÓN: COMPARAR CANTIDAD ACTUAL VS. ANTERIOR Y DETECTAR IDs NUEVOS
             if (primeraCarga) {
                 // Primera carga: registrar existentes sin emitir sonido ni parpadeo
                 listaLimpia.forEach(r => {
                     const id = String(r.idReclamo || r.ID_Reclamo || '').trim().toUpperCase();
                     if (id) idsConocidos.add(id);
                 });
+                cantidadReclamosAnterior = listaLimpia.length;
                 primeraCarga = false;
             } else {
-                let idNuevoDetectado = null;
+                const nuevosIds = [];
                 listaLimpia.forEach(r => {
                     const id = String(r.idReclamo || r.ID_Reclamo || '').trim().toUpperCase();
                     if (id && !idsConocidos.has(id)) {
-                        idNuevoDetectado = id;
+                        nuevosIds.push(id);
                         idsConocidos.add(id);
                     }
                 });
 
-                // Si se detectó un reclamo nuevo: DISPARAR NOTIFICACIÓN DOBLE
-                if (idNuevoDetectado) {
-                    reproducirAlarma();
-                    activarParpadeoVisual(idNuevoDetectado);
+                // Si hay más reclamos que antes o IDs desconocidos:
+                if (nuevosIds.length > 0 || listaLimpia.length > cantidadReclamosAnterior) {
+                    const idsParaNotificar = nuevosIds.length > 0 ? nuevosIds : ['NUEVO'];
+                    const primerReclamo = listaLimpia.find(r => String(r.idReclamo || '').toUpperCase() === nuevosIds[0]);
+                    const infoRuta = primerReclamo ? ` de ${primerReclamo.ruta || 'Ruta'}` : '';
+                    
+                    activarNotificacionVisual(idsParaNotificar, `¡Nuevo Reclamo ${nuevosIds[0] || ''}${infoRuta}!`);
                 }
+
+                cantidadReclamosAnterior = listaLimpia.length;
             }
 
             // 3. SINCRONIZACIÓN DE BORRADO EN TIEMPO REAL:
-            // Si un reclamo fue eliminado en Admin, desaparece en todas las rutas
+            // Desaparece en todas las pantallas
             reclamos = listaLimpia.map(r => ({
                 idReclamo: r.idReclamo || r.ID_Reclamo || '',
                 ruta: r.ruta || r.Ruta || '',
@@ -567,14 +639,14 @@ async function cargarReclamos() {
             document.getElementById("textoSincro").textContent = "En línea — " + horaActual;
         }
     } catch (error) {
-        console.warn("Sincronización en curso:", error);
+        console.warn("Sincronización en proceso:", error);
         document.getElementById("textoSincro").textContent = "⚠️ Sincronizando...";
     } finally {
         estaCargando = false;
     }
 }
 
-// 📊 ACTUALIZAR TABLA DE RECLAMOS CON FILA PARPADEANTE
+// 📊 ACTUALIZAR TABLA DE RECLAMOS
 function actualizarTabla() {
     const cuerpo = document.getElementById("cuerpoTabla");
     let listaFiltrada = reclamos;
@@ -594,10 +666,10 @@ function actualizarTabla() {
     cuerpo.innerHTML = listaFiltrada.map(r => {
         const esAdmin = usuarioActual && usuarioActual.tipo === "admin";
         const id = r.idReclamo || '-';
-        const estaParpadeando = idsParpadeoActivo.has(id.trim().toUpperCase());
+        const parpadea = idsNuevosParpadeo.has(id.trim().toUpperCase());
 
         return `
-            <tr class="${estaParpadeando ? 'fila-parpadeo-nueva' : ''}">
+            <tr class="${parpadea ? 'fila-parpadeante' : ''}">
                 <td><strong style="color:var(--primario); font-family:monospace;">${id}</strong></td>
                 <td><span style="background:#e8eaf6; padding:3px 8px; border-radius:12px; font-weight:600; font-size:12px;">${r.ruta || '-'}</span></td>
                 <td>${r.vendedor || '-'}</td>
@@ -684,11 +756,10 @@ async function guardarReclamo() {
         if (resultado.ok || resultado.success) {
             mostrarMensaje("✅ Guardado correctamente", "exito");
             
-            // Notificación doble inmediata en el emisor
-            reproducirAlarma();
-            activarParpadeoVisual(idGenerado);
+            // Disparar notificación visual y sonora localmente
             idsConocidos.add(idGenerado.toUpperCase());
-
+            activarNotificacionVisual([idGenerado], `¡Reclamo ${idGenerado} registrado con éxito!`);
+            
             limpiarFormulario();
             await cargarReclamos();
         } else {
@@ -697,9 +768,8 @@ async function guardarReclamo() {
     } catch (error) {
         // En caso de modo no-cors o redirección
         mostrarMensaje("✅ Guardado correctamente", "exito");
-        reproducirAlarma();
-        activarParpadeoVisual(idGenerado);
         idsConocidos.add(idGenerado.toUpperCase());
+        activarNotificacionVisual([idGenerado], `¡Reclamo ${idGenerado} registrado con éxito!`);
         limpiarFormulario();
         setTimeout(cargarReclamos, 1000);
     } finally {
@@ -733,12 +803,13 @@ async function confirmarBorrado() {
     // 1. Desaparece INMEDIATAMENTE en 0 ms de la pantalla sin recargar
     idsBorradosLocales.add(idEliminar.toUpperCase());
     idsConocidos.delete(idEliminar.toUpperCase());
-    idsParpadeoActivo.delete(idEliminar.toUpperCase());
+    idsNuevosParpadeo.delete(idEliminar.toUpperCase());
     reclamos = reclamos.filter(r => (r.idReclamo || '').trim().toUpperCase() !== idEliminar.toUpperCase());
+    cantidadReclamosAnterior = reclamos.length;
     actualizarTabla();
     mostrarMensaje("✅ Borrado", "exito");
 
-    // 2. Enviar orden de eliminación física al Apps Script
+    // 2. Enviar orden de eliminación al Google Apps Script
     try {
         await fetch(ENLACE_SCRIPT, {
             method: "POST",
@@ -755,7 +826,7 @@ async function confirmarBorrado() {
         console.warn("Aviso en petición de borrado:", error);
     }
 
-    // 3. Forzar sincronización de fondo para actualizar todas las pantallas
+    // 3. Forzar sincronización en segundo plano sin recargar la página
     setTimeout(cargarReclamos, 500);
 }
 
@@ -791,6 +862,7 @@ function cerrarSesion() {
     document.getElementById("areaLogin").classList.remove("oculto");
     document.getElementById("usuario").value = "";
     document.getElementById("contrasena").value = "";
+    detenerParpadeoVisual();
     limpiarFormulario();
 }
 
