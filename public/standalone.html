@@ -6,38 +6,44 @@
     <title>Sistema de Reclamos MYG</title>
     <style>
         :root {
-            /* 🎨 NUEVA PALETA VIBRANTE Y LLAMATIVA */
-            --primario: #0D47A1;      /* Azul Eléctrico */
-            --secundario: #1976D2;    /* Azul Brillante */
-            --acento: #FF6D00;        /* Naranja Intenso */
-            --acento-hover: #E65100;  /* Naranja Oscuro */
-            --fondo: #f0f4f8;
-            --tarjeta: #ffffff;
-            --texto: #1e293b;
-            --textoClaro: #64748b;
-            --exito: #16a34a;
-            --alerta: #FF9100;
-            --peligro: #dc2626;
-            --borde: #cbd5e1;
-            /* ✨ SOMBRAS PRONUNCIADAS Y MODERNAS */
-            --sombra: 0 10px 30px rgba(13, 71, 161, 0.10), 0 4px 12px rgba(0, 0, 0, 0.05);
-            --sombraHover: 0 18px 45px rgba(13, 71, 161, 0.18), 0 6px 18px rgba(0, 0, 0, 0.08);
-            --radio-tarjeta: 20px;
+            /* 🎨 PALETA DE COLORES VIBRANTE Y PROFESIONAL */
+            --primario: #0F52BA;       /* Azul Real Intenso */
+            --secundario: #0091EA;     /* Azul Eléctrico */
+            --acento: #FF7000;         /* Naranja Brillante */
+            --acento-hover: #F56500;   /* Naranja Oscuro */
+            --exito: #00C853;          /* Verde Brillante */
+            --alerta: #FFAB00;         /* Amarillo Brillante */
+            --peligro: #D50000;        /* Rojo Intenso */
+            --fondo-inicio: #E3F2FD;   /* Azul Muy Claro */
+            --fondo-fin: #FFFFFF;      /* Blanco Puro */
+            --tarjeta: #FFFFFF;        /* Fondo Blanco */
+            --texto: #1E293B;          /* Gris Oscuro */
+            --textoClaro: #64748B;     /* Gris Medio */
+            --borde: #CFD8DC;          /* Borde Suave */
+            
+            /* ✨ SOMBRAS SUAVES PERO VISIBLES */
+            --sombra: 0 10px 25px -5px rgba(15, 82, 186, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+            --sombraHover: 0 20px 35px -5px rgba(15, 82, 186, 0.22), 0 10px 15px -5px rgba(0, 0, 0, 0.08);
+            --sombraCabecera: 0 8px 30px rgba(15, 82, 186, 0.38);
+            
+            /* 📐 BORDES REDONDEADOS Y MODERNOS (18px) */
+            --radio-tarjeta: 18px;
             --radio-control: 12px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
         
-        /* 🌊 FONDO DEGRADADO SUAVE AZUL CLARO A BLANCO */
+        /* 🌊 FONDO DE PANTALLA: DEGRADADO SUAVE DESDE AZUL MUY CLARO HASTA BLANCO */
         body { 
-            background: linear-gradient(135deg, #e3f2fd 0%, #f1f5f9 45%, #ffffff 100%); 
+            background: linear-gradient(135deg, var(--fondo-inicio) 0%, #F1F7FD 50%, var(--fondo-fin) 100%); 
             min-height: 100vh; 
             color: var(--texto); 
             position: relative; 
             background-attachment: fixed;
+            transition: background 0.3s ease;
         }
         
-        /* ⚡ CABECERA AZUL ELÉCTRICO A AZUL BRILLANTE */
+        /* ⚡ CABECERA: DEGRADADO VIBRANTE (AZUL REAL INTENSO A AZUL ELÉCTRICO) CON SOMBRA PRONUNCIADA */
         .cabecera { 
             background: linear-gradient(135deg, var(--primario) 0%, var(--secundario) 100%); 
             color: white; 
@@ -45,7 +51,7 @@
             display: flex; 
             align-items: center; 
             justify-content: space-between; 
-            box-shadow: 0 6px 25px rgba(13, 71, 161, 0.35); 
+            box-shadow: var(--sombraCabecera); 
             position: sticky; 
             top: 0; 
             z-index: 100; 
@@ -60,10 +66,10 @@
             background: white; 
             padding: 4px; 
             object-fit: contain; 
-            transition: transform 0.3s ease;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
         }
         .logo-img:hover { transform: scale(1.05); }
-        .titulo-sistema { font-size: 21px; font-weight: 800; letter-spacing: 0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .titulo-sistema { font-size: 21px; font-weight: 800; letter-spacing: 0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.25); }
         
         .cabecera-derecha { display: flex; align-items: center; gap: 16px; }
         
@@ -79,13 +85,13 @@
             height: 46px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.20);
-            border: 2px solid rgba(255, 255, 255, 0.35);
+            border: 2px solid rgba(255, 255, 255, 0.40);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .campana-boton:hover {
             background: rgba(255, 255, 255, 0.32);
             transform: scale(1.10);
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 18px rgba(255, 255, 255, 0.5);
         }
         .campana-icono {
             font-size: 23px;
@@ -98,7 +104,7 @@
             position: absolute;
             top: -4px;
             right: -4px;
-            background: #d50000;
+            background: #D50000;
             color: #ffffff;
             font-size: 11px;
             font-weight: 900;
@@ -121,15 +127,15 @@
         /* 🚨 PARPADEO ROJO/NARANJA BRILLANTE + ESCALA 1.2 POR 10 SEGUNDOS */
         @keyframes parpadeoCampanaAdmin {
             0%, 100% {
-                background: #d50000;
-                border-color: #ff1744;
-                box-shadow: 0 0 25px #ff1744, 0 0 50px rgba(255, 23, 68, 0.7);
+                background: #D50000;
+                border-color: #FF1744;
+                box-shadow: 0 0 25px #FF1744, 0 0 50px rgba(255, 23, 68, 0.7);
                 transform: scale(1.20) rotate(-10deg);
             }
             50% {
-                background: #ff6d00;
-                border-color: #ffd600;
-                box-shadow: 0 0 35px #ff9100, 0 0 65px rgba(255, 145, 0, 0.9);
+                background: #FF7000;
+                border-color: #FFAB00;
+                box-shadow: 0 0 35px #FF7000, 0 0 65px rgba(255, 112, 0, 0.9);
                 transform: scale(1.22) rotate(10deg);
             }
         }
@@ -147,15 +153,16 @@
             padding: 8px 16px; 
             border-radius: 25px; 
             font-weight: 600;
-            border: 1px solid rgba(255,255,255,0.25);
+            border: 1px solid rgba(255,255,255,0.30);
             backdrop-filter: blur(4px);
+            transition: all 0.3s ease;
         }
-        .punto-verde { width: 10px; height: 10px; background: #4ade80; border-radius: 50%; box-shadow: 0 0 8px #4ade80; animation: parpadeoPunto 2s infinite; }
+        .punto-verde { width: 10px; height: 10px; background: #00E676; border-radius: 50%; box-shadow: 0 0 10px #00E676; animation: parpadeoPunto 2s infinite; }
         @keyframes parpadeoPunto { 0%,100% {opacity:1} 50% {opacity:0.4} }
 
         .contenedor { max-width: 1400px; margin: 0 auto; padding: 25px; }
         
-        /* 📦 TARJETAS CON BORDES REDONDEADOS SUAVES (20px) Y ELEVACIÓN AL PASAR EL CURSOR */
+        /* 📦 TARJETAS CON FONDO BLANCO, BORDES REDONDEADOS (18px) Y SOMBRAS SUAVES VISIBLES */
         .login-card { 
             background: var(--tarjeta); 
             padding: 45px 35px; 
@@ -165,10 +172,10 @@
             margin: 70px auto; 
             text-align: center; 
             transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); 
-            border: 1px solid rgba(255,255,255,0.8);
+            border: 1px solid rgba(207, 216, 220, 0.6);
         }
         .login-card:hover { 
-            transform: translateY(-6px); 
+            transform: translateY(-4px); 
             box-shadow: var(--sombraHover); 
         }
         .login-logo { max-width: 150px; margin-bottom: 22px; height: auto; border-radius: 12px; }
@@ -187,29 +194,29 @@
             justify-content: space-between; 
             margin-bottom: 7px; 
             font-weight: 700; 
-            color: #334155; 
+            color: var(--texto); 
             font-size: 13px; 
         }
         
-        /* ✍️ INPUTS Y CAMPOS CON BORDES REDONDEADOS Y HALO BRILLANTE */
-        input, select { 
+        /* ✍️ CAMPOS DE ENTRADA CON BORDE AZUL BRILLANTE AL ENFOCAR + RESALTE SUAVE */
+        input, select, textarea { 
             width: 100%; 
             padding: 12px 16px; 
             border: 2px solid var(--borde); 
             border-radius: var(--radio-control); 
             font-size: 14px; 
             color: var(--texto);
-            background: #ffffff;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            background: #FFFFFF;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
         }
-        input:focus, select:focus { 
+        input:focus, select:focus, textarea:focus { 
             outline: none; 
             border-color: var(--secundario); 
-            box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.18); 
-            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(0, 145, 234, 0.20), 0 2px 8px rgba(0, 145, 234, 0.15); 
+            background: #FFFFFF;
         }
         
-        /* 🚀 BOTONES MODERNOS, ANIMADOS CON ELEVACIÓN */
+        /* 🚀 BOTONES: DEGRADADO + BRILLO AL PASAR EL CURSOR + ELEVACIÓN SUAVE */
         .btn { 
             padding: 12px 24px; 
             border: none; 
@@ -217,6 +224,8 @@
             font-size: 14px; 
             font-weight: 700; 
             cursor: pointer; 
+            position: relative;
+            overflow: hidden;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
             text-transform: uppercase; 
             letter-spacing: 0.5px; 
@@ -225,50 +234,79 @@
             justify-content: center; 
             gap: 8px; 
         }
+
+        /* Efecto de brillo que recorre el botón al pasar el cursor */
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -60%;
+            width: 40%;
+            height: 200%;
+            background: linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.35) 50%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            transform: rotate(25deg);
+            transition: all 0.6s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .btn:hover::after {
+            left: 130%;
+            opacity: 1;
+        }
+
+        /* Botón Primario: Azul Real a Azul Eléctrico */
         .btn-primario { 
             background: linear-gradient(135deg, var(--primario) 0%, var(--secundario) 100%); 
             color: white; 
-            box-shadow: 0 4px 15px rgba(13, 71, 161, 0.35);
+            box-shadow: 0 4px 15px rgba(15, 82, 186, 0.35);
         }
         .btn-primario:hover { 
-            transform: translateY(-3px); 
-            box-shadow: 0 8px 25px rgba(13, 71, 161, 0.50); 
-            background: linear-gradient(135deg, #0b3c88 0%, #1565c0 100%);
+            transform: translateY(-2px); 
+            box-shadow: 0 8px 24px rgba(15, 82, 186, 0.50), 0 0 15px rgba(0, 145, 234, 0.4); 
+            background: linear-gradient(135deg, #0d47a1 0%, #0081d5 100%);
         }
         
-        /* BOTÓN NARANJA INTENSO (#FF6D00) PARA ACCIONES DESTACADAS */
+        /* Botón Acento: Naranja Brillante (#FF7000) */
         .btn-acento { 
             background: linear-gradient(135deg, var(--acento) 0%, #FFA000 100%); 
             color: white; 
-            box-shadow: 0 4px 15px rgba(255, 109, 0, 0.35);
+            box-shadow: 0 4px 15px rgba(255, 112, 0, 0.35);
         }
         .btn-acento:hover { 
-            transform: translateY(-3px); 
-            box-shadow: 0 8px 25px rgba(255, 109, 0, 0.55); 
+            transform: translateY(-2px); 
+            box-shadow: 0 8px 25px rgba(255, 112, 0, 0.55), 0 0 20px rgba(255, 112, 0, 0.45); 
             background: linear-gradient(135deg, var(--acento-hover) 0%, #FF8F00 100%);
         }
         
+        /* Botón Éxito: Verde Brillante (#00C853) */
         .btn-exito { 
-            background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); 
+            background: linear-gradient(135deg, var(--exito) 0%, #00E676 100%); 
             color: white; 
-            box-shadow: 0 4px 14px rgba(22, 163, 74, 0.3);
+            box-shadow: 0 4px 14px rgba(0, 200, 83, 0.30);
         }
         .btn-exito:hover { 
             transform: translateY(-2px); 
-            box-shadow: 0 6px 20px rgba(22, 163, 74, 0.45); 
+            box-shadow: 0 8px 22px rgba(0, 200, 83, 0.50), 0 0 15px rgba(0, 230, 118, 0.4); 
         }
+
+        /* Botón Peligro */
         .btn-peligro { 
-            background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); 
+            background: linear-gradient(135deg, var(--peligro) 0%, #FF1744 100%); 
             color: white; 
-            box-shadow: 0 4px 14px rgba(220, 38, 38, 0.3);
+            box-shadow: 0 4px 14px rgba(213, 0, 0, 0.30);
         }
         .btn-peligro:hover { 
             transform: translateY(-2px); 
-            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.45); 
+            box-shadow: 0 8px 22px rgba(213, 0, 0, 0.50); 
         }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
 
-        /* 📦 TARJETAS FORMULARIO E HISTORIAL CON BORDES REDONDEADOS DE 20PX */
+        /* 📦 TARJETAS FORMULARIO E HISTORIAL CON BORDES REDONDEADOS DE 18PX */
         .form-card, .lista-card { 
             background: var(--tarjeta); 
             padding: 30px; 
@@ -276,7 +314,7 @@
             box-shadow: var(--sombra); 
             margin-bottom: 30px; 
             transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); 
-            border: 1px solid rgba(255,255,255,0.8);
+            border: 1px solid rgba(207, 216, 220, 0.6);
         }
         .form-card:hover, .lista-card:hover { 
             box-shadow: var(--sombraHover); 
@@ -287,28 +325,16 @@
         .campo-completo { grid-column: 1 / -1; }
         
         textarea { 
-            width: 100%; 
-            padding: 12px 16px; 
-            border: 2px solid var(--borde); 
-            border-radius: var(--radio-control); 
-            font-size: 14px; 
             min-height: 90px; 
             resize: vertical; 
-            color: var(--texto);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-        }
-        textarea:focus { 
-            outline: none; 
-            border-color: var(--secundario); 
-            box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.18); 
         }
         
         .botones-form { display: flex; gap: 14px; margin-top: 25px; flex-wrap: wrap; }
 
         /* 🚨 ALERTA VISUAL GRANDE ENCIMA DE LA TABLA */
         .alerta-banner-admin {
-            background: linear-gradient(135deg, #d50000 0%, #ff6d00 100%);
-            color: #ffffff;
+            background: linear-gradient(135deg, var(--alerta) 0%, var(--acento) 100%);
+            color: #1E293B;
             padding: 16px 24px;
             border-radius: 14px;
             margin-bottom: 20px;
@@ -317,8 +343,8 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 8px 30px rgba(213, 0, 0, 0.45);
-            border: 2px solid #ffffff;
+            box-shadow: 0 8px 30px rgba(255, 112, 0, 0.40);
+            border: 2px solid #FFFFFF;
             animation: aparecerBanner 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         @keyframes aparecerBanner {
@@ -331,9 +357,10 @@
             border-radius: 14px; 
             border: 1px solid var(--borde); 
             box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            background: #FFFFFF;
         }
         table { width: 100%; border-collapse: collapse; min-width: 820px; }
-        th, td { padding: 13px 16px; text-align: left; border-bottom: 1px solid var(--borde); font-size: 13px; }
+        th, td { padding: 13px 16px; text-align: left; border-bottom: 1px solid #E2E8F0; font-size: 13px; }
         th { 
             background: linear-gradient(135deg, var(--primario) 0%, var(--secundario) 100%); 
             color: white; 
@@ -342,20 +369,30 @@
             top: 0; 
             letter-spacing: 0.3px;
         }
-        tr { transition: background-color 0.25s ease; }
-        tr:hover { background: #f8fafc; }
+        
+        /* FILAS DE LA TABLA: COLOR ALTERNO SUAVE + RESALTE AL PASAR EL CURSOR */
+        tbody tr { 
+            transition: all 0.2s ease; 
+        }
+        tbody tr:nth-child(even) { 
+            background-color: #F8FAFC; 
+        }
+        tbody tr:hover { 
+            background-color: #EFF6FF !important; 
+            box-shadow: inset 3px 0 0 var(--secundario);
+        }
         .acciones-btns { display: flex; gap: 8px; }
         .btn-sm { padding: 7px 12px; font-size: 12px; border-radius: 8px; text-transform: none; }
 
         /* 🚨 FILA RESALTADA EN AMARILLO/NARANJA BRILLANTE POR 8 SEGUNDOS */
         @keyframes parpadeoFilaAmarilloNaranja {
             0%, 100% {
-                background-color: #ff9800 !important;
+                background-color: #FF7000 !important;
                 color: #ffffff !important;
             }
             50% {
-                background-color: #fff3e0 !important;
-                color: #b71c1c !important;
+                background-color: #FFF3E0 !important;
+                color: #B71C1C !important;
             }
         }
         .fila-nueva-resaltada {
@@ -372,15 +409,16 @@
             justify-content: center; 
             color: var(--textoClaro); 
             cursor: pointer; 
-            transition: all 0.3s; 
-            background: #f8fafc; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            background: #F8FAFC; 
             font-size: 13px; 
             font-weight: 600;
         }
         .firma-area:hover { 
             border-color: var(--primario); 
-            background: rgba(13, 71, 161, 0.05); 
+            background: rgba(15, 82, 186, 0.06); 
             color: var(--primario);
+            transform: scale(1.01);
         }
         .firma-imagen { max-height: 65px; max-width: 100%; }
 
@@ -394,8 +432,8 @@
             font-size: 14px; 
         }
         @keyframes aparecer { from {opacity:0; transform: translateY(-8px)} to {opacity:1; transform: translateY(0)} }
-        .mensaje-exito { background: #dcfce7; color: #15803d; border-left: 5px solid #16a34a; display: block; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.15); }
-        .mensaje-error { background: #fee2e2; color: #b91c1c; border-left: 5px solid #dc2626; display: block; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15); }
+        .mensaje-exito { background: #DCFCE7; color: #15803D; border-left: 5px solid var(--exito); display: block; box-shadow: 0 4px 12px rgba(0, 200, 83, 0.15); }
+        .mensaje-error { background: #FEE2E2; color: #B91C1C; border-left: 5px solid var(--peligro); display: block; box-shadow: 0 4px 12px rgba(213, 0, 0, 0.15); }
 
         .oculto { display: none !important; }
 
@@ -409,7 +447,7 @@
             .alerta-banner-admin { font-size: 14px; flex-direction: column; gap: 10px; text-align: center; }
         }
 
-        /* 🪟 MODAL CON BORDES REDONDEADOS DE 20PX Y ELEVACIÓN SUAVE */
+        /* 🪟 MODAL CON BORDES REDONDEADOS DE 18PX Y ELEVACIÓN SUAVE */
         .modal-fondo { 
             position: fixed; 
             top: 0; 
