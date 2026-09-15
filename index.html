@@ -1,21 +1,2570 @@
-<!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Control de Cambios y Reclamaciones de Productos MYG</title>
-    <meta name="description" content="Sistema de Control de Cambios y Reclamaciones de Productos MYG con acceso por rutas, carpetas individuales, panel de alertas con sonido para el administrador, firmas digitales, vouchers y estadísticas." />
-    <meta property="og:title" content="Control de Cambios y Reclamaciones de Productos MYG" />
-    <meta property="og:description" content="Sistema de Control de Cambios y Reclamaciones de Productos MYG con acceso por rutas, carpetas individuales, panel de alertas con sonido para el administrador, firmas digitales, vouchers y estadísticas." />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-  </head>
-  <body class="bg-slate-50 text-slate-900 font-sans antialiased min-h-screen">
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+<!DOCTYPE html>
+<html lang="es-GT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Reclamos MYG</title>
+    <!-- Chart.js para las gráficas analíticas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            /* 🎨 PALETA DE COLORES VIBRANTE Y PROFESIONAL */
+            --primario: #0F52BA;       /* Azul Real Intenso */
+            --secundario: #0091EA;     /* Azul Eléctrico */
+            --acento: #FF7000;         /* Naranja Brillante */
+            --acento-hover: #F56500;   /* Naranja Oscuro */
+            --exito: #00C853;          /* Verde Brillante */
+            --alerta: #FFAB00;         /* Amarillo Brillante */
+            --peligro: #D50000;        /* Rojo Intenso */
+            --fondo-inicio: #E3F2FD;   /* Azul Muy Claro */
+            --fondo-fin: #FFFFFF;      /* Blanco Puro */
+            --tarjeta: #FFFFFF;        /* Fondo Blanco */
+            --texto: #1E293B;          /* Gris Oscuro */
+            --textoClaro: #64748B;     /* Gris Medio */
+            --borde: #CFD8DC;          /* Borde Suave */
+            
+            /* ✨ SOMBRAS SUAVES PERO VISIBLES */
+            --sombra: 0 10px 25px -5px rgba(15, 82, 186, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+            --sombraHover: 0 20px 35px -5px rgba(15, 82, 186, 0.22), 0 10px 15px -5px rgba(0, 0, 0, 0.08);
+            --sombraCabecera: 0 8px 30px rgba(15, 82, 186, 0.38);
+            
+            /* 📐 BORDES REDONDEADOS Y MODERNOS (18px) */
+            --radio-tarjeta: 18px;
+            --radio-control: 12px;
+        }
 
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        
+        body { 
+            background: linear-gradient(135deg, var(--fondo-inicio) 0%, #F1F7FD 50%, var(--fondo-fin) 100%); 
+            min-height: 100vh; 
+            color: var(--texto); 
+            position: relative; 
+            background-attachment: fixed;
+            transition: background 0.3s ease;
+        }
+        
+        /* ⚡ CABECERA VIBRANTE CON SOMBRA */
+        .cabecera { 
+            background: linear-gradient(135deg, var(--primario) 0%, var(--secundario) 100%); 
+            color: white; 
+            padding: 16px 30px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            box-shadow: var(--sombraCabecera); 
+            position: sticky; 
+            top: 0; 
+            z-index: 100; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        .logo-contenedor { display: flex; align-items: center; gap: 14px; }
+        .logo-img { 
+            height: 50px; 
+            width: auto; 
+            max-height: 50px;
+            border-radius: 10px; 
+            box-shadow: 0 4px 14px rgba(0,0,0,0.25); 
+            background: white; 
+            padding: 4px; 
+            object-fit: contain; 
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        .logo-img:hover { transform: scale(1.04); }
+        .logo-login {
+            width: 130px;
+            max-width: 100%;
+            height: auto;
+            object-fit: contain;
+            border-radius: 14px;
+            padding: 6px;
+            background: white;
+            box-shadow: 0 6px 18px rgba(15, 82, 186, 0.18);
+            display: inline-block;
+            transition: transform 0.3s ease;
+        }
+        .logo-login:hover { transform: scale(1.04); }
+        .titulo-sistema { font-size: 21px; font-weight: 800; letter-spacing: 0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.25); }
+        
+        /* 🖨️ CABECERA EXCLUSIVA PARA REPORTES IMPRESOS */
+        .cabecera-impresion { display: none; }
+        
+        .cabecera-derecha { display: flex; align-items: center; gap: 16px; }
+        
+        /* 🔔 CAMPANITA PARPADEANTE */
+        .campana-boton {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.20);
+            border: 2px solid rgba(255, 255, 255, 0.40);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .campana-boton:hover {
+            background: rgba(255, 255, 255, 0.32);
+            transform: scale(1.10);
+            box-shadow: 0 0 18px rgba(255, 255, 255, 0.5);
+        }
+        .campana-icono {
+            font-size: 23px;
+            display: inline-block;
+            transition: transform 0.25s ease;
+        }
+        .campana-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #D50000;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 900;
+            padding: 2px 7px;
+            border-radius: 12px;
+            border: 2px solid #ffffff;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+        }
+        
+        /* ANIMACIÓN DE PARPADEO INTENSO DE LA CAMPANITA (10 SEGUNDOS) */
+        @keyframes parpadeoCampanaIntenso {
+            0%, 100% {
+                background: #FF7000;
+                border-color: #FFFFFF;
+                box-shadow: 0 0 25px #FF7000, 0 0 45px rgba(255, 112, 0, 0.9);
+                transform: scale(1.22) rotate(15deg);
+            }
+            25% {
+                transform: scale(1.25) rotate(-15deg);
+            }
+            50% {
+                background: #D50000;
+                border-color: #FFEB3B;
+                box-shadow: 0 0 30px #D50000, 0 0 50px rgba(213, 0, 0, 0.9);
+                transform: scale(1.20) rotate(15deg);
+            }
+            75% {
+                transform: scale(1.25) rotate(-15deg);
+            }
+        }
+        .campana-parpadeo-activa {
+            animation: parpadeoCampanaIntenso 0.45s infinite cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+
+        .indicador-sincro { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            font-size: 13px; 
+            background: rgba(255, 255, 255, 0.2); 
+            padding: 6px 14px; 
+            border-radius: 20px; 
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+        .punto-verde { 
+            width: 10px; 
+            height: 10px; 
+            background-color: var(--exito); 
+            border-radius: 50%; 
+            box-shadow: 0 0 10px var(--exito); 
+            animation: latido 1.8s infinite cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        @keyframes latido { 
+            0% { transform: scale(1); opacity: 1; } 
+            50% { transform: scale(1.4); opacity: 0.7; } 
+            100% { transform: scale(1); opacity: 1; } 
+        }
+        
+        .usuario-badge { 
+            background: rgba(255, 255, 255, 0.25); 
+            padding: 6px 14px; 
+            border-radius: 20px; 
+            font-size: 13px; 
+            font-weight: 700; 
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .contenedor { max-width: 1350px; margin: 25px auto; padding: 0 20px; }
+        
+        /* 🌟 TARJETAS ELEVADAS CON BORDES REDONDEADOS */
+        .login-card { 
+            max-width: 440px; 
+            margin: 80px auto; 
+            background: var(--tarjeta); 
+            padding: 40px; 
+            border-radius: var(--radio-tarjeta); 
+            box-shadow: var(--sombra); 
+            border: 1px solid rgba(207, 216, 220, 0.6);
+            animation: deslizarArriba 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
+        @keyframes deslizarArriba { 
+            from { transform: translateY(30px) scale(0.96); opacity: 0; } 
+            to { transform: translateY(0) scale(1); opacity: 1; } 
+        }
+        
+        .login-titulo { 
+            text-align: center; 
+            color: var(--primario); 
+            margin-bottom: 25px; 
+            font-size: 23px; 
+            font-weight: 800; 
+        }
+        
+        .input-grupo { margin-bottom: 18px; }
+        label { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            margin-bottom: 7px; 
+            font-weight: 700; 
+            color: var(--texto); 
+            font-size: 13.5px; 
+        }
+        input, select, textarea { 
+            width: 100%; 
+            padding: 12px 16px; 
+            border: 2px solid var(--borde); 
+            border-radius: var(--radio-control); 
+            font-size: 14px; 
+            color: var(--texto);
+            background: #FFFFFF;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        input:focus, select:focus, textarea:focus { 
+            outline: none; 
+            border-color: var(--secundario); 
+            box-shadow: 0 0 0 4px rgba(0, 145, 234, 0.20), 0 2px 8px rgba(0, 145, 234, 0.15); 
+            background: #FFFFFF;
+        }
+        
+        .btn { 
+            padding: 12px 24px; 
+            border: none; 
+            border-radius: var(--radio-control); 
+            font-size: 14px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 8px; 
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -60%;
+            width: 40%;
+            height: 200%;
+            background: linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.35) 50%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            transform: rotate(25deg);
+            transition: all 0.6s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .btn:hover::after {
+            left: 130%;
+            opacity: 1;
+        }
+
+        .btn-primario { 
+            background: linear-gradient(135deg, var(--primario) 0%, var(--secundario) 100%); 
+            color: white; 
+            box-shadow: 0 4px 15px rgba(15, 82, 186, 0.35);
+        }
+        .btn-primario:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 8px 24px rgba(15, 82, 186, 0.50), 0 0 15px rgba(0, 145, 234, 0.4); 
+            background: linear-gradient(135deg, #0d47a1 0%, #0081d5 100%);
+        }
+        
+        .btn-acento { 
+            background: linear-gradient(135deg, var(--acento) 0%, #FFA000 100%); 
+            color: white; 
+            box-shadow: 0 4px 15px rgba(255, 112, 0, 0.35);
+        }
+        .btn-acento:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 8px 25px rgba(255, 112, 0, 0.55), 0 0 20px rgba(255, 112, 0, 0.45); 
+            background: linear-gradient(135deg, var(--acento-hover) 0%, #FF8F00 100%);
+        }
+        
+        .btn-exito { 
+            background: linear-gradient(135deg, var(--exito) 0%, #00E676 100%); 
+            color: white; 
+            box-shadow: 0 4px 14px rgba(0, 200, 83, 0.30);
+        }
+        .btn-peligro { 
+            background: linear-gradient(135deg, var(--peligro) 0%, #FF1744 100%); 
+            color: white; 
+            box-shadow: 0 4px 14px rgba(213, 0, 0, 0.30);
+        }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+
+        .form-card, .lista-card, .grafica-card { 
+            background: var(--tarjeta); 
+            padding: 30px; 
+            border-radius: var(--radio-tarjeta); 
+            box-shadow: var(--sombra); 
+            margin-bottom: 30px; 
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); 
+            border: 1px solid rgba(207, 216, 220, 0.6);
+        }
+        .form-card:hover, .lista-card:hover, .grafica-card:hover { 
+            box-shadow: var(--sombraHover); 
+            transform: translateY(-3px);
+        }
+        
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+        .campo-completo { grid-column: 1 / -1; }
+        textarea { min-height: 90px; resize: vertical; }
+        .botones-form { display: flex; gap: 14px; margin-top: 25px; flex-wrap: wrap; }
+
+        /* 📁 CARPETAS POR RUTA */
+        .carpetas-barra {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #E2E8F0;
+        }
+        .carpeta-chip {
+            padding: 9px 16px;
+            border-radius: 20px;
+            background: #F1F5F9;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1.5px solid #CBD5E1;
+            transition: all 0.2s ease;
+        }
+        .carpeta-chip:hover {
+            background: #E2E8F0;
+            transform: translateY(-1px);
+        }
+        .carpeta-chip.activa {
+            background: linear-gradient(135deg, var(--primario) 0%, var(--secundario) 100%);
+            color: white;
+            border-color: var(--primario);
+            box-shadow: 0 4px 12px rgba(15, 82, 186, 0.3);
+        }
+        .carpeta-conteo {
+            background: rgba(0,0,0,0.15);
+            padding: 2px 7px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+        .carpeta-chip.activa .carpeta-conteo {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* 📋 5 CHECKBOXES DE ESTADO */
+        .seccion-estados {
+            background: #F8FAFC;
+            border: 2px solid #E2E8F0;
+            border-radius: 14px;
+            padding: 16px 20px;
+            margin-top: 10px;
+        }
+        .estados-cabecera {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .estados-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 12px;
+        }
+        .checkbox-estado-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #FFFFFF;
+            border: 2px solid #CBD5E1;
+            border-radius: 12px;
+            padding: 11px 14px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 700;
+            color: #1E293B;
+            user-select: none;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .checkbox-estado-item:hover:not(.deshabilitado) {
+            border-color: var(--primario);
+            background: #F0F7FF;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(15, 82, 186, 0.15);
+        }
+        .checkbox-estado-item.activo-verde {
+            background: #DCFCE7;
+            border-color: #16A34A;
+            color: #15803D;
+        }
+        .checkbox-estado-item.activo-rojo {
+            background: #FEE2E2;
+            border-color: #DC2626;
+            color: #B91C1C;
+        }
+        .checkbox-estado-item.activo-naranja {
+            background: #FFEDD5;
+            border-color: #EA580C;
+            color: #C2410C;
+        }
+        .checkbox-estado-item.activo-azul {
+            background: #E0F2FE;
+            border-color: #0284C7;
+            color: #0369A1;
+        }
+        .checkbox-estado-item.deshabilitado {
+            opacity: 0.55;
+            cursor: not-allowed;
+            background: #F1F5F9;
+            border-color: #E2E8F0;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+        .checkbox-estado-item input[type="checkbox"] {
+            width: 19px;
+            height: 19px;
+            cursor: pointer;
+            accent-color: var(--primario);
+            margin: 0;
+            flex-shrink: 0;
+        }
+        .checkbox-estado-item.deshabilitado input[type="checkbox"] {
+            cursor: not-allowed;
+        }
+        .estado-timestamp {
+            font-size: 11px;
+            color: #0284C7;
+            font-weight: 800;
+            margin-top: 3px;
+            display: block;
+        }
+
+        /* 🏷️ BADGES DE ESTADO PARA LA TABLA */
+        .badge-estado {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 11px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 800;
+            white-space: nowrap;
+            letter-spacing: 0.3px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .badge-estado:hover { transform: scale(1.05); }
+        .badge-aceptado { background: #DCFCE7; color: #15803D; border: 1.5px solid #86EFAC; }
+        .badge-rechazado { background: #FEE2E2; color: #B91C1C; border: 1.5px solid #FCA5A5; }
+        .badge-entrega { background: #FFEDD5; color: #C2410C; border: 1.5px solid #FDBA74; }
+        .badge-entregado { background: #E0F2FE; color: #0369A1; border: 1.5px solid #7DD3FC; }
+        .badge-recibido { background: #F0FDF4; color: #166534; border: 1.5px solid #BBF7D0; }
+        .badge-pendiente { background: #F1F5F9; color: #64748B; border: 1.5px solid #CBD5E1; }
+
+        .alerta-banner-admin {
+            background: linear-gradient(135deg, var(--alerta) 0%, var(--acento) 100%);
+            color: #1E293B;
+            padding: 16px 24px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+            font-size: 15px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 8px 30px rgba(255, 112, 0, 0.40);
+            border: 2px solid #FFFFFF;
+            animation: aparecerBanner 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes aparecerBanner {
+            from { opacity: 0; transform: translateY(-15px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .tabla-contenedor { 
+            overflow-x: auto; 
+            border-radius: 14px; 
+            border: 1px solid var(--borde); 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            background: #FFFFFF;
+        }
+        table { width: 100%; border-collapse: collapse; min-width: 1400px; }
+        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #E2E8F0; font-size: 13px; vertical-align: middle; }
+        th { 
+            background: linear-gradient(135deg, var(--primario) 0%, var(--secundario) 100%); 
+            color: white; 
+            font-weight: 700; 
+            position: sticky; 
+            top: 0; 
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+        
+        tbody tr:nth-child(even) { background-color: #F8FAFC; }
+        tbody tr:hover { background-color: #EFF6FF !important; box-shadow: inset 3px 0 0 var(--secundario); }
+        .acciones-btns { display: flex; gap: 6px; }
+        .btn-sm { padding: 7px 12px; font-size: 12px; border-radius: 8px; text-transform: none; }
+
+        @keyframes parpadeoFilaAmarilloNaranja {
+            0%, 100% { background-color: #FF7000 !important; color: #ffffff !important; }
+            50% { background-color: #FFF3E0 !important; color: #B71C1C !important; }
+        }
+        .fila-nueva-resaltada {
+            animation: parpadeoFilaAmarilloNaranja 0.7s infinite ease-in-out !important;
+            font-weight: 800 !important;
+        }
+
+        .firma-area { 
+            border: 2px dashed var(--borde); 
+            border-radius: var(--radio-control); 
+            height: 75px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: var(--textoClaro); 
+            cursor: pointer; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            background: #F8FAFC; 
+            font-size: 13px; 
+            font-weight: 600;
+            overflow: hidden;
+            position: relative;
+        }
+        .firma-area:hover { 
+            border-color: var(--primario); 
+            background: rgba(15, 82, 186, 0.06); 
+            color: var(--primario);
+            transform: scale(1.01);
+        }
+        .firma-imagen { max-height: 65px; max-width: 100%; object-fit: contain; }
+
+        .miniatura-foto {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 1px solid var(--borde);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .miniatura-foto:hover { transform: scale(1.15); }
+
+        /* 📈 SECCIÓN DE GRÁFICAS ANALÍTICAS DEBAJO DEL HISTORIAL */
+        .graficas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 25px;
+            margin-top: 10px;
+        }
+        .grafica-contenedor-canvas {
+            position: relative;
+            height: 270px;
+            width: 100%;
+        }
+
+        /* MODALES */
+        .modal-fondo { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(15, 23, 42, 0.65); 
+            backdrop-filter: blur(4px); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            z-index: 1000; 
+            opacity: 0; 
+            pointer-events: none; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        .modal-fondo.activo { opacity: 1; pointer-events: all; }
+        .modal-caja { 
+            background: white; 
+            padding: 30px; 
+            border-radius: var(--radio-tarjeta); 
+            max-width: 650px; 
+            width: 92%; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); 
+            transform: translateY(20px) scale(0.95); 
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            max-height: 90vh; 
+            overflow-y: auto; 
+        }
+        .modal-fondo.activo .modal-caja { transform: translateY(0) scale(1); }
+        .modal-titulo { font-size: 20px; font-weight: 800; color: var(--primario); margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .modal-texto { color: #475569; font-size: 14.5px; line-height: 1.6; margin-bottom: 25px; }
+        .modal-botones { display: flex; justify-content: flex-end; gap: 12px; margin-top: 25px; }
+        
+        .voucher-detalle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 15px; }
+        .voucher-campo { background: #F8FAFC; padding: 12px; border-radius: 10px; border: 1px solid #E2E8F0; }
+        .voucher-campo strong { display: block; font-size: 11.5px; color: #64748B; text-transform: uppercase; margin-bottom: 4px; }
+        .voucher-campo span { font-size: 14px; font-weight: 700; color: #1E293B; word-break: break-word; }
+        .voucher-campo.completo { grid-column: 1 / -1; }
+
+        .voucher-estado-box {
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            font-weight: 700;
+            border: 1px solid #E2E8F0;
+            background: #FFFFFF;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .voucher-estado-box.marcado-verde { background: #DCFCE7; border-color: #86EFAC; color: #15803D; }
+        .voucher-estado-box.marcado-rojo { background: #FEE2E2; border-color: #FCA5A5; color: #B91C1C; }
+        .voucher-estado-box.marcado-naranja { background: #FFEDD5; border-color: #FDBA74; color: #C2410C; }
+        .voucher-estado-box.marcado-azul { background: #E0F2FE; border-color: #7DD3FC; color: #0369A1; }
+
+        .oculto { display: none !important; }
+        .mensaje { padding: 12px 18px; border-radius: var(--radio-control); margin-bottom: 20px; font-size: 14px; font-weight: 700; text-align: center; }
+        .mensaje-error { background: #FEE2E2; color: #B91C1C; border: 1px solid #FCA5A5; }
+        .mensaje-exito { background: #DCFCE7; color: #15803D; border: 1px solid #86EFAC; }
+
+        @media (max-width: 768px) {
+            .cabecera { padding: 14px 18px; flex-direction: column; gap: 12px; }
+            .cabecera-derecha { width: 100%; justify-content: space-between; }
+            .form-grid { grid-template-columns: 1fr; }
+            .voucher-detalle-grid { grid-template-columns: 1fr; }
+            .graficas-grid { grid-template-columns: 1fr; }
+        }
+
+        /* 🖨️ ESTILOS PARA IMPRESIÓN LIMPIA DE REPORTES Y VOUCHERS */
+        @media print {
+            body { background: white !important; color: black !important; }
+            .cabecera, .carpetas-barra, .botones-form, .acciones-btns, #seccionGraficas, #formCardNuevo, #bannerAlertaAdmin, .campana-boton, .indicador-sincro, .usuario-badge, .modal-botones, .btn {
+                display: none !important;
+            }
+
+            /* Impresión de un Reclamo Individual (Reporte Limpio) */
+            body.imprimiendo-reclamo .cabecera-impresion,
+            body.imprimiendo-reclamo #cardHistorial,
+            body.imprimiendo-reclamo #modalEstados,
+            body.imprimiendo-reclamo #modalEliminar {
+                display: none !important;
+            }
+            body.imprimiendo-reclamo #modalDetalle {
+                position: static !important;
+                display: block !important;
+                background: transparent !important;
+                opacity: 1 !important;
+                pointer-events: all !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            body.imprimiendo-reclamo #modalDetalle .modal-caja {
+                box-shadow: none !important;
+                border: 1px solid #cbd5e1 !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 16px !important;
+                border-radius: 8px !important;
+                transform: none !important;
+                max-height: none !important;
+                overflow: visible !important;
+            }
+            body.imprimiendo-reclamo #modalDetalle .modal-titulo {
+                display: none !important;
+            }
+
+            /* Impresión de la Tabla de Historial General */
+            body:not(.imprimiendo-reclamo) #modalDetalle,
+            body:not(.imprimiendo-reclamo) #modalEstados,
+            body:not(.imprimiendo-reclamo) #modalEliminar {
+                display: none !important;
+            }
+            body:not(.imprimiendo-reclamo) .cabecera-impresion {
+                display: flex !important;
+                align-items: center;
+                gap: 16px;
+                border-bottom: 2px solid #0F52BA;
+                padding-bottom: 12px;
+                margin-bottom: 20px;
+            }
+            body:not(.imprimiendo-reclamo) .cabecera-impresion img {
+                width: 60px !important;
+                height: auto !important;
+                max-width: 60px !important;
+                object-fit: contain !important;
+                background: white !important;
+                padding: 3px !important;
+                border-radius: 6px !important;
+            }
+            body:not(.imprimiendo-reclamo) .cabecera-impresion h2 {
+                margin: 0;
+                color: #0F52BA !important;
+                font-size: 20px !important;
+                font-weight: 800;
+            }
+            body:not(.imprimiendo-reclamo) .cabecera-impresion p {
+                margin: 2px 0 0 0;
+                font-size: 13px !important;
+                color: #475569 !important;
+            }
+            .voucher-campo { background: white !important; border: 1px solid #ddd !important; }
+            .voucher-estado-box { border: 1px solid #ccc !important; }
+            .tabla-contenedor { border: none !important; box-shadow: none !important; overflow: visible !important; }
+            table { width: 100% !important; min-width: 100% !important; font-size: 11px !important; }
+            th { background: #0F52BA !important; color: white !important; -webkit-print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ⚡ CABECERA ELEVADA -->
+<div class="cabecera">
+    <div class="logo-contenedor">
+        <img src="/logo.png" onerror="this.onerror=null; this.src='https://drive.google.com/uc?id=1lgJvo_v5BIBLsgGZIGpgjGtfMZKEC474';" class="logo-img" alt="Logo MYG">
+        <div>
+            <div class="titulo-sistema">Sistema de Reclamos MYG</div>
+            <div style="font-size:12px; opacity:0.9; font-weight:600;">Control de Cambios y Reclamaciones</div>
+        </div>
+    </div>
+    <div class="cabecera-derecha">
+        <!-- 🔔 CAMPANITA PARPADEANTE CON SONIDO PARA ADMIN -->
+        <div id="btnCampanita" class="campana-boton oculto" onclick="hacerClickCampanita()" title="Notificaciones de nuevos reclamos">
+            <span class="campana-icono">🔔</span>
+            <span id="badgeCampanita" class="campana-badge oculto">0</span>
+        </div>
+
+        <div class="indicador-sincro" id="indicadorSincro">
+            <div class="punto-verde"></div>
+            <span id="textoSincro" style="font-weight:700;">Conectando...</span>
+        </div>
+        <div class="usuario-badge oculto" id="badgeUsuario"></div>
+        <button class="btn btn-sm btn-acento oculto" id="btnCerrarSesionTop" onclick="cerrarSesion()">Cerrar Sesión</button>
+    </div>
+</div>
+
+<!-- 🔐 PANTALLA DE ACCESO / LOGIN -->
+<div class="contenedor" id="areaLogin">
+    <div class="login-card">
+        <div style="text-align:center; margin-bottom:20px;">
+            <img src="/logo.png" onerror="this.onerror=null; this.src='https://drive.google.com/uc?id=1lgJvo_v5BIBLsgGZIGpgjGtfMZKEC474';" class="logo-login" alt="Logo MYG">
+        </div>
+        <h2 class="login-titulo">Iniciar Sesión</h2>
+        <div class="input-grupo">
+            <label for="usuario">Usuario / Nombre</label>
+            <input type="text" id="usuario" placeholder="Admin, Brayan Gomez, Melvin Sequeen..." autocomplete="username">
+        </div>
+        <div class="input-grupo">
+            <label for="contrasena">Contraseña</label>
+            <input type="password" id="contrasena" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <button class="btn btn-primario" style="width:100%; margin-top:10px;" onclick="iniciarSesion()">Ingresar al Sistema</button>
+        <div id="msgLogin" class="mensaje mensaje-error" style="margin-top:18px; display:none;"></div>
+    </div>
+</div>
+
+<!-- 📱 ÁREA PRINCIPAL AUTENTICADA -->
+<div class="contenedor oculto" id="areaPrincipal">
+    <!-- 🖨️ CABECERA EXCLUSIVA PARA REPORTES IMPRESOS -->
+    <div class="cabecera-impresion">
+        <img src="/logo.png" onerror="this.onerror=null; this.src='https://drive.google.com/uc?id=1lgJvo_v5BIBLsgGZIGpgjGtfMZKEC474';" alt="Logo MYG">
+        <div>
+            <h2>Sistema de Reclamos MYG</h2>
+            <p>Control de Cambios y Reclamaciones de Productos — Reporte Oficial</p>
+        </div>
+    </div>
+
+    <div id="mensajeAccion" class="mensaje" style="display:none;"></div>
+
+    <!-- 📝 FORMULARIO DE RECLAMO -->
+    <div class="form-card" id="formCardNuevo">
+        <h2 style="color:var(--primario); margin-bottom:22px; display:flex; align-items:center; gap:10px; font-size:20px; font-weight:800;">
+            <span>📝</span> Nuevo Reclamo / Cambio de Producto
+        </h2>
+        <div class="form-grid">
+            <div class="input-grupo">
+                <label>N° Reclamo (ID Consecutivo)</label>
+                <input type="text" id="idReclamo" readonly style="background:#f1f5f9; font-weight:800; color:var(--primario); cursor:not-allowed;">
+            </div>
+            <div class="input-grupo">
+                <label>Ruta</label>
+                <input type="text" id="ruta" readonly style="background:#f1f5f9; font-weight:700; color:#334155; cursor:not-allowed;">
+            </div>
+            <div class="input-grupo">
+                <label>Nombre del Vendedor</label>
+                <input type="text" id="vendedor" readonly style="background:#f1f5f9; font-weight:700; color:#334155; cursor:not-allowed;">
+            </div>
+            <div class="input-grupo">
+                <label>Nombre del Cliente <span style="color:var(--peligro); font-weight:900;">*</span></label>
+                <input type="text" id="cliente" placeholder="Nombre completo del cliente..." required>
+            </div>
+
+            <!-- 📞 TELÉFONO DEL CLIENTE (OBLIGATORIO: NÚMEROS Y GUIONES) -->
+            <div class="input-grupo">
+                <label>📞 Teléfono del Cliente <span style="color:var(--peligro); font-weight:900;">*</span></label>
+                <input type="tel" id="telefono" placeholder="Ej: 5555-1234 o 55551234" pattern="[0-9\s\-+]+" required>
+            </div>
+
+            <div class="input-grupo">
+                <label>N° de Factura <span style="color:var(--peligro); font-weight:900;">*</span></label>
+                <input type="text" id="factura" placeholder="Número de factura..." required>
+            </div>
+            
+            <!-- 🚚 NOMBRE DEL PILOTO = VENDEDOR AUTOMÁTICO (SOLO LECTURA) -->
+            <div class="input-grupo">
+                <label>
+                    <span>Nombre del Piloto / Vendedor <span style="color:var(--peligro); font-weight:900;">*</span></span>
+                    <span style="font-size:11px; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:8px; font-weight:700; border:1px solid #bae6fd;">Automático</span>
+                </label>
+                <input type="text" id="piloto" readonly style="background:#f1f5f9; font-weight:700; color:#1e293b; cursor:not-allowed;" placeholder="Automático (igual al vendedor)..." required>
+            </div>
+
+            <div class="input-grupo">
+                <label>Producto con Falla <span style="color:var(--peligro); font-weight:900;">*</span></label>
+                <input type="text" id="producto" placeholder="Descripción del producto..." required>
+            </div>
+            <div class="input-grupo">
+                <label>Fecha</label>
+                <input type="date" id="fecha">
+            </div>
+            <div class="input-grupo">
+                <label>Hora</label>
+                <input type="time" id="hora">
+            </div>
+
+            <!-- 📸 FOTO DEL PRODUCTO / DEFECTO -->
+            <div class="input-grupo">
+                <label>📸 Foto del Producto / Falla</label>
+                <div class="firma-area" onclick="document.getElementById('inputFoto').click()">
+                    <span id="textoFoto">📷 Click para adjuntar foto</span>
+                    <img id="previewFoto" class="firma-imagen oculto" alt="Foto Producto">
+                </div>
+                <input type="file" id="inputFoto" accept="image/*" class="oculto" onchange="procesarFoto(event)">
+            </div>
+
+            <div class="input-grupo campo-completo">
+                <label>Motivo del Reclamo / Cambio <span style="color:var(--peligro); font-weight:900;">*</span></label>
+                <textarea id="motivo" placeholder="Describa el motivo del reclamo o defecto del producto..." required></textarea>
+            </div>
+
+            <div class="input-grupo">
+                <label>Firma del Vendedor</label>
+                <div class="firma-area" id="firmaVendedor" onclick="abrirFirma('vendedor')">
+                    <span id="textoFirmaVendedor">✍️ Click para registrar firma</span>
+                    <img id="imgFirmaVendedor" class="firma-imagen oculto" alt="Firma Vendedor">
+                </div>
+            </div>
+            <div class="input-grupo">
+                <label>Firma del Cliente</label>
+                <div class="firma-area" id="firmaCliente" onclick="abrirFirma('cliente')">
+                    <span id="textoFirmaCliente">✍️ Click para registrar firma</span>
+                    <img id="imgFirmaCliente" class="firma-imagen oculto" alt="Firma Cliente">
+                </div>
+            </div>
+
+            <!-- ✅ 5 CHECKBOXES DE ESTADO (SOLO ADMIN PUEDE MARCAR - RUTAS DESHABILITADOS) -->
+            <div class="input-grupo campo-completo seccion-estados">
+                <div class="estados-cabecera">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:18px;">📋</span>
+                        <strong style="color:var(--primario); font-size:15px;">Estados del Proceso</strong>
+                        <span id="badgePermisoEstadosForm" style="font-size:11px; padding:3px 9px; border-radius:10px; font-weight:800;"></span>
+                    </div>
+                    <span id="infoFechaEntregaForm" class="estado-timestamp"></span>
+                </div>
+
+                <div class="estados-grid" id="gridEstadosForm">
+                    <label class="checkbox-estado-item" id="lblFormAceptado">
+                        <input type="checkbox" id="chkFormAceptado" onchange="alCambiarEstadoFormulario('aceptado')">
+                        <span>✅ Proceso Aceptado</span>
+                    </label>
+                    <label class="checkbox-estado-item" id="lblFormRechazado">
+                        <input type="checkbox" id="chkFormRechazado" onchange="alCambiarEstadoFormulario('rechazado')">
+                        <span>❌ Proceso Rechazado</span>
+                    </label>
+                    <label class="checkbox-estado-item" id="lblFormEntrega">
+                        <input type="checkbox" id="chkFormEntrega" onchange="alCambiarEstadoFormulario('entrega')">
+                        <span>🔄 En Proceso de Entrega</span>
+                    </label>
+                    <label class="checkbox-estado-item" id="lblFormCambioEntregado">
+                        <input type="checkbox" id="chkFormCambioEntregado" onchange="alCambiarEstadoFormulario('cambioEntregado')">
+                        <div>
+                            <span>📦 Cambio Entregado</span>
+                            <span id="textoFechaEntregaForm" class="estado-timestamp"></span>
+                        </div>
+                    </label>
+                    <label class="checkbox-estado-item" id="lblFormRecibido">
+                        <input type="checkbox" id="chkFormRecibido" onchange="alCambiarEstadoFormulario('recibido')">
+                        <span>✅ Producto Recibido</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="botones-form">
+            <button class="btn btn-primario" id="btnGuardar" onclick="guardarReclamo()">💾 Guardar Reclamo</button>
+            <button class="btn btn-exito" onclick="imprimirReporteFormulario()" title="Imprimir reporte del reclamo">🖨️ Imprimir Reporte</button>
+            <button class="btn btn-acento" onclick="limpiarFormulario()">🔄 Limpiar Formulario</button>
+            <button class="btn" style="background:#64748b; color:white;" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <!-- 📁 HISTORIAL Y CARPETAS POR RUTA -->
+    <div class="lista-card" id="cardHistorial">
+        <!-- 🚨 ALERTA AL LLEGAR RECLAMO NUEVO (PARA ADMIN) -->
+        <div id="bannerAlertaAdmin" class="alerta-banner-admin oculto">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span style="font-size:24px;">🚨</span>
+                <span id="textoAlertaAdmin">¡NUEVO RECLAMO RECIBIDO!</span>
+            </div>
+            <button onclick="marcarAlertaVista()" style="background:#ffffff; color:#d50000; border:none; padding:6px 14px; border-radius:8px; font-weight:800; cursor:pointer; font-size:12px; text-transform:uppercase;">Cerrar Alerta</button>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
+            <h2 id="tituloHistorial" style="color:var(--primario); font-size:20px; font-weight:800;">
+                📊 Historial de Reclamos
+            </h2>
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <button class="btn btn-sm btn-primario" onclick="cargarReclamos()" title="Refrescar datos">🔄 Refrescar</button>
+                <button class="btn btn-sm btn-exito" onclick="window.print()" title="Imprimir reporte de historial">🖨️ Imprimir Reporte</button>
+                <button id="btnLimpiarTodoAdmin" class="btn btn-sm btn-peligro oculto" onclick="pedirConfirmacionLimpiarTodo()" title="Borrar todo el historial (Solo Admin)">🗑️ Limpiar Todo</button>
+            </div>
+        </div>
+
+        <!-- 📂 BARRA DE NAVEGACIÓN DE CARPETAS POR RUTA -->
+        <div class="carpetas-barra" id="barraCarpetas">
+            <!-- Rellenado dinámicamente según rol -->
+        </div>
+
+        <!-- 📊 TABLA CON TODAS LAS COLUMNAS Y EL ESTADO -->
+        <!-- ID Reclamo | Ruta | Vendedor | Cliente | 📞 Teléfono | Factura | Piloto | Photo | Producto | Estado | Fecha | Hora | FirmaVendedor | FirmaCliente | Acciones -->
+        <div class="tabla-contenedor">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Ruta</th>
+                        <th>Vendedor</th>
+                        <th>Cliente</th>
+                        <th>📞 Teléfono</th>
+                        <th>Factura</th>
+                        <th>Piloto</th>
+                        <th>Photo</th>
+                        <th>Producto</th>
+                        <th>Estado</th>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>FirmaVendedor</th>
+                        <th>FirmaCliente</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="cuerpoTabla">
+                    <tr>
+                        <td colspan="15" style="text-align:center; padding:30px; color:var(--textoClaro);">
+                            Cargando reclamos...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 📊 GRÁFICAS DEBAJO DEL HISTORIAL (RUTAS, PRODUCTOS, TENDENCIA) -->
+    <div class="graficas-grid" id="seccionGraficas">
+        <!-- Gráfica 1: Reclamos por Ruta -->
+        <div class="grafica-card">
+            <h3 style="color:var(--primario); font-size:16px; font-weight:800; margin-bottom:15px; display:flex; align-items:center; gap:8px;">
+                <span>🚚</span> Reclamos por Ruta
+            </h3>
+            <div class="grafica-contenedor-canvas">
+                <canvas id="chartRutas"></canvas>
+            </div>
+        </div>
+
+        <!-- Gráfica 2: Productos con Más Fallas -->
+        <div class="grafica-card">
+            <h3 style="color:var(--primario); font-size:16px; font-weight:800; margin-bottom:15px; display:flex; align-items:center; gap:8px;">
+                <span>📦</span> Productos con Más Fallas
+            </h3>
+            <div class="grafica-contenedor-canvas">
+                <canvas id="chartProductos"></canvas>
+            </div>
+        </div>
+
+        <!-- Gráfica 3: Reclamos por Tiempo (Mensual / Semanal) -->
+        <div class="grafica-card">
+            <h3 style="color:var(--primario); font-size:16px; font-weight:800; margin-bottom:15px; display:flex; align-items:center; gap:8px;">
+                <span>📅</span> Tendencia de Reclamos
+            </h3>
+            <div class="grafica-contenedor-canvas">
+                <canvas id="chartTiempo"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ⚙️ MODAL PARA GESTIONAR ESTADOS (SOLO ADMIN PUEDE GUARDAR - RUTAS SOLO LECTURA) -->
+<div class="modal-fondo" id="modalEstados">
+    <div class="modal-caja">
+        <div class="modal-titulo">
+            <span>⚙️</span> <span id="tituloModalEstados">Gestionar Estado del Reclamo</span>
+        </div>
+        <p class="modal-texto" id="subtituloModalEstados" style="margin-bottom:15px;">
+            Marque o actualice los estados del proceso.
+        </p>
+
+        <div style="background:#F1F5F9; padding:12px; border-radius:10px; margin-bottom:18px; font-size:13px; border:1px solid #CBD5E1;">
+            <div id="detalleReclamoModalEstados" style="line-height:1.7;"></div>
+        </div>
+
+        <div class="estados-grid" id="gridEstadosModal">
+            <label class="checkbox-estado-item" id="lblModalAceptado">
+                <input type="checkbox" id="chkModalAceptado" onchange="alCambiarEstadoModal('aceptado')">
+                <span>✅ Proceso Aceptado</span>
+            </label>
+            <label class="checkbox-estado-item" id="lblModalRechazado">
+                <input type="checkbox" id="chkModalRechazado" onchange="alCambiarEstadoModal('rechazado')">
+                <span>❌ Proceso Rechazado</span>
+            </label>
+            <label class="checkbox-estado-item" id="lblModalEntrega">
+                <input type="checkbox" id="chkModalEntrega" onchange="alCambiarEstadoModal('entrega')">
+                <span>🔄 En Proceso de Entrega</span>
+            </label>
+            <label class="checkbox-estado-item" id="lblModalCambioEntregado">
+                <input type="checkbox" id="chkModalCambioEntregado" onchange="alCambiarEstadoModal('cambioEntregado')">
+                <div>
+                    <span>📦 Cambio Entregado</span>
+                    <span id="textoFechaEntregaModal" class="estado-timestamp"></span>
+                </div>
+            </label>
+            <label class="checkbox-estado-item" id="lblModalRecibido">
+                <input type="checkbox" id="chkModalRecibido" onchange="alCambiarEstadoModal('recibido')">
+                <span>✅ Producto Recibido</span>
+            </label>
+        </div>
+
+        <div class="modal-botones">
+            <button class="btn btn-sm" style="background:#cbd5e1; color:#334155;" onclick="cerrarModalEstados()">Cerrar</button>
+            <button class="btn btn-sm btn-primario" id="btnGuardarEstadosModal" onclick="guardarEstadosDesdeModal()">💾 Guardar Estado</button>
+        </div>
+    </div>
+</div>
+
+<!-- 📄 MODAL DE DETALLE / VOUCHER IMPRIMIBLE -->
+<div class="modal-fondo" id="modalDetalle">
+    <div class="modal-caja">
+        <div class="modal-titulo">
+            <span>📄</span> Comprobante de Reclamo
+        </div>
+        <div id="contenidoDetalleVoucher" class="voucher-detalle-grid">
+            <!-- Rellenado dinámicamente -->
+        </div>
+        <div class="modal-botones" id="botonesModalDetalle">
+            <button class="btn btn-sm" style="background:#cbd5e1; color:#334155;" onclick="cerrarModalDetalle()">Cerrar</button>
+            <button class="btn btn-sm btn-exito" onclick="imprimirReporteActual()" title="Imprimir este reporte">🖨️ Imprimir Reporte</button>
+            <span id="contenedorBtnEliminarDetalle"></span>
+        </div>
+    </div>
+</div>
+
+<!-- 🗑️ MODAL DE CONFIRMACIÓN DE BORRADO (SOLO ADMIN) -->
+<div class="modal-fondo" id="modalEliminar">
+    <div class="modal-caja">
+        <div class="modal-titulo" style="color:var(--peligro);">
+            <span>🗑️</span> Confirmar Eliminación
+        </div>
+        <p class="modal-texto">
+            ¿Seguro que desea eliminar este reclamo? Esta acción NO se puede deshacer ⚠️<br><br>
+            <strong id="textoDetalleEliminar" style="color:#1e293b; font-size:14.5px; display:block; background:#F8FAFC; padding:12px; border-radius:8px; border:1px solid #CBD5E1;"></strong><br>
+            Esta acción solo la puede realizar el Administrador y se eliminará de la tabla, de Google Sheets y de la base de datos en vivo.
+        </p>
+        <div class="modal-botones">
+            <button class="btn btn-sm" style="background:#cbd5e1; color:#334155;" onclick="cerrarModalEliminar()">Cancelar</button>
+            <button class="btn btn-sm btn-peligro" id="btnConfirmarEliminar" onclick="ejecutarEliminacion()">🗑️ Eliminar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// -------------------------------------------------------------
+// 📌 DATOS FIJOS DEL SISTEMA Y GOOGLE APPS SCRIPT
+// -------------------------------------------------------------
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyxx75EDsHJ0VcorrpG8-RlT5aHMVqaGe7yFE6C1BxXSTpyW0hGLp_X4KiIbICXVj1tkA/exec";
+const LOGO_URL = "/logo.png";
+
+// -------------------------------------------------------------
+// 🔑 USUARIOS Y CONTRASEÑAS EXACTAMENTE SOLICITADOS
+// -------------------------------------------------------------
+const USUARIOS = {
+    // Administrador: ve todos los reclamos, puede editar todo, marcar estados, borrar
+    "admin": { usuario: "Admin", pass: "MYG2026", rol: "admin", ruta: "TODAS", vendedor: "Administrador General", piloto: "Administrador General" },
+    
+    // Ruta 1: Brayan Gomez | ruta1myg
+    "ruta 1": { usuario: "Ruta 1", pass: "ruta1myg", rol: "ruta", ruta: "Ruta 1", vendedor: "Brayan Gomez", piloto: "Brayan Gomez" },
+    "brayan gomez": { usuario: "Ruta 1", pass: "ruta1myg", rol: "ruta", ruta: "Ruta 1", vendedor: "Brayan Gomez", piloto: "Brayan Gomez" },
+    
+    // Ruta 2: Melvin Sequeen | ruta2myg
+    "ruta 2": { usuario: "Ruta 2", pass: "ruta2myg", rol: "ruta", ruta: "Ruta 2", vendedor: "Melvin Sequeen", piloto: "Melvin Sequeen" },
+    "melvin sequeen": { usuario: "Ruta 2", pass: "ruta2myg", rol: "ruta", ruta: "Ruta 2", vendedor: "Melvin Sequeen", piloto: "Melvin Sequeen" },
+    
+    // Ruta 3: Melvin Gómez | ruta3myg
+    "ruta 3": { usuario: "Ruta 3", pass: "ruta3myg", rol: "ruta", ruta: "Ruta 3", vendedor: "Melvin Gómez", piloto: "Melvin Gómez" },
+    "melvin gómez": { usuario: "Ruta 3", pass: "ruta3myg", rol: "ruta", ruta: "Ruta 3", vendedor: "Melvin Gómez", piloto: "Melvin Gómez" },
+    "melvin gomez": { usuario: "Ruta 3", pass: "ruta3myg", rol: "ruta", ruta: "Ruta 3", vendedor: "Melvin Gómez", piloto: "Melvin Gómez" },
+    
+    // Ruta 4: Marcos Juárez | ruta4myg
+    "ruta 4": { usuario: "Ruta 4", pass: "ruta4myg", rol: "ruta", ruta: "Ruta 4", vendedor: "Marcos Juárez", piloto: "Marcos Juárez" },
+    "marcos juárez": { usuario: "Ruta 4", pass: "ruta4myg", rol: "ruta", ruta: "Ruta 4", vendedor: "Marcos Juárez", piloto: "Marcos Juárez" },
+    "marcos juarez": { usuario: "Ruta 4", pass: "ruta4myg", rol: "ruta", ruta: "Ruta 4", vendedor: "Marcos Juárez", piloto: "Marcos Juárez" },
+    
+    // Ruta 5: Ruta 5 | ruta5myg
+    "ruta 5": { usuario: "Ruta 5", pass: "ruta5myg", rol: "ruta", ruta: "Ruta 5", vendedor: "Ruta 5", piloto: "Ruta 5" },
+    
+    // Ruta 6: Gustavo Gómez | ruta6myg
+    "ruta 6": { usuario: "Ruta 6", pass: "ruta6myg", rol: "ruta", ruta: "Ruta 6", vendedor: "Gustavo Gómez", piloto: "Gustavo Gómez" },
+    "gustavo gómez": { usuario: "Ruta 6", pass: "ruta6myg", rol: "ruta", ruta: "Ruta 6", vendedor: "Gustavo Gómez", piloto: "Gustavo Gómez" },
+    "gustavo gomez": { usuario: "Ruta 6", pass: "ruta6myg", rol: "ruta", ruta: "Ruta 6", vendedor: "Gustavo Gómez", piloto: "Gustavo Gómez" },
+    
+    // Ruta 7: Ruta 7 | ruta7myg
+    "ruta 7": { usuario: "Ruta 7", pass: "ruta7myg", rol: "ruta", ruta: "Ruta 7", vendedor: "Ruta 7", piloto: "Ruta 7" },
+    
+    // Ruta 8: Marvin Otoniel | ruta8myg
+    "ruta 8": { usuario: "Ruta 8", pass: "ruta8myg", rol: "ruta", ruta: "Ruta 8", vendedor: "Marvin Otoniel", piloto: "Marvin Otoniel" },
+    "marvin otoniel": { usuario: "Ruta 8", pass: "ruta8myg", rol: "ruta", ruta: "Ruta 8", vendedor: "Marvin Otoniel", piloto: "Marvin Otoniel" },
+    
+    // Ruta 9: Sergio Catú | ruta9myg
+    "ruta 9": { usuario: "Ruta 9", pass: "ruta9myg", rol: "ruta", ruta: "Ruta 9", vendedor: "Sergio Catú", piloto: "Sergio Catú" },
+    "sergio catú": { usuario: "Ruta 9", pass: "ruta9myg", rol: "ruta", ruta: "Ruta 9", vendedor: "Sergio Catú", piloto: "Sergio Catú" },
+    "sergio catu": { usuario: "Ruta 9", pass: "ruta9myg", rol: "ruta", ruta: "Ruta 9", vendedor: "Sergio Catú", piloto: "Sergio Catú" },
+    
+    // Ruta 10: Edgar Guzmán | ruta10myg
+    "ruta 10": { usuario: "Ruta 10", pass: "ruta10myg", rol: "ruta", ruta: "Ruta 10", vendedor: "Edgar Guzmán", piloto: "Edgar Guzmán" },
+    "edgar guzmán": { usuario: "Ruta 10", pass: "ruta10myg", rol: "ruta", ruta: "Ruta 10", vendedor: "Edgar Guzmán", piloto: "Edgar Guzmán" },
+    "edgar guzman": { usuario: "Ruta 10", pass: "ruta10myg", rol: "ruta", ruta: "Ruta 10", vendedor: "Edgar Guzmán", piloto: "Edgar Guzmán" },
+    
+    // Ruta 11: Ruta 11 | ruta11myg
+    "ruta 11": { usuario: "Ruta 11", pass: "ruta11myg", rol: "ruta", ruta: "Ruta 11", vendedor: "Ruta 11", piloto: "Ruta 11" }
+};
+
+const LISTA_RUTAS = [
+    { id: "Ruta 1", nombre: "Ruta 1 - Brayan Gomez" },
+    { id: "Ruta 2", nombre: "Ruta 2 - Melvin Sequeen" },
+    { id: "Ruta 3", nombre: "Ruta 3 - Melvin Gómez" },
+    { id: "Ruta 4", nombre: "Ruta 4 - Marcos Juárez" },
+    { id: "Ruta 5", nombre: "Ruta 5" },
+    { id: "Ruta 6", nombre: "Ruta 6 - Gustavo Gómez" },
+    { id: "Ruta 7", nombre: "Ruta 7" },
+    { id: "Ruta 8", nombre: "Ruta 8 - Marvin Otoniel" },
+    { id: "Ruta 9", nombre: "Ruta 9 - Sergio Catú" },
+    { id: "Ruta 10", nombre: "Ruta 10 - Edgar Guzmán" },
+    { id: "Ruta 11", nombre: "Ruta 11" }
+];
+
+let usuarioActual = null;
+let reclamosCache = [];
+let idsConocidos = new Set();
+let temporizadorRefresco = null;
+let reclamoAEliminarId = null;
+let reclamoEnEdicionEstado = null;
+let idNuevoResaltado = null;
+let timerParpadeoCampana = null;
+let fotoBase64Actual = "";
+let carpetaActiva = "TODAS";
+let fechaHoraEntregaForm = "";
+let fechaHoraEntregaModal = "";
+
+// Instancias de Chart.js
+let chartRutasInstancia = null;
+let chartProductosInstancia = null;
+let chartTiempoInstancia = null;
+
+// SINTETIZADOR WEB AUDIO API PARA ALARMA
+let audioCtx = null;
+function getAudioContext() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    return audioCtx;
+}
+
+function reproducirAlarmaAdmin() {
+    try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+
+        const notas = [
+            { freq: 880, start: 0, dur: 0.15 },
+            { freq: 1174.66, start: 0.16, dur: 0.18 },
+            { freq: 1318.51, start: 0.35, dur: 0.22 },
+            { freq: 1760, start: 0.58, dur: 0.40 }
+        ];
+
+        notas.forEach(n => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(n.freq, now + n.start);
+
+            gain.gain.setValueAtTime(0.001, now + n.start);
+            gain.gain.exponentialRampToValueAtTime(0.4, now + n.start + 0.04);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + n.start + n.dur);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + n.start);
+            osc.stop(now + n.start + n.dur);
+        });
+    } catch (e) {
+        console.warn("Audio Context en espera:", e);
+    }
+}
+
+window.onload = function() {
+    establecerFechaHoraActual();
+    document.addEventListener('click', function primerClick() {
+        getAudioContext();
+        document.removeEventListener('click', primerClick);
+    }, { once: true });
+};
+
+function establecerFechaHoraActual() {
+    const hoy = new Date();
+    const f = hoy.toISOString().split('T')[0];
+    const h = hoy.toTimeString().split(' ')[0].substring(0,5);
+    const campoFecha = document.getElementById("fecha");
+    const campoHora = document.getElementById("hora");
+    if (campoFecha && !campoFecha.value) campoFecha.value = f;
+    if (campoHora && !campoHora.value) campoHora.value = h;
+}
+
+// -------------------------------------------------------------
+// 🔐 AUTENTICACIÓN Y FILTRO ESTRICTO DE CARPETAS
+// -------------------------------------------------------------
+function normalizarTexto(t) {
+    return (t || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function iniciarSesion() {
+    const uInput = document.getElementById("usuario").value.trim();
+    const pInput = document.getElementById("contrasena").value.trim();
+    const msg = document.getElementById("msgLogin");
+
+    const uNorm = normalizarTexto(uInput);
+
+    let match = null;
+    for (const [key, obj] of Object.entries(USUARIOS)) {
+        if (normalizarTexto(key) === uNorm || 
+            normalizarTexto(obj.usuario) === uNorm || 
+            (obj.vendedor && normalizarTexto(obj.vendedor) === uNorm)) {
+            match = obj;
+            break;
+        }
+    }
+
+    if (!match || match.pass !== pInput) {
+        msg.textContent = "❌ Usuario o contraseña incorrectos.";
+        msg.style.display = "block";
+        return;
+    }
+
+    msg.style.display = "none";
+    usuarioActual = match;
+
+    // Configurar interfaz según rol
+    document.getElementById("areaLogin").classList.add("oculto");
+    document.getElementById("areaPrincipal").classList.remove("oculto");
+    document.getElementById("btnCerrarSesionTop").classList.remove("oculto");
+
+    const badge = document.getElementById("badgeUsuario");
+    badge.textContent = `👤 ${usuarioActual.usuario} (${usuarioActual.rol === 'admin' ? 'Administrador' : usuarioActual.ruta})`;
+    badge.classList.remove("oculto");
+
+    // Formulario: autoselección de Ruta, Vendedor y Piloto
+    if (usuarioActual.rol === "admin") {
+        document.getElementById("ruta").value = "Ruta 1";
+        document.getElementById("vendedor").value = "Administrador General";
+        document.getElementById("piloto").value = "Administrador General";
+        document.getElementById("btnCampanita").classList.remove("oculto");
+        document.getElementById("btnLimpiarTodoAdmin").classList.remove("oculto");
+        carpetaActiva = "TODAS";
+    } else {
+        document.getElementById("ruta").value = usuarioActual.ruta;
+        document.getElementById("vendedor").value = usuarioActual.vendedor;
+        document.getElementById("piloto").value = usuarioActual.vendedor; // 🚚 Piloto = Vendedor automático
+        document.getElementById("btnCampanita").classList.add("oculto");
+        document.getElementById("btnLimpiarTodoAdmin").classList.add("oculto");
+        carpetaActiva = usuarioActual.ruta;
+    }
+
+    // Configurar permisos de los 5 checkboxes en el formulario
+    aplicarPermisosCheckboxesForm();
+
+    establecerFechaHoraActual();
+    cargarReclamos(true);
+
+    // Sincronización continua cada 2 segundos
+    if (temporizadorRefresco) clearInterval(temporizadorRefresco);
+    temporizadorRefresco = setInterval(sincronizarEnSegundoPlano, 2000);
+}
+
+function aplicarPermisosCheckboxesForm() {
+    const esAdmin = usuarioActual && usuarioActual.rol === "admin";
+    const badge = document.getElementById("badgePermisoEstadosForm");
+    const inputs = [
+        "chkFormAceptado", "chkFormRechazado", "chkFormEntrega", 
+        "chkFormCambioEntregado", "chkFormRecibido"
+    ];
+    const labels = [
+        "lblFormAceptado", "lblFormRechazado", "lblFormEntrega", 
+        "lblFormCambioEntregado", "lblFormRecibido"
+    ];
+
+    if (esAdmin) {
+        badge.textContent = "👑 Admin: Editable";
+        badge.style.background = "#DCFCE7";
+        badge.style.color = "#15803D";
+        inputs.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = false;
+        });
+        labels.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove("deshabilitado");
+        });
+    } else {
+        badge.textContent = "🔒 Solo Administrador puede marcar";
+        badge.style.background = "#F1F5F9";
+        badge.style.color = "#64748B";
+        inputs.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = true;
+        });
+        labels.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.add("deshabilitado");
+        });
+    }
+}
+
+function cerrarSesion() {
+    usuarioActual = null;
+    reclamosCache = [];
+    idsConocidos.clear();
+    if (temporizadorRefresco) clearInterval(temporizadorRefresco);
+    detenerParpadeoCampana();
+
+    document.getElementById("areaPrincipal").classList.add("oculto");
+    document.getElementById("areaLogin").classList.remove("oculto");
+    document.getElementById("btnCerrarSesionTop").classList.add("oculto");
+    document.getElementById("badgeUsuario").classList.add("oculto");
+    document.getElementById("btnCampanita").classList.add("oculto");
+    document.getElementById("usuario").value = "";
+    document.getElementById("contrasena").value = "";
+    document.getElementById("msgLogin").style.display = "none";
+}
+
+// -------------------------------------------------------------
+// 📁 RENDERIZADO DE CARPETAS POR RUTA
+// -------------------------------------------------------------
+function renderizarBarraCarpetas() {
+    const barra = document.getElementById("barraCarpetas");
+    barra.innerHTML = "";
+
+    if (!usuarioActual) return;
+
+    // Conteo por ruta
+    const conteos = { "TODAS": reclamosCache.length };
+    LISTA_RUTAS.forEach(r => { conteos[r.id] = 0; });
+    reclamosCache.forEach(r => {
+        const rutaNom = r.ruta || "Ruta 1";
+        conteos[rutaNom] = (conteos[rutaNom] || 0) + 1;
+    });
+
+    if (usuarioActual.rol === "admin") {
+        // Carpeta "Todas las Rutas"
+        const chipTodas = document.createElement("div");
+        chipTodas.className = "carpeta-chip" + (carpetaActiva === "TODAS" ? " activa" : "");
+        chipTodas.innerHTML = `<span>📁 Todas las Rutas</span> <span class="carpeta-conteo">${conteos["TODAS"]}</span>`;
+        chipTodas.onclick = () => seleccionarCarpeta("TODAS");
+        barra.appendChild(chipTodas);
+
+        // Carpeta individual para cada una de las 11 rutas
+        LISTA_RUTAS.forEach(r => {
+            const chip = document.createElement("div");
+            chip.className = "carpeta-chip" + (carpetaActiva === r.id ? " activa" : "");
+            chip.innerHTML = `<span>🚚 ${r.id}</span> <span class="carpeta-conteo">${conteos[r.id] || 0}</span>`;
+            chip.onclick = () => seleccionarCarpeta(r.id);
+            barra.appendChild(chip);
+        });
+    } else {
+        // Para usuario de ruta: muestra ÚNICAMENTE su propia carpeta
+        const miRuta = usuarioActual.ruta;
+        const chip = document.createElement("div");
+        chip.className = "carpeta-chip activa";
+        chip.innerHTML = `<span>📁 Mi Carpeta (${miRuta})</span> <span class="carpeta-conteo">${conteos[miRuta] || 0}</span>`;
+        barra.appendChild(chip);
+    }
+}
+
+function seleccionarCarpeta(rutaId) {
+    carpetaActiva = rutaId;
+    renderizarBarraCarpetas();
+    renderizarTabla();
+    actualizarGraficas();
+}
+
+function actualizarSiguienteId() {
+    const campoId = document.getElementById("idReclamo");
+    if (!campoId) return;
+
+    let maxNum = 0;
+    reclamosCache.forEach(r => {
+        const str = String(r.id || "");
+        const match = str.match(/(\d+)/);
+        if (match) {
+            const num = parseInt(match[1], 10);
+            if (num > maxNum) maxNum = num;
+        }
+    });
+    const sig = maxNum + 1;
+    campoId.value = "REC-" + String(sig).padStart(4, '0');
+}
+
+// -------------------------------------------------------------
+// 🔄 SINCRONIZACIÓN CONTINUA CADA 2 SEGUNDOS
+// -------------------------------------------------------------
+async function cargarReclamos(esPrimerCarga = false) {
+    const indicador = document.getElementById("indicadorSincro");
+    const textoSincro = document.getElementById("textoSincro");
+
+    try {
+        textoSincro.textContent = "Sincronizando...";
+        
+        let datos = null;
+        try {
+            const resp = await fetch("/api/records");
+            if (resp.ok) {
+                datos = await resp.json();
+            }
+        } catch (err) {}
+
+        if (!datos || !Array.isArray(datos) || datos.length === 0) {
+            const local = localStorage.getItem("myg_reclamos_backup");
+            datos = local ? JSON.parse(local) : [];
+        }
+
+        procesarDatosRecibidos(datos, esPrimerCarga);
+        textoSincro.textContent = "En línea (2s)";
+        indicador.querySelector(".punto-verde").style.background = "#00c853";
+    } catch (e) {
+        textoSincro.textContent = "Local";
+        indicador.querySelector(".punto-verde").style.background = "#ffab00";
+    }
+}
+
+async function sincronizarEnSegundoPlano() {
+    if (!usuarioActual) return;
+    try {
+        const resp = await fetch("/api/records");
+        if (resp.ok) {
+            const datos = await resp.json();
+            if (Array.isArray(datos)) {
+                procesarDatosRecibidos(datos, false);
+            }
+        }
+    } catch (e) {}
+}
+
+function procesarDatosRecibidos(nuevosDatos, esPrimerCarga) {
+    let hayNuevoParaAdmin = false;
+    let nuevoReclamoDetectado = null;
+
+    if (esPrimerCarga) {
+        nuevosDatos.forEach(r => idsConocidos.add(r.id));
+    } else {
+        nuevosDatos.forEach(r => {
+            if (!idsConocidos.has(r.id)) {
+                idsConocidos.add(r.id);
+                if (usuarioActual && usuarioActual.rol === "admin") {
+                    hayNuevoParaAdmin = true;
+                    nuevoReclamoDetectado = r;
+                }
+            }
+        });
+    }
+
+    reclamosCache = nuevosDatos;
+    actualizarSiguienteId();
+    renderizarBarraCarpetas();
+    renderizarTabla();
+    actualizarGraficas();
+
+    if (hayNuevoParaAdmin && nuevoReclamoDetectado) {
+        activarNotificacionAdmin(nuevoReclamoDetectado);
+    }
+}
+
+// -------------------------------------------------------------
+// 🔔 CAMPANITA + ALARMA SONORA + PARPADEO 10 SEGUNDOS
+// -------------------------------------------------------------
+function activarNotificacionAdmin(reclamo) {
+    reproducirAlarmaAdmin();
+
+    const campana = document.getElementById("btnCampanita");
+    const badge = document.getElementById("badgeCampanita");
+    const banner = document.getElementById("bannerAlertaAdmin");
+    const textoBanner = document.getElementById("textoAlertaAdmin");
+
+    let count = parseInt(badge.textContent || "0", 10) + 1;
+    badge.textContent = count;
+    badge.classList.remove("oculto");
+
+    campana.classList.add("campana-parpadeo-activa");
+    if (timerParpadeoCampana) clearTimeout(timerParpadeoCampana);
+    timerParpadeoCampana = setTimeout(() => {
+        campana.classList.remove("campana-parpadeo-activa");
+    }, 10000);
+
+    const tel = reclamo.telefono || reclamo.clientPhone || '-';
+    textoBanner.innerHTML = `<strong>⚠️ NUEVO RECLAMO:</strong> ${reclamo.id} | ${reclamo.ruta} (${reclamo.vendedor}) | Cliente: ${reclamo.cliente} | Tel: ${tel} | Producto: ${reclamo.producto}`;
+    banner.classList.remove("oculto");
+
+    idNuevoResaltado = reclamo.id;
+    renderizarTabla();
+    setTimeout(() => {
+        idNuevoResaltado = null;
+        renderizarTabla();
+    }, 8000);
+}
+
+function hacerClickCampanita() {
+    detenerParpadeoCampana();
+    const badge = document.getElementById("badgeCampanita");
+    badge.textContent = "0";
+    badge.classList.add("oculto");
+    document.getElementById("bannerAlertaAdmin").classList.add("oculto");
+}
+
+function marcarAlertaVista() {
+    document.getElementById("bannerAlertaAdmin").classList.add("oculto");
+}
+
+function detenerParpadeoCampana() {
+    const campana = document.getElementById("btnCampanita");
+    campana.classList.remove("campana-parpadeo-activa");
+    if (timerParpadeoCampana) clearTimeout(timerParpadeoCampana);
+}
+
+// -------------------------------------------------------------
+// 🔄 LÓGICA Y REGLAS DE LOS 5 CHECKBOXES DE ESTADO
+// 1. Proceso Aceptado
+// 2. Proceso Rechazado (Excluyente con Aceptado)
+// 3. En Proceso de Entrega (deshabilitado si Rechazado)
+// 4. Cambio Entregado (deshabilitado si Rechazado - fecha/hora automática)
+// 5. Producto Recibido (deshabilitado si Rechazado)
+// -------------------------------------------------------------
+function alCambiarEstadoFormulario(tipo) {
+    if (!usuarioActual || usuarioActual.rol !== "admin") return;
+
+    const chkAceptado = document.getElementById("chkFormAceptado");
+    const chkRechazado = document.getElementById("chkFormRechazado");
+    const chkEntrega = document.getElementById("chkFormEntrega");
+    const chkCambio = document.getElementById("chkFormCambioEntregado");
+    const chkRecibido = document.getElementById("chkFormRecibido");
+
+    const lblAceptado = document.getElementById("lblFormAceptado");
+    const lblRechazado = document.getElementById("lblFormRechazado");
+    const lblEntrega = document.getElementById("lblFormEntrega");
+    const lblCambio = document.getElementById("lblFormCambioEntregado");
+    const lblRecibido = document.getElementById("lblFormRecibido");
+
+    if (tipo === 'aceptado' && chkAceptado.checked) {
+        chkRechazado.checked = false;
+    } else if (tipo === 'rechazado' && chkRechazado.checked) {
+        chkAceptado.checked = false;
+        // Si rechazado está marcado -> los de entrega quedan deshabilitados y desmarcados
+        chkEntrega.checked = false;
+        chkCambio.checked = false;
+        chkRecibido.checked = false;
+        fechaHoraEntregaForm = "";
+        document.getElementById("textoFechaEntregaForm").textContent = "";
+    }
+
+    // Regla de rechazo: deshabilita entrega
+    const rechazadoActivo = chkRechazado.checked;
+    [chkEntrega, chkCambio, chkRecibido].forEach(chk => {
+        chk.disabled = rechazadoActivo;
+    });
+    [lblEntrega, lblCambio, lblRecibido].forEach(lbl => {
+        if (rechazadoActivo) lbl.classList.add("deshabilitado");
+        else lbl.classList.remove("deshabilitado");
+    });
+
+    // Regla Cambio Entregado -> registra fecha y hora automática
+    if (tipo === 'cambioEntregado') {
+        if (chkCambio.checked) {
+            fechaHoraEntregaForm = obtenerFechaHoraFormateada();
+            document.getElementById("textoFechaEntregaForm").textContent = "📅 " + fechaHoraEntregaForm;
+        } else {
+            fechaHoraEntregaForm = "";
+            document.getElementById("textoFechaEntregaForm").textContent = "";
+        }
+    }
+
+    // Actualizar clases de colores activos
+    lblAceptado.className = "checkbox-estado-item" + (chkAceptado.checked ? " activo-verde" : "");
+    lblRechazado.className = "checkbox-estado-item" + (chkRechazado.checked ? " activo-rojo" : "");
+    lblEntrega.className = "checkbox-estado-item" + (chkEntrega.checked ? " activo-naranja" : "") + (rechazadoActivo ? " deshabilitado" : "");
+    lblCambio.className = "checkbox-estado-item" + (chkCambio.checked ? " activo-azul" : "") + (rechazadoActivo ? " deshabilitado" : "");
+    lblRecibido.className = "checkbox-estado-item" + (chkRecibido.checked ? " activo-verde" : "") + (rechazadoActivo ? " deshabilitado" : "");
+}
+
+function alCambiarEstadoModal(tipo) {
+    if (!usuarioActual || usuarioActual.rol !== "admin") return;
+
+    const chkAceptado = document.getElementById("chkModalAceptado");
+    const chkRechazado = document.getElementById("chkModalRechazado");
+    const chkEntrega = document.getElementById("chkModalEntrega");
+    const chkCambio = document.getElementById("chkModalCambioEntregado");
+    const chkRecibido = document.getElementById("chkModalRecibido");
+
+    const lblAceptado = document.getElementById("lblModalAceptado");
+    const lblRechazado = document.getElementById("lblModalRechazado");
+    const lblEntrega = document.getElementById("lblModalEntrega");
+    const lblCambio = document.getElementById("lblModalCambioEntregado");
+    const lblRecibido = document.getElementById("lblModalRecibido");
+
+    if (tipo === 'aceptado' && chkAceptado.checked) {
+        chkRechazado.checked = false;
+    } else if (tipo === 'rechazado' && chkRechazado.checked) {
+        chkAceptado.checked = false;
+        chkEntrega.checked = false;
+        chkCambio.checked = false;
+        chkRecibido.checked = false;
+        fechaHoraEntregaModal = "";
+        document.getElementById("textoFechaEntregaModal").textContent = "";
+    }
+
+    const rechazadoActivo = chkRechazado.checked;
+    [chkEntrega, chkCambio, chkRecibido].forEach(chk => {
+        chk.disabled = rechazadoActivo;
+    });
+    [lblEntrega, lblCambio, lblRecibido].forEach(lbl => {
+        if (rechazadoActivo) lbl.classList.add("deshabilitado");
+        else lbl.classList.remove("deshabilitado");
+    });
+
+    if (tipo === 'cambioEntregado') {
+        if (chkCambio.checked) {
+            fechaHoraEntregaModal = obtenerFechaHoraFormateada();
+            document.getElementById("textoFechaEntregaModal").textContent = "📅 " + fechaHoraEntregaModal;
+        } else {
+            fechaHoraEntregaModal = "";
+            document.getElementById("textoFechaEntregaModal").textContent = "";
+        }
+    }
+
+    lblAceptado.className = "checkbox-estado-item" + (chkAceptado.checked ? " activo-verde" : "");
+    lblRechazado.className = "checkbox-estado-item" + (chkRechazado.checked ? " activo-rojo" : "");
+    lblEntrega.className = "checkbox-estado-item" + (chkEntrega.checked ? " activo-naranja" : "") + (rechazadoActivo ? " deshabilitado" : "");
+    lblCambio.className = "checkbox-estado-item" + (chkCambio.checked ? " activo-azul" : "") + (rechazadoActivo ? " deshabilitado" : "");
+    lblRecibido.className = "checkbox-estado-item" + (chkRecibido.checked ? " activo-verde" : "") + (rechazadoActivo ? " deshabilitado" : "");
+}
+
+function obtenerFechaHoraFormateada() {
+    const d = new Date();
+    const dia = String(d.getDate()).padStart(2, '0');
+    const mes = String(d.getMonth() + 1).padStart(2, '0');
+    const anio = d.getFullYear();
+    const hora = String(d.getHours()).padStart(2, '0');
+    const min = String(d.getMinutes()).padStart(2, '0');
+    return `${dia}/${mes}/${anio} ${hora}:${min}`;
+}
+
+// -------------------------------------------------------------
+// 📊 TABLA: FILTRADO POR RUTA Y COLUMNA ESTADO CON ÍCONO + TEXTO
+// -------------------------------------------------------------
+function renderizarTabla() {
+    const tbody = document.getElementById("cuerpoTabla");
+    tbody.innerHTML = "";
+
+    let lista = reclamosCache;
+
+    // 🔒 RESTRICCIÓN DE ACCESO: Cada ruta ve SOLO lo suyo
+    if (usuarioActual && usuarioActual.rol === "ruta") {
+        lista = reclamosCache.filter(r => r.ruta === usuarioActual.ruta);
+    } else if (usuarioActual && usuarioActual.rol === "admin") {
+        if (carpetaActiva !== "TODAS") {
+            lista = reclamosCache.filter(r => r.ruta === carpetaActiva);
+        }
+    }
+
+    if (lista.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; padding:35px; color:var(--textoClaro); font-weight:600;">No hay reclamos en esta carpeta.</td></tr>`;
+        return;
+    }
+
+    lista.sort((a, b) => (b.id || "").localeCompare(a.id || ""));
+
+    lista.forEach(r => {
+        const tr = document.createElement("tr");
+        if (r.id === idNuevoResaltado) {
+            tr.classList.add("fila-nueva-resaltada");
+        }
+
+        // 🔒 Permisos
+        const esAdmin = (usuarioActual && usuarioActual.rol === "admin");
+        const telCliente = r.telefono || r.clientPhone || r.phone || '-';
+        
+        let celdaFoto = '<span style="color:#94a3b8; font-size:12px;">Sin foto</span>';
+        if (r.photo || r.foto) {
+            const src = r.photo || r.foto;
+            celdaFoto = `<img src="${src}" class="miniatura-foto" onclick="abrirFotoGrande('${src}')" title="Ver foto">`;
+        }
+
+        // Determinar badge de Estado con Ícono + Texto
+        const badgeEstadoHtml = generarBadgeEstado(r, esAdmin);
+
+        tr.innerHTML = `
+            <td><strong>${r.id || '-'}</strong></td>
+            <td><span style="background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:6px; font-weight:700; font-size:12px;">${r.ruta || '-'}</span></td>
+            <td>${r.vendedor || '-'}</td>
+            <td><strong>${r.cliente || '-'}</strong></td>
+            <td><span style="color:#0F52BA; font-weight:700;">📞 ${telCliente}</span></td>
+            <td>${r.factura || '-'}</td>
+            <td><span style="color:#334155; font-size:12px;">${r.piloto || r.vendedor || '-'}</span></td>
+            <td style="text-align:center;">${celdaFoto}</td>
+            <td>${r.producto || '-'}</td>
+            <td>${badgeEstadoHtml}</td>
+            <td>${r.fecha || '-'}</td>
+            <td>${r.hora || '-'}</td>
+            <td><span style="color:#16a34a; font-weight:600; font-size:12px;">${r.firmaVendedor ? '✅ Registrada' : 'Pendiente'}</span></td>
+            <td><span style="color:#16a34a; font-weight:600; font-size:12px;">${r.firmaCliente ? '✅ Registrada' : 'Pendiente'}</span></td>
+            <td>
+                <div class="acciones-btns">
+                    <button class="btn btn-sm btn-primario" onclick="verDetalle('${r.id}')" title="Ver Detalle">👁️ Detalle</button>
+                    <button class="btn btn-sm btn-exito" onclick="imprimirReporteReclamo('${r.id}')" title="Imprimir Reporte">🖨️ Imprimir Reporte</button>
+                    <button class="btn btn-sm" style="background:#0284c7; color:white;" onclick="abrirModalGestionEstados('${r.id}')" title="${esAdmin ? 'Gestionar Estados' : 'Ver Estados'}">⚙️ Estado</button>
+                    ${esAdmin ? `<button class="btn btn-sm btn-peligro" onclick="pedirConfirmacionEliminar('${r.id}')" title="Eliminar Reclamo (Solo Administrador)">🗑️ Eliminar</button>` : ''}
+                </div>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function generarBadgeEstado(r, esAdmin) {
+    const clickAttr = `onclick="abrirModalGestionEstados('${r.id}')" title="${esAdmin ? 'Click para cambiar estado' : 'Ver estados'}"`;
+
+    if (r.procesoRechazado) {
+        return `<span class="badge-estado badge-rechazado" ${clickAttr}>❌ Proceso Rechazado</span>`;
+    }
+    if (r.productoRecibido) {
+        return `<span class="badge-estado badge-recibido" ${clickAttr}>✅ Producto Recibido</span>`;
+    }
+    if (r.cambioEntregado) {
+        const extra = r.fechaCambioEntregado ? ` (${r.fechaCambioEntregado.split(' ')[0]})` : '';
+        return `<span class="badge-estado badge-entregado" ${clickAttr}>📦 Cambio Entregado${extra}</span>`;
+    }
+    if (r.enProcesoEntrega) {
+        return `<span class="badge-estado badge-entrega" ${clickAttr}>🔄 En Proceso</span>`;
+    }
+    if (r.procesoAceptado) {
+        return `<span class="badge-estado badge-aceptado" ${clickAttr}>✅ Aceptado</span>`;
+    }
+    return `<span class="badge-estado badge-pendiente" ${clickAttr}>⏳ Pendiente</span>`;
+}
+
+function abrirFotoGrande(src) {
+    const w = window.open("");
+    w.document.write(`<img src="${src}" style="max-width:100%; height:auto; display:block; margin:auto; padding:20px;">`);
+}
+
+function procesarFoto(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        fotoBase64Actual = e.target.result;
+        const prev = document.getElementById("previewFoto");
+        prev.src = fotoBase64Actual;
+        prev.classList.remove("oculto");
+        document.getElementById("textoFoto").textContent = "✅ Foto adjunta (clic para cambiar)";
+    };
+    reader.readAsDataURL(file);
+}
+
+// -------------------------------------------------------------
+// ⚙️ GESTIÓN DE ESTADOS EN MODAL
+// -------------------------------------------------------------
+function abrirModalGestionEstados(id) {
+    const r = reclamosCache.find(x => x.id === id);
+    if (!r) return;
+
+    reclamoEnEdicionEstado = r;
+    const esAdmin = usuarioActual && usuarioActual.rol === "admin";
+
+    document.getElementById("tituloModalEstados").textContent = `Estado del Reclamo: ${r.id}`;
+    document.getElementById("subtituloModalEstados").textContent = esAdmin 
+        ? "Como Administrador, puede marcar o actualizar los estados a continuación:" 
+        : "Visualización de los estados registrados para este reclamo (Solo lectura para Rutas):";
+
+    document.getElementById("detalleReclamoModalEstados").innerHTML = `
+        <strong>Cliente:</strong> ${r.cliente} | <strong>📞 Tel:</strong> ${r.telefono || r.clientPhone || '-'} <br>
+        <strong>Ruta:</strong> ${r.ruta} | <strong>Vendedor:</strong> ${r.vendedor} | <strong>Piloto:</strong> ${r.piloto || r.vendedor} <br>
+        <strong>Factura:</strong> ${r.factura} | <strong>Producto:</strong> ${r.producto}
+    `;
+
+    // Cargar valores actuales en los 5 checkboxes del modal
+    const chkAceptado = document.getElementById("chkModalAceptado");
+    const chkRechazado = document.getElementById("chkModalRechazado");
+    const chkEntrega = document.getElementById("chkModalEntrega");
+    const chkCambio = document.getElementById("chkModalCambioEntregado");
+    const chkRecibido = document.getElementById("chkModalRecibido");
+
+    chkAceptado.checked = !!r.procesoAceptado;
+    chkRechazado.checked = !!r.procesoRechazado;
+    chkEntrega.checked = !!r.enProcesoEntrega;
+    chkCambio.checked = !!r.cambioEntregado;
+    chkRecibido.checked = !!r.productoRecibido;
+
+    fechaHoraEntregaModal = r.fechaCambioEntregado || "";
+    document.getElementById("textoFechaEntregaModal").textContent = fechaHoraEntregaModal ? ("📅 " + fechaHoraEntregaModal) : "";
+
+    // Aplicar permisos
+    const inputs = [chkAceptado, chkRechazado, chkEntrega, chkCambio, chkRecibido];
+    const labels = [
+        document.getElementById("lblModalAceptado"),
+        document.getElementById("lblModalRechazado"),
+        document.getElementById("lblModalEntrega"),
+        document.getElementById("lblModalCambioEntregado"),
+        document.getElementById("lblModalRecibido")
+    ];
+
+    inputs.forEach(chk => chk.disabled = !esAdmin);
+    labels.forEach(lbl => {
+        if (!esAdmin) lbl.classList.add("deshabilitado");
+        else lbl.classList.remove("deshabilitado");
+    });
+
+    const btnGuardar = document.getElementById("btnGuardarEstadosModal");
+    if (esAdmin) {
+        btnGuardar.classList.remove("oculto");
+    } else {
+        btnGuardar.classList.add("oculto");
+    }
+
+    alCambiarEstadoModal('init');
+    document.getElementById("modalEstados").classList.add("activo");
+}
+
+function cerrarModalEstados() {
+    reclamoEnEdicionEstado = null;
+    document.getElementById("modalEstados").classList.remove("activo");
+}
+
+async function guardarEstadosDesdeModal() {
+    if (!reclamoEnEdicionEstado || !usuarioActual || usuarioActual.rol !== "admin") return;
+
+    const id = reclamoEnEdicionEstado.id;
+    const btn = document.getElementById("btnGuardarEstadosModal");
+    btn.disabled = true;
+    btn.textContent = "⏳ Guardando...";
+
+    const procesoAceptado = document.getElementById("chkModalAceptado").checked;
+    const procesoRechazado = document.getElementById("chkModalRechazado").checked;
+    const enProcesoEntrega = document.getElementById("chkModalEntrega").checked;
+    const cambioEntregado = document.getElementById("chkModalCambioEntregado").checked;
+    const productoRecibido = document.getElementById("chkModalRecibido").checked;
+
+    const camposActualizados = {
+        procesoAceptado,
+        procesoRechazado,
+        enProcesoEntrega,
+        cambioEntregado,
+        productoRecibido,
+        fechaCambioEntregado: cambioEntregado ? (fechaHoraEntregaModal || obtenerFechaHoraFormateada()) : ""
+    };
+
+    // Actualizar objeto en caché
+    const index = reclamosCache.findIndex(x => x.id === id);
+    if (index !== -1) {
+        reclamosCache[index] = { ...reclamosCache[index], ...camposActualizados };
+    }
+    localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache));
+
+    // Actualizar en backend local (PUT/PATCH)
+    try {
+        await fetch(`/api/records/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(reclamosCache[index])
+        });
+    } catch (e) {
+        console.warn("Error actualizando backend:", e);
+    }
+
+    // Sincronizar actualización con Google Sheets hoja "RECLAMOS"
+    enviarActualizacionGoogleSheets(reclamosCache[index]);
+
+    cerrarModalEstados();
+    btn.disabled = false;
+    btn.textContent = "💾 Guardar Estado";
+
+    mostrarMensaje("mensajeAccion", `✅ ¡Estados del reclamo ${id} actualizados con éxito!`, "exito");
+    renderizarTabla();
+}
+
+// -------------------------------------------------------------
+// 💾 GUARDAR RECLAMO CON TELÉFONO OBLIGATORIO Y ENVÍO A HOJA "RECLAMOS"
+// -------------------------------------------------------------
+async function guardarReclamo() {
+    const cliente = document.getElementById("cliente").value.trim();
+    const telefono = document.getElementById("telefono").value.trim();
+    const factura = document.getElementById("factura").value.trim();
+    const producto = document.getElementById("producto").value.trim();
+    const motivo = document.getElementById("motivo").value.trim();
+
+    if (!cliente) {
+        mostrarMensaje("mensajeAccion", "❌ El Nombre del Cliente es obligatorio.", "error");
+        document.getElementById("cliente").focus();
+        return;
+    }
+
+    if (!telefono) {
+        mostrarMensaje("mensajeAccion", "❌ El Teléfono del Cliente es obligatorio. Por favor escríbalo.", "error");
+        document.getElementById("telefono").focus();
+        return;
+    }
+
+    const formatoTelValido = /^[0-9\s\-+]+$/.test(telefono);
+    if (!formatoTelValido) {
+        mostrarMensaje("mensajeAccion", "❌ El Teléfono solo debe contener números, guiones o espacios.", "error");
+        document.getElementById("telefono").focus();
+        return;
+    }
+
+    if (!factura || !producto || !motivo) {
+        mostrarMensaje("mensajeAccion", "❌ Por favor complete todos los campos obligatorios marcados con (*).", "error");
+        return;
+    }
+
+    const btn = document.getElementById("btnGuardar");
+    btn.disabled = true;
+    btn.textContent = "⏳ Guardando...";
+
+    const id = document.getElementById("idReclamo").value;
+    const ruta = document.getElementById("ruta").value;
+    const vendedor = document.getElementById("vendedor").value;
+    const piloto = document.getElementById("piloto").value; // 🚚 Automático = Vendedor
+    const fecha = document.getElementById("fecha").value;
+    const hora = document.getElementById("hora").value;
+
+    // Obtener valores de los 5 checkboxes
+    const procesoAceptado = document.getElementById("chkFormAceptado").checked;
+    const procesoRechazado = document.getElementById("chkFormRechazado").checked;
+    const enProcesoEntrega = document.getElementById("chkFormEntrega").checked;
+    const cambioEntregado = document.getElementById("chkFormCambioEntregado").checked;
+    const productoRecibido = document.getElementById("chkFormRecibido").checked;
+
+    const nuevo = {
+        id,
+        voucherNumber: id,
+        routeId: ruta.toUpperCase().replace(/\s+/g, '-'),
+        ruta,
+        vendorName: vendedor,
+        vendedor,
+        pilotName: piloto,
+        piloto,
+        clientName: cliente,
+        cliente,
+        clientPhone: telefono,
+        telefono,
+        invoiceNumber: factura,
+        factura,
+        photo: fotoBase64Actual,
+        foto: fotoBase64Actual,
+        productName: producto,
+        producto,
+        description: motivo,
+        motivo,
+        date: fecha,
+        fecha,
+        time: hora,
+        hora,
+        firmaVendedor: document.getElementById("textoFirmaVendedor").textContent,
+        firmaCliente: document.getElementById("textoFirmaCliente").textContent,
+        procesoAceptado,
+        procesoRechazado,
+        enProcesoEntrega,
+        cambioEntregado,
+        productoRecibido,
+        fechaCambioEntregado: cambioEntregado ? (fechaHoraEntregaForm || obtenerFechaHoraFormateada()) : "",
+        timestamp: new Date().toISOString()
+    };
+
+    // Envío a Google Apps Script (hoja RECLAMOS con columnas A a R completas)
+    enviarActualizacionGoogleSheets(nuevo);
+
+    // Envío a servidor local
+    try {
+        await fetch("/api/records", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(nuevo)
+        });
+    } catch (e) {
+        console.warn("Backend local:", e);
+    }
+
+    reclamosCache.unshift(nuevo);
+    idsConocidos.add(nuevo.id);
+    localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache));
+
+    mostrarMensaje("mensajeAccion", `✅ ¡Reclamo ${id} guardado con éxito! Tel: ${telefono}`, "exito");
+    limpiarFormulario();
+    renderizarBarraCarpetas();
+    renderizarTabla();
+    actualizarGraficas();
+
+    btn.disabled = false;
+    btn.textContent = "💾 Guardar Reclamo";
+}
+
+// Envío a Google Sheets (Hoja "RECLAMOS" columnas A-R)
+function enviarActualizacionGoogleSheets(r) {
+    try {
+        const payload = {
+            hoja: "RECLAMOS",
+            id: r.id,
+            ruta: r.ruta,
+            vendedor: r.vendedor,
+            cliente: r.cliente,
+            telefono: r.telefono,
+            factura: r.factura,
+            piloto: r.piloto || r.vendedor,
+            photo: r.photo || r.foto || "",
+            producto: r.producto,
+            motivo: r.motivo,
+            fecha: r.fecha,
+            hora: r.hora,
+            firmaVendedor: r.firmaVendedor,
+            firmaCliente: r.firmaCliente,
+            procesoAceptado: r.procesoAceptado ? "SI" : "NO",
+            procesoRechazado: r.procesoRechazado ? "SI" : "NO",
+            enProcesoEntrega: r.enProcesoEntrega ? "SI" : "NO",
+            cambioEntregado: r.cambioEntregado ? (r.fechaCambioEntregado ? `SI (${r.fechaCambioEntregado})` : "SI") : "NO",
+            productoRecibido: r.productoRecibido ? "SI" : "NO",
+            fechaCambioEntregado: r.fechaCambioEntregado || "",
+            // Orden exacto de columnas para el Apps Script:
+            "ID_Reclamo": r.id,
+            "Ruta": r.ruta,
+            "Vendedor": r.vendedor,
+            "Cliente": r.cliente,
+            "Telefono": r.telefono,
+            "Factura": r.factura,
+            "Piloto": r.piloto || r.vendedor,
+            "Producto": r.producto,
+            "Motivo": r.motivo,
+            "Fecha": r.fecha,
+            "Hora": r.hora,
+            "FirmaVendedor": r.firmaVendedor,
+            "FirmaCliente": r.firmaCliente,
+            "Proceso Aceptado": r.procesoAceptado ? "SI" : "NO",
+            "Proceso Rechazado": r.procesoRechazado ? "SI" : "NO",
+            "En Proceso de Entrega": r.enProcesoEntrega ? "SI" : "NO",
+            "Cambio Entregado": r.cambioEntregado ? (r.fechaCambioEntregado ? `SI (${r.fechaCambioEntregado})` : "SI") : "NO",
+            "Producto Recibido": r.productoRecibido ? "SI" : "NO"
+        };
+
+        fetch(WEB_APP_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        }).catch(err => console.warn("Apps Script envio silencioso:", err));
+    } catch (e) {
+        console.warn("Apps Script error:", e);
+    }
+}
+
+function limpiarFormulario() {
+    document.getElementById("cliente").value = "";
+    document.getElementById("telefono").value = "";
+    document.getElementById("factura").value = "";
+    document.getElementById("producto").value = "";
+    document.getElementById("motivo").value = "";
+    document.getElementById("textoFirmaVendedor").textContent = "✍️ Click para registrar firma";
+    document.getElementById("textoFirmaCliente").textContent = "✍️ Click para registrar firma";
+    document.getElementById("textoFoto").textContent = "📷 Click para adjuntar foto";
+    document.getElementById("previewFoto").classList.add("oculto");
+    document.getElementById("inputFoto").value = "";
+    fotoBase64Actual = "";
+
+    // Limpiar checkboxes de estado
+    document.getElementById("chkFormAceptado").checked = false;
+    document.getElementById("chkFormRechazado").checked = false;
+    document.getElementById("chkFormEntrega").checked = false;
+    document.getElementById("chkFormCambioEntregado").checked = false;
+    document.getElementById("chkFormRecibido").checked = false;
+    fechaHoraEntregaForm = "";
+    document.getElementById("textoFechaEntregaForm").textContent = "";
+
+    alCambiarEstadoFormulario('init');
+    establecerFechaHoraActual();
+    actualizarSiguienteId();
+}
+
+// -------------------------------------------------------------
+// 🗑️ BORRADO EN TIEMPO REAL (SOLO ADMIN) Y LIMPIAR TODO
+// -------------------------------------------------------------
+function pedirConfirmacionEliminar(id) {
+    if (!usuarioActual || usuarioActual.rol !== "admin") {
+        mostrarMensaje("mensajeAccion", "❌ Solo el Administrador tiene permiso para borrar reclamos.", "error");
+        return;
+    }
+    reclamoAEliminarId = id;
+    const item = reclamosCache.find(r => r.id === id);
+    const detalle = item 
+        ? `${item.id} — Cliente: ${item.cliente} | Producto: ${item.producto} (Tel: ${item.telefono || item.clientPhone || '-'})` 
+        : id;
+    document.getElementById("textoDetalleEliminar").textContent = detalle;
+    document.getElementById("modalEliminar").classList.add("activo");
+}
+
+function cerrarModalEliminar() {
+    reclamoAEliminarId = null;
+    document.getElementById("modalEliminar").classList.remove("activo");
+}
+
+async function ejecutarEliminacion() {
+    if (!reclamoAEliminarId || !usuarioActual || usuarioActual.rol !== "admin") return;
+
+    const id = reclamoAEliminarId;
+    const btn = document.getElementById("btnConfirmarEliminar");
+    btn.disabled = true;
+    btn.textContent = "Eliminando...";
+
+    // 1. Eliminar en el backend local
+    try {
+        await fetch(`/api/records/${encodeURIComponent(id)}`, { method: "DELETE" });
+    } catch (e) {
+        console.warn("Error borrando en backend:", e);
+    }
+
+    // 2. Sincronizar eliminación con Google Sheets
+    try {
+        fetch(WEB_APP_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                action: "eliminar",
+                id: id,
+                ID_Reclamo: id
+            })
+        }).catch(err => console.warn("Google Sheets sync delete:", err));
+    } catch (e) {
+        console.warn("Google Sheets error:", e);
+    }
+
+    // 3. Actualizar memoria y almacenamiento local
+    reclamosCache = reclamosCache.filter(r => r.id !== id && r.voucherNumber !== id);
+    idsConocidos.delete(id);
+    localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache));
+
+    cerrarModalEliminar();
+    btn.disabled = false;
+    btn.textContent = "🗑️ Eliminar";
+
+    mostrarMensaje("mensajeAccion", `🗑️ Reclamo ${id} eliminado exitosamente en vivo.`, "exito");
+    actualizarSiguienteId();
+    renderizarBarraCarpetas();
+    renderizarTabla();
+    actualizarGraficas();
+}
+
+async function pedirConfirmacionLimpiarTodo() {
+    if (!usuarioActual || usuarioActual.rol !== "admin") {
+        alert("Acceso denegado. Solo el Administrador puede borrar todo el historial.");
+        return;
+    }
+
+    const confirmacion1 = confirm("⚠️ ADVERTENCIA CRÍTICA:\n\n¿Seguro que desea eliminar TODO el historial de reclamos?\n\nEsta acción borrará permanentemente todos los registros y NO se puede deshacer.");
+    if (!confirmacion1) return;
+
+    const confirmacion2 = prompt("⚠️ CONFIRMACIÓN FINAL OBLIGATORIA:\n\nPara borrar todo el historial de reclamos permanentemente, escriba la frase:\nELIMINAR TODO");
+    if (confirmacion2 !== "ELIMINAR TODO") {
+        alert("Operación cancelada. La frase no coincide.");
+        return;
+    }
+
+    await ejecutarLimpiarTodo();
+}
+
+async function ejecutarLimpiarTodo() {
+    try {
+        await fetch("/api/records", { method: "DELETE" });
+    } catch (e) {
+        console.warn("Error backend limpiar todo:", e);
+    }
+
+    try {
+        fetch(WEB_APP_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "limpiarTodo" })
+        }).catch(err => console.warn("Google Sheets sync limpiar todo:", err));
+    } catch (e) {}
+
+    reclamosCache = [];
+    idsConocidos.clear();
+    localStorage.removeItem("myg_reclamos_backup");
+
+    mostrarMensaje("mensajeAccion", "🗑️ Todo el historial de reclamos ha sido eliminado exitosamente.", "exito");
+    actualizarSiguienteId();
+    renderizarBarraCarpetas();
+    renderizarTabla();
+    actualizarGraficas();
+}
+
+function mostrarMensaje(idElemento, texto, tipo) {
+    const el = document.getElementById(idElemento);
+    el.className = "mensaje " + (tipo === "exito" ? "mensaje-exito" : "mensaje-error");
+    el.textContent = texto;
+    el.style.display = "block";
+    setTimeout(() => { el.style.display = "none"; }, 5000);
+}
+
+// -------------------------------------------------------------
+// 📄 DETALLE / COMPROBANTE CON TELÉFONO, FOTO Y ESTADOS COMPLETOS
+// -------------------------------------------------------------
+function verDetalle(idOReclamo) {
+    let r = null;
+    if (typeof idOReclamo === "object" && idOReclamo !== null) {
+        r = idOReclamo;
+    } else {
+        r = reclamosCache.find(x => x.id === idOReclamo);
+    }
+    if (!r) return;
+
+    // Configurar botón de eliminar en modal si es Administrador
+    const esAdmin = (usuarioActual && usuarioActual.rol === "admin");
+    const contBtnEliminar = document.getElementById("contenedorBtnEliminarDetalle");
+    if (contBtnEliminar) {
+        if (esAdmin && r.id && !String(r.id).includes("BORRADOR")) {
+            contBtnEliminar.innerHTML = `<button class="btn btn-sm btn-peligro" onclick="cerrarModalDetalle(); pedirConfirmacionEliminar('${r.id}');" title="Eliminar Reclamo (Solo Admin)">🗑️ Eliminar</button>`;
+        } else {
+            contBtnEliminar.innerHTML = "";
+        }
+    }
+
+    const cont = document.getElementById("contenidoDetalleVoucher");
+    const fotoHtml = (r.photo || r.foto) 
+        ? `<div class="voucher-campo completo" style="text-align:center;"><strong>Foto del Producto:</strong><img src="${r.photo || r.foto}" style="max-height:160px; max-width:100%; border-radius:8px; margin-top:6px; object-fit:contain;"></div>` 
+        : '';
+
+    // Generar sección de los 5 estados en el voucher
+    const estadosVoucherHtml = `
+        <div class="voucher-campo completo" style="background:#F8FAFC;">
+            <strong style="color:var(--primario); font-size:12.5px; margin-bottom:8px;">📋 Estados del Proceso:</strong>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:8px;">
+                <div class="voucher-estado-box ${r.procesoAceptado ? 'marcado-verde' : ''}">
+                    ${r.procesoAceptado ? '☑️' : '⬜'} ✅ Proceso Aceptado
+                </div>
+                <div class="voucher-estado-box ${r.procesoRechazado ? 'marcado-rojo' : ''}">
+                    ${r.procesoRechazado ? '☑️' : '⬜'} ❌ Proceso Rechazado
+                </div>
+                <div class="voucher-estado-box ${r.enProcesoEntrega ? 'marcado-naranja' : ''}">
+                    ${r.enProcesoEntrega ? '☑️' : '⬜'} 🔄 En Proceso de Entrega
+                </div>
+                <div class="voucher-estado-box ${r.cambioEntregado ? 'marcado-azul' : ''}">
+                    ${r.cambioEntregado ? '☑️' : '⬜'} 📦 Cambio Entregado
+                    ${r.fechaCambioEntregado ? `<br><small style="font-size:10px; color:#0369a1; font-weight:800;">📅 ${r.fechaCambioEntregado}</small>` : ''}
+                </div>
+                <div class="voucher-estado-box ${r.productoRecibido ? 'marcado-verde' : ''}">
+                    ${r.productoRecibido ? '☑️' : '⬜'} ✅ Producto Recibido
+                </div>
+            </div>
+        </div>
+    `;
+
+    cont.innerHTML = `
+        <div class="voucher-campo completo" style="display:flex; align-items:center; justify-content:space-between; background:linear-gradient(135deg, #0F52BA 0%, #1565C0 100%); color:white; padding:14px 18px; border-radius:12px; margin-bottom:6px; flex-wrap:wrap; gap:12px;">
+            <div style="display:flex; align-items:center; gap:14px;">
+                <img src="${LOGO_URL}" onerror="this.onerror=null; this.src='https://drive.google.com/uc?id=1lgJvo_v5BIBLsgGZIGpgjGtfMZKEC474';" style="width:60px; height:auto; background:white; padding:4px; border-radius:8px; object-fit:contain; box-shadow:0 2px 6px rgba(0,0,0,0.2);" alt="Logo MYG">
+                <div>
+                    <div style="font-weight:800; font-size:16px; letter-spacing:0.5px; color:#ffffff;">Sistema de Reclamos MYG</div>
+                    <div style="font-size:11.5px; opacity:0.95; font-weight:600; color:#E3F2FD;">Comprobante de Cambio y Reclamación de Producto</div>
+                </div>
+            </div>
+            <div style="text-align:right;">
+                <span style="font-size:17px; font-weight:900; color:#FFD54F; background:rgba(0,0,0,0.25); padding:5px 12px; border-radius:6px; letter-spacing:0.5px; display:inline-block;">${r.id || '-'}</span>
+            </div>
+        </div>
+        <div class="voucher-campo"><strong>ID Reclamo:</strong><span>${r.id || '-'}</span></div>
+        <div class="voucher-campo"><strong>Ruta:</strong><span>${r.ruta || '-'}</span></div>
+        <div class="voucher-campo"><strong>Vendedor:</strong><span>${r.vendedor || '-'}</span></div>
+        <div class="voucher-campo"><strong>Piloto:</strong><span>${r.piloto || r.vendedor || '-'}</span></div>
+        <div class="voucher-campo"><strong>Cliente:</strong><span>${r.cliente || '-'}</span></div>
+        <div class="voucher-campo" style="background:#E3F2FD; border-color:#0091EA;">
+            <strong style="color:#0F52BA;">📞 Teléfono del Cliente:</strong>
+            <span style="color:#0F52BA; font-size:15px;">${r.telefono || r.clientPhone || r.phone || '-'}</span>
+        </div>
+        <div class="voucher-campo"><strong>N° Factura:</strong><span>${r.factura || '-'}</span></div>
+        <div class="voucher-campo"><strong>Producto con Falla:</strong><span>${r.producto || '-'}</span></div>
+        <div class="voucher-campo"><strong>Fecha:</strong><span>${r.fecha || '-'}</span></div>
+        <div class="voucher-campo"><strong>Hora:</strong><span>${r.hora || '-'}</span></div>
+        ${fotoHtml}
+        <div class="voucher-campo completo"><strong>Motivo del Reclamo:</strong><span>${r.motivo || '-'}</span></div>
+        ${estadosVoucherHtml}
+        <div class="voucher-campo"><strong>Firma Vendedor:</strong><span>${r.firmaVendedor || 'Registrada'}</span></div>
+        <div class="voucher-campo"><strong>Firma Cliente:</strong><span>${r.firmaCliente || 'Registrada'}</span></div>
+    `;
+
+    document.getElementById("modalDetalle").classList.add("activo");
+}
+
+function cerrarModalDetalle() {
+    document.getElementById("modalDetalle").classList.remove("activo");
+    document.body.classList.remove("imprimiendo-reclamo");
+}
+
+// -------------------------------------------------------------
+// 🖨️ FUNCIONES DE IMPRESIÓN DE REPORTES LIMPIOS (TODOS LOS USUARIOS)
+// -------------------------------------------------------------
+function imprimirReporteReclamo(id) {
+    verDetalle(id);
+    document.body.classList.add("imprimiendo-reclamo");
+    setTimeout(() => {
+        window.print();
+    }, 200);
+}
+
+function imprimirReporteActual() {
+    document.body.classList.add("imprimiendo-reclamo");
+    window.print();
+}
+
+function imprimirReporteFormulario() {
+    const cliente = document.getElementById("cliente").value.trim();
+    const producto = document.getElementById("producto").value.trim();
+    const id = document.getElementById("idReclamo").value.trim();
+
+    if (cliente || producto) {
+        const reclamoTemp = {
+            id: id || "REC-REPORTE",
+            ruta: document.getElementById("ruta").value || (usuarioActual ? usuarioActual.ruta : "Ruta 1"),
+            vendedor: document.getElementById("vendedor").value || (usuarioActual ? usuarioActual.vendedor : ""),
+            piloto: document.getElementById("piloto").value || document.getElementById("vendedor").value || "",
+            cliente: cliente || "Cliente no especificado",
+            telefono: document.getElementById("telefono").value || "-",
+            factura: document.getElementById("factura").value || "-",
+            producto: producto || "Producto no especificado",
+            motivo: document.getElementById("motivo").value || "-",
+            fecha: document.getElementById("fecha").value || "",
+            hora: document.getElementById("hora").value || "",
+            photo: fotoBase64Actual || "",
+            procesoAceptado: document.getElementById("chkFormAceptado").checked,
+            procesoRechazado: document.getElementById("chkFormRechazado").checked,
+            enProcesoEntrega: document.getElementById("chkFormEntrega").checked,
+            cambioEntregado: document.getElementById("chkFormCambioEntregado").checked,
+            fechaCambioEntregado: fechaHoraEntregaForm || "",
+            productoRecibido: document.getElementById("chkFormRecibido").checked,
+            firmaVendedor: document.getElementById("textoFirmaVendedor").textContent.includes("✅") ? document.getElementById("textoFirmaVendedor").textContent.replace("✅ Firmado por ", "") : "Registrada",
+            firmaCliente: document.getElementById("textoFirmaCliente").textContent.includes("✅") ? document.getElementById("textoFirmaCliente").textContent.replace("✅ Firmado por ", "") : "Registrada"
+        };
+        verDetalle(reclamoTemp);
+        document.body.classList.add("imprimiendo-reclamo");
+        setTimeout(() => {
+            window.print();
+        }, 200);
+    } else {
+        // Si el formulario aún está vacío, imprimir el primer reclamo visible de su lista o notificar
+        let lista = reclamosCache;
+        if (usuarioActual && usuarioActual.rol === "ruta") {
+            lista = reclamosCache.filter(r => r.ruta === usuarioActual.ruta);
+        }
+        if (lista.length > 0) {
+            imprimirReporteReclamo(lista[0].id);
+        } else {
+            alert("Para imprimir un reporte, ingrese los datos del reclamo en el formulario o haga clic en '🖨️ Imprimir Reporte' en cualquier reclamo de la tabla.");
+        }
+    }
+}
+
+window.addEventListener("afterprint", () => {
+    document.body.classList.remove("imprimiendo-reclamo");
+});
+
+function abrirFirma(tipo) {
+    const titular = tipo === 'vendedor' ? document.getElementById("vendedor").value : (document.getElementById("cliente").value || 'Cliente');
+    const firmaDigital = prompt(`Firma Digital para ${titular}:\nEscriba el nombre o código de validación:`, titular);
+    if (firmaDigital) {
+        if (tipo === 'vendedor') {
+            document.getElementById("textoFirmaVendedor").textContent = "✅ Firmado por " + firmaDigital;
+        } else {
+            document.getElementById("textoFirmaCliente").textContent = "✅ Firmado por " + firmaDigital;
+        }
+    }
+}
+
+// -------------------------------------------------------------
+// 📈 GRÁFICAS ANALÍTICAS (RUTAS, PRODUCTOS, TENDENCIA)
+// -------------------------------------------------------------
+function actualizarGraficas() {
+    if (!window.Chart) return;
+
+    let datosGraficas = reclamosCache;
+    if (usuarioActual && usuarioActual.rol === "ruta") {
+        datosGraficas = reclamosCache.filter(r => r.ruta === usuarioActual.ruta);
+    } else if (usuarioActual && usuarioActual.rol === "admin" && carpetaActiva !== "TODAS") {
+        datosGraficas = reclamosCache.filter(r => r.ruta === carpetaActiva);
+    }
+
+    // 1. Reclamos por Ruta
+    const mapaRutas = {};
+    LISTA_RUTAS.forEach(r => { mapaRutas[r.id] = 0; });
+    datosGraficas.forEach(r => {
+        const rutaNombre = r.ruta || "Ruta 1";
+        mapaRutas[rutaNombre] = (mapaRutas[rutaNombre] || 0) + 1;
+    });
+
+    const labelsRutas = Object.keys(mapaRutas);
+    const conteosRutas = Object.values(mapaRutas);
+
+    const ctxRutas = document.getElementById("chartRutas");
+    if (ctxRutas) {
+        if (chartRutasInstancia) chartRutasInstancia.destroy();
+        chartRutasInstancia = new Chart(ctxRutas, {
+            type: 'bar',
+            data: {
+                labels: labelsRutas,
+                datasets: [{
+                    label: 'Reclamos por Ruta',
+                    data: conteosRutas,
+                    backgroundColor: '#0F52BA',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            }
+        });
+    }
+
+    // 2. Productos con Más Fallas
+    const mapaProd = {};
+    datosGraficas.forEach(r => {
+        const p = (r.producto || "Sin especificar").trim();
+        if (p) mapaProd[p] = (mapaProd[p] || 0) + 1;
+    });
+
+    const prodOrdenados = Object.entries(mapaProd)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6);
+
+    const labelsProd = prodOrdenados.map(x => x[0]);
+    const conteosProd = prodOrdenados.map(x => x[1]);
+
+    const ctxProd = document.getElementById("chartProductos");
+    if (ctxProd) {
+        if (chartProductosInstancia) chartProductosInstancia.destroy();
+        chartProductosInstancia = new Chart(ctxProd, {
+            type: 'doughnut',
+            data: {
+                labels: labelsProd.length ? labelsProd : ['Sin datos'],
+                datasets: [{
+                    data: conteosProd.length ? conteosProd : [0],
+                    backgroundColor: ['#0F52BA', '#FF7000', '#0091EA', '#00C853', '#FFAB00', '#D50000']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } }
+            }
+        });
+    }
+
+    // 3. Tendencia por Fecha
+    const mapaFechas = {};
+    datosGraficas.forEach(r => {
+        const f = r.fecha || "Hoy";
+        mapaFechas[f] = (mapaFechas[f] || 0) + 1;
+    });
+
+    const fechasOrdenadas = Object.keys(mapaFechas).sort();
+    const conteosFechas = fechasOrdenadas.map(f => mapaFechas[f]);
+
+    const ctxTiempo = document.getElementById("chartTiempo");
+    if (ctxTiempo) {
+        if (chartTiempoInstancia) chartTiempoInstancia.destroy();
+        chartTiempoInstancia = new Chart(ctxTiempo, {
+            type: 'line',
+            data: {
+                labels: fechasOrdenadas.length ? fechasOrdenadas : ['Sin datos'],
+                datasets: [{
+                    label: 'Reclamos Registrados',
+                    data: conteosFechas.length ? conteosFechas : [0],
+                    borderColor: '#FF7000',
+                    backgroundColor: 'rgba(255, 112, 0, 0.12)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#FF7000'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            }
+        });
+    }
+}
+</script>
+
+</body>
+</html>
