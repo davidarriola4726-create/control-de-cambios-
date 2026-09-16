@@ -39,7 +39,7 @@ function saveClaims(claims: any[]) {
   }
 }
 
-const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbyxx75EDsHJ0VcorrpG8-RlT5aHMVqaGe7yFE6C1BxXSTpyW0hGLp_X4KiIbICXVj1tkA/exec";
+const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbwBNgwKl7EOyAZBpyBpAe_B4eIpZLwkpRtWyGLzyPEE8eJf1ofHxbKu9P2zaKMH2lh1_Q/exec";
 
 // Reintentar envío a Google Sheets en segundo plano
 async function enviarAGoogleSheetsConReintentos(payload: any, maxRetries = 3) {
@@ -71,44 +71,74 @@ async function sincronizarDesdeGoogleSheets() {
     const resp = await fetch(GOOGLE_SHEETS_URL);
     if (!resp.ok) return;
     const data: any = await resp.json();
-    if (data && data.ok && Array.isArray(data.reclamos)) {
+    const items = Array.isArray(data) ? data : (data?.reclamos || data?.records || data?.data || []);
+    
+    if (Array.isArray(items) && items.length > 0) {
       let claims = getClaims();
       let huboCambios = false;
 
-      for (const item of data.reclamos) {
-        const id = item.idReclamo || item.ID_Reclamo || item.id;
+      for (const item of items) {
+        const id = item.idReclamo || item.ID_Reclamo || item.id || item.ID;
         if (!id) continue;
         const index = claims.findIndex((c: any) => c.id === id || c.voucherNumber === id);
+        
+        const aceptado = item.procesoAceptado === 'SI' || item['Proceso Aceptado'] === 'SI' || item.Aceptado === 'SI';
+        const rechazado = item.procesoRechazado === 'SI' || item['Proceso Rechazado'] === 'SI' || item.Rechazado === 'SI';
+        const enEntrega = item.enProcesoEntrega === 'SI' || item['En Proceso de Entrega'] === 'SI' || item.EnEntrega === 'SI';
+        const entregado = String(item.cambioEntregado || item['Cambio Entregado'] || item.Entregado || '').includes('SI');
+        const recibido = item.productoRecibido === 'SI' || item['Producto Recibido'] === 'SI' || item.Recibido === 'SI';
+        const firmaV = item.firmaVendedor || item.FirmaVendedor || item['Firma Vendedor'] || '';
+        const firmaC = item.firmaCliente || item.FirmaCliente || item['Firma Cliente'] || '';
+
         if (index === -1) {
           // Registro nuevo en Google Sheets no existente localmente
           claims.push({
             id: id,
             voucherNumber: id,
-            ruta: item.ruta || 'Ruta 1',
-            vendedor: item.vendedor || '',
-            piloto: item.piloto || item.vendedor || '',
-            cliente: item.cliente || '',
+            ruta: item.ruta || item.Ruta || 'Ruta 1',
+            vendedor: item.vendedor || item.Vendedor || '',
+            piloto: item.piloto || item.Piloto || item.vendedor || '',
+            cliente: item.cliente || item.Cliente || '',
             telefono: item.telefono || item.Telefono || '',
-            factura: item.factura || '',
-            producto: item.producto || '',
-            motivo: item.motivo || '',
-            fecha: item.fecha ? String(item.fecha).split('T')[0] : '',
-            hora: item.hora ? String(item.hora).split('T')[1]?.slice(0, 5) || '' : '',
-            firmaVendedor: item.firmaVendedor || item.FirmaVendedor || '',
-            firmaCliente: item.firmaCliente || item.FirmaCliente || '',
-            procesoAceptado: item.procesoAceptado === 'SI',
-            procesoRechazado: item.procesoRechazado === 'SI',
-            enProcesoEntrega: item.enProcesoEntrega === 'SI',
-            cambioEntregado: String(item.cambioEntregado || '').includes('SI'),
-            productoRecibido: item.productoRecibido === 'SI'
+            factura: item.factura || item.Factura || '',
+            producto: item.producto || item.Producto || '',
+            motivo: item.motivo || item.Motivo || '',
+            fecha: item.fecha ? String(item.fecha).split('T')[0] : (item.Fecha || ''),
+            hora: item.hora ? String(item.hora).split('T')[1]?.slice(0, 5) || String(item.hora) : (item.Hora || ''),
+            firmaVendedor: firmaV,
+            firmaCliente: firmaC,
+            procesoAceptado: aceptado,
+            procesoRechazado: rechazado,
+            enProcesoEntrega: enEntrega,
+            cambioEntregado: entregado,
+            productoRecibido: recibido,
+            fechaCambioEntregado: item.fechaCambioEntregado || item['Fecha Cambio Entregado'] || ''
           });
           huboCambios = true;
+        } else {
+          // Actualizar estados si cambiaron en Google Sheets
+          const actual = claims[index];
+          if (actual.procesoAceptado !== aceptado || 
+              actual.procesoRechazado !== rechazado || 
+              actual.enProcesoEntrega !== enEntrega || 
+              actual.cambioEntregado !== entregado || 
+              actual.productoRecibido !== recibido ||
+              (!actual.firmaCliente && firmaC)) {
+            actual.procesoAceptado = aceptado;
+            actual.procesoRechazado = rechazado;
+            actual.enProcesoEntrega = enEntrega;
+            actual.cambioEntregado = entregado;
+            actual.productoRecibido = recibido;
+            if (firmaC) actual.firmaCliente = firmaC;
+            if (firmaV) actual.firmaVendedor = firmaV;
+            huboCambios = true;
+          }
         }
       }
 
       if (huboCambios) {
         saveClaims(claims);
-        console.log(`[GoogleSheets Sync] Se sincronizaron registros desde Google Sheets`);
+        console.log(`[GoogleSheets Sync] Sincronización completada con éxito desde Google Sheets`);
       }
     }
   } catch (err) {
@@ -116,9 +146,9 @@ async function sincronizarDesdeGoogleSheets() {
   }
 }
 
-// Ejecutar sincronización al inicio y periódicamente cada 30 segundos
-setTimeout(sincronizarDesdeGoogleSheets, 2000);
-setInterval(sincronizarDesdeGoogleSheets, 30000);
+// Ejecutar sincronización al inicio y periódicamente cada 5 segundos
+setTimeout(sincronizarDesdeGoogleSheets, 1500);
+setInterval(sincronizarDesdeGoogleSheets, 5000);
 
 // API Routes
 app.get('/api/records', (req, res) => {

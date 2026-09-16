@@ -1216,7 +1216,7 @@
 // -------------------------------------------------------------
 // 📌 DATOS FIJOS DEL SISTEMA Y GOOGLE APPS SCRIPT
 // -------------------------------------------------------------
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyxx75EDsHJ0VcorrpG8-RlT5aHMVqaGe7yFE6C1BxXSTpyW0hGLp_X4KiIbICXVj1tkA/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwBNgwKl7EOyAZBpyBpAe_B4eIpZLwkpRtWyGLzyPEE8eJf1ofHxbKu9P2zaKMH2lh1_Q/exec";
 const LOGO_URL = "/logo.png";
 
 // -------------------------------------------------------------
@@ -2125,7 +2125,9 @@ async function guardarEstadosDesdeModal() {
     btn.textContent = "💾 Guardar Estado";
 
     mostrarMensaje("mensajeAccion", `✅ ¡Estados del reclamo ${id} actualizados con éxito!`, "exito");
+    renderizarBarraCarpetas();
     renderizarTabla();
+    actualizarGraficas();
 }
 
 // -------------------------------------------------------------
@@ -2700,8 +2702,16 @@ function inicializarCanvasFirma(canvasId, tipo) {
         ctx.lineTo(coords.x, coords.y);
         ctx.stroke();
 
-        if (tipo === 'vendedor') firmaVendedorTrazada = true;
-        if (tipo === 'cliente') firmaClienteTrazada = true;
+        if (tipo === 'vendedor') {
+            firmaVendedorTrazada = true;
+            const el = document.getElementById("estadoFirmaVendedor");
+            if (el) { el.textContent = "✍️ Firmado"; el.style.color = "#16a34a"; }
+        }
+        if (tipo === 'cliente') {
+            firmaClienteTrazada = true;
+            const el = document.getElementById("estadoFirmaCliente");
+            if (el) { el.textContent = "✍️ Firmado"; el.style.color = "#16a34a"; }
+        }
         if (tipo === 'clienteModal') firmaClienteModalTrazada = true;
     }
 
@@ -2727,9 +2737,13 @@ function limpiarFirma(tipo) {
     if (tipo === 'vendedor') {
         canvasId = "canvasFirmaVendedor";
         firmaVendedorTrazada = false;
+        const el = document.getElementById("estadoFirmaVendedor");
+        if (el) { el.textContent = "Sin firmar"; el.style.color = "#94a3b8"; }
     } else if (tipo === 'cliente') {
         canvasId = "canvasFirmaCliente";
         firmaClienteTrazada = false;
+        const el = document.getElementById("estadoFirmaCliente");
+        if (el) { el.textContent = "Sin firmar"; el.style.color = "#94a3b8"; }
     } else if (tipo === 'clienteModal') {
         canvasId = "canvasFirmaClienteModal";
         firmaClienteModalTrazada = false;
@@ -2747,9 +2761,13 @@ function cargarFirmaEnCanvas(tipo, base64) {
     if (tipo === 'vendedor') {
         canvasId = "canvasFirmaVendedor";
         firmaVendedorTrazada = true;
+        const el = document.getElementById("estadoFirmaVendedor");
+        if (el) { el.textContent = "✍️ Firmado"; el.style.color = "#16a34a"; }
     } else if (tipo === 'cliente') {
         canvasId = "canvasFirmaCliente";
         firmaClienteTrazada = true;
+        const el = document.getElementById("estadoFirmaCliente");
+        if (el) { el.textContent = "✍️ Firmado"; el.style.color = "#16a34a"; }
     } else if (tipo === 'clienteModal') {
         canvasId = "canvasFirmaClienteModal";
         firmaClienteModalTrazada = true;
