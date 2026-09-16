@@ -39,6 +39,87 @@ function saveClaims(claims: any[]) {
   }
 }
 
+const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbyxx75EDsHJ0VcorrpG8-RlT5aHMVqaGe7yFE6C1BxXSTpyW0hGLp_X4KiIbICXVj1tkA/exec";
+
+// Reintentar envío a Google Sheets en segundo plano
+async function enviarAGoogleSheetsConReintentos(payload: any, maxRetries = 3) {
+  for (let intento = 1; intento <= maxRetries; intento++) {
+    try {
+      const resp = await fetch(GOOGLE_SHEETS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (resp.ok) {
+        console.log(`[GoogleSheets Sync] Éxito al sincronizar ${payload.id || payload.ID_Reclamo || 'registro'}`);
+        return true;
+      }
+    } catch (err) {
+      console.warn(`[GoogleSheets Sync] Intento ${intento}/${maxRetries} falló:`, err);
+      if (intento < maxRetries) {
+        await new Promise(r => setTimeout(r, 1000 * intento));
+      }
+    }
+  }
+  console.error(`[GoogleSheets Sync] No se pudo sincronizar tras ${maxRetries} intentos`);
+  return false;
+}
+
+// Sincronizar lectura desde Google Sheets hacia el servidor local
+async function sincronizarDesdeGoogleSheets() {
+  try {
+    const resp = await fetch(GOOGLE_SHEETS_URL);
+    if (!resp.ok) return;
+    const data: any = await resp.json();
+    if (data && data.ok && Array.isArray(data.reclamos)) {
+      let claims = getClaims();
+      let huboCambios = false;
+
+      for (const item of data.reclamos) {
+        const id = item.idReclamo || item.ID_Reclamo || item.id;
+        if (!id) continue;
+        const index = claims.findIndex((c: any) => c.id === id || c.voucherNumber === id);
+        if (index === -1) {
+          // Registro nuevo en Google Sheets no existente localmente
+          claims.push({
+            id: id,
+            voucherNumber: id,
+            ruta: item.ruta || 'Ruta 1',
+            vendedor: item.vendedor || '',
+            piloto: item.piloto || item.vendedor || '',
+            cliente: item.cliente || '',
+            telefono: item.telefono || item.Telefono || '',
+            factura: item.factura || '',
+            producto: item.producto || '',
+            motivo: item.motivo || '',
+            fecha: item.fecha ? String(item.fecha).split('T')[0] : '',
+            hora: item.hora ? String(item.hora).split('T')[1]?.slice(0, 5) || '' : '',
+            firmaVendedor: item.firmaVendedor || item.FirmaVendedor || '',
+            firmaCliente: item.firmaCliente || item.FirmaCliente || '',
+            procesoAceptado: item.procesoAceptado === 'SI',
+            procesoRechazado: item.procesoRechazado === 'SI',
+            enProcesoEntrega: item.enProcesoEntrega === 'SI',
+            cambioEntregado: String(item.cambioEntregado || '').includes('SI'),
+            productoRecibido: item.productoRecibido === 'SI'
+          });
+          huboCambios = true;
+        }
+      }
+
+      if (huboCambios) {
+        saveClaims(claims);
+        console.log(`[GoogleSheets Sync] Se sincronizaron registros desde Google Sheets`);
+      }
+    }
+  } catch (err) {
+    console.warn('[GoogleSheets Sync] Error leyendo Google Sheets:', err);
+  }
+}
+
+// Ejecutar sincronización al inicio y periódicamente cada 30 segundos
+setTimeout(sincronizarDesdeGoogleSheets, 2000);
+setInterval(sincronizarDesdeGoogleSheets, 30000);
+
 // API Routes
 app.get('/api/records', (req, res) => {
   const claims = getClaims();
@@ -53,6 +134,51 @@ app.post('/api/records', (req, res) => {
   }
   claims.unshift(newRecord);
   saveClaims(claims);
+
+  // Sincronizar asíncronamente con Google Sheets
+  enviarAGoogleSheetsConReintentos({
+    hoja: "RECLAMOS",
+    id: newRecord.id,
+    ID_Reclamo: newRecord.id,
+    ruta: newRecord.ruta,
+    Ruta: newRecord.ruta,
+    vendedor: newRecord.vendedor,
+    Vendedor: newRecord.vendedor,
+    cliente: newRecord.cliente,
+    Cliente: newRecord.cliente,
+    telefono: newRecord.telefono || newRecord.clientPhone || "",
+    Telefono: newRecord.telefono || newRecord.clientPhone || "",
+    factura: newRecord.factura,
+    Factura: newRecord.factura,
+    piloto: newRecord.piloto || newRecord.vendedor,
+    Piloto: newRecord.piloto || newRecord.vendedor,
+    photo: newRecord.photo || newRecord.foto || "",
+    foto: newRecord.photo || newRecord.foto || "",
+    producto: newRecord.producto,
+    Producto: newRecord.producto,
+    motivo: newRecord.motivo,
+    Motivo: newRecord.motivo,
+    fecha: newRecord.fecha,
+    Fecha: newRecord.fecha,
+    hora: newRecord.hora,
+    Hora: newRecord.hora,
+    firmaVendedor: newRecord.firmaVendedor || "",
+    FirmaVendedor: newRecord.firmaVendedor || "",
+    firmaCliente: newRecord.firmaCliente || "",
+    FirmaCliente: newRecord.firmaCliente || "",
+    procesoAceptado: newRecord.procesoAceptado ? "SI" : "NO",
+    "Proceso Aceptado": newRecord.procesoAceptado ? "SI" : "NO",
+    procesoRechazado: newRecord.procesoRechazado ? "SI" : "NO",
+    "Proceso Rechazado": newRecord.procesoRechazado ? "SI" : "NO",
+    enProcesoEntrega: newRecord.enProcesoEntrega ? "SI" : "NO",
+    "En Proceso de Entrega": newRecord.enProcesoEntrega ? "SI" : "NO",
+    cambioEntregado: newRecord.cambioEntregado ? "SI" : "NO",
+    "Cambio Entregado": newRecord.cambioEntregado ? "SI" : "NO",
+    productoRecibido: newRecord.productoRecibido ? "SI" : "NO",
+    "Producto Recibido": newRecord.productoRecibido ? "SI" : "NO",
+    fechaCambioEntregado: newRecord.fechaCambioEntregado || ""
+  });
+
   res.status(201).json(newRecord);
 });
 
@@ -64,9 +190,18 @@ app.put('/api/records/:id', (req, res) => {
   if (index !== -1) {
     claims[index] = { ...claims[index], ...updatedData, id };
     saveClaims(claims);
+
+    // Sincronizar actualización con Google Sheets
+    enviarAGoogleSheetsConReintentos({
+      action: "actualizar",
+      hoja: "RECLAMOS",
+      id: id,
+      ID_Reclamo: id,
+      ...claims[index]
+    });
+
     res.json(claims[index]);
   } else {
-    // If not found, add it
     claims.unshift({ ...updatedData, id });
     saveClaims(claims);
     res.status(201).json(updatedData);
@@ -97,6 +232,14 @@ app.delete('/api/records/:id', (req, res) => {
   let claims = getClaims();
   claims = claims.filter((c: any) => c.id !== id && c.voucherNumber !== id);
   saveClaims(claims);
+
+  enviarAGoogleSheetsConReintentos({
+    action: "eliminar",
+    hoja: "RECLAMOS",
+    id: id,
+    ID_Reclamo: id
+  });
+
   res.json({ success: true, id });
 });
 

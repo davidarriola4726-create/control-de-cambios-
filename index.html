@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Reclamos MYG</title>
+    <title>Control de Cambios y Reclamaciones de Productos MYG</title>
+    <meta name="description" content="Sistema de Control de Cambios y Reclamaciones de Productos MYG con acceso por rutas, carpetas individuales, panel de alertas con sonido para el administrador, firmas digitales, vouchers y estadísticas.">
+    <meta property="og:title" content="Control de Cambios y Reclamaciones de Productos MYG">
+    <meta property="og:description" content="Sistema de Control de Cambios y Reclamaciones de Productos MYG con acceso por rutas, carpetas individuales, panel de alertas con sonido para el administrador, firmas digitales, vouchers y estadísticas.">
     <!-- Chart.js para las gráficas analíticas -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -569,6 +572,80 @@
         }
         .firma-imagen { max-height: 65px; max-width: 100%; object-fit: contain; }
 
+        /* ✍️ ÁREAS DE FIRMA DIBUJABLES (220px × 70px) */
+        .contenedor-firma-canvas {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 6px;
+            width: 100%;
+        }
+        .canvas-firma {
+            width: 220px;
+            height: 70px;
+            background-color: #ffffff;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            cursor: crosshair;
+            touch-action: none;
+            display: block;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .canvas-firma:hover, .canvas-firma.dibujando {
+            border-color: var(--primario);
+            box-shadow: 0 0 0 3px rgba(15, 82, 186, 0.15);
+        }
+        .canvas-firma-pie {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 220px;
+            gap: 8px;
+        }
+        .btn-borrar-firma {
+            background: #F8FAFC;
+            color: #475569;
+            border: 1px solid #CBD5E1;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s ease;
+        }
+        .btn-borrar-firma:hover {
+            background: #FEE2E2;
+            color: #DC2626;
+            border-color: #FCA5A5;
+        }
+        .estado-firma-texto {
+            font-size: 11px;
+            font-weight: 700;
+            color: #94A3B8;
+        }
+        .estado-firma-texto.firmado {
+            color: #16A34A;
+        }
+        .firma-recuadro-impreso {
+            background: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 4px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .firma-imagen-reporte {
+            height: 55px;
+            max-width: 200px;
+            object-fit: contain;
+            display: block;
+            background: #ffffff;
+        }
+
         .miniatura-foto {
             width: 44px;
             height: 44px;
@@ -740,6 +817,8 @@
             .tabla-contenedor { border: none !important; box-shadow: none !important; overflow: visible !important; }
             table { width: 100% !important; min-width: 100% !important; font-size: 11px !important; }
             th { background: #0F52BA !important; color: white !important; -webkit-print-color-adjust: exact; }
+            .firma-recuadro-impreso { border: 1.5px solid #475569 !important; background: #ffffff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .firma-imagen-reporte { height: 50px !important; max-width: 180px !important; background: #ffffff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
     </style>
 </head>
@@ -875,17 +954,23 @@
             </div>
 
             <div class="input-grupo">
-                <label>Firma del Vendedor</label>
-                <div class="firma-area" id="firmaVendedor" onclick="abrirFirma('vendedor')">
-                    <span id="textoFirmaVendedor">✍️ Click para registrar firma</span>
-                    <img id="imgFirmaVendedor" class="firma-imagen oculto" alt="Firma Vendedor">
+                <label>✍️ Firma del Vendedor / Piloto</label>
+                <div class="contenedor-firma-canvas">
+                    <canvas id="canvasFirmaVendedor" width="220" height="70" class="canvas-firma" title="Firme aquí con el dedo o ratón"></canvas>
+                    <div class="canvas-firma-pie">
+                        <button type="button" class="btn-borrar-firma" onclick="limpiarFirma('vendedor')">🗑️ Borrar Firma</button>
+                        <span id="estadoFirmaVendedor" class="estado-firma-texto">Sin firmar</span>
+                    </div>
                 </div>
             </div>
             <div class="input-grupo">
-                <label>Firma del Cliente</label>
-                <div class="firma-area" id="firmaCliente" onclick="abrirFirma('cliente')">
-                    <span id="textoFirmaCliente">✍️ Click para registrar firma</span>
-                    <img id="imgFirmaCliente" class="firma-imagen oculto" alt="Firma Cliente">
+                <label>✍️ Firma del Cliente (al recibir producto)</label>
+                <div class="contenedor-firma-canvas">
+                    <canvas id="canvasFirmaCliente" width="220" height="70" class="canvas-firma" title="Firme aquí con el dedo o ratón"></canvas>
+                    <div class="canvas-firma-pie">
+                        <button type="button" class="btn-borrar-firma" onclick="limpiarFirma('cliente')">🗑️ Borrar Firma</button>
+                        <span id="estadoFirmaCliente" class="estado-firma-texto">Sin firmar</span>
+                    </div>
                 </div>
             </div>
 
@@ -1071,6 +1156,20 @@
             </label>
         </div>
 
+        <!-- ✍️ ÁREA DIBUJABLE PARA FIRMA DEL CLIENTE AL RECIBIR PRODUCTO (MODAL) -->
+        <div id="seccionFirmaClienteModal" style="margin-top:16px; padding:12px; background:#F8FAFC; border:1px solid #CBD5E1; border-radius:10px;">
+            <label style="font-weight:700; font-size:13px; color:var(--texto); display:block; margin-bottom:6px;">
+                ✍️ Firma del Cliente (al momento de recibir el producto):
+            </label>
+            <div class="contenedor-firma-canvas">
+                <canvas id="canvasFirmaClienteModal" width="220" height="70" class="canvas-firma" title="Firme aquí con el dedo o ratón"></canvas>
+                <div class="canvas-firma-pie">
+                    <button type="button" class="btn-borrar-firma" onclick="limpiarFirma('clienteModal')">🗑️ Borrar Firma</button>
+                    <span id="estadoFirmaClienteModal" class="estado-firma-texto">Sin firmar</span>
+                </div>
+            </div>
+        </div>
+
         <div class="modal-botones">
             <button class="btn btn-sm" style="background:#cbd5e1; color:#334155;" onclick="cerrarModalEstados()">Cerrar</button>
             <button class="btn btn-sm btn-primario" id="btnGuardarEstadosModal" onclick="guardarEstadosDesdeModal()">💾 Guardar Estado</button>
@@ -1252,6 +1351,10 @@ function reproducirAlarmaAdmin() {
 
 window.onload = function() {
     establecerFechaHoraActual();
+    setTimeout(() => {
+        inicializarCanvasFirma('canvasFirmaVendedor', 'vendedor');
+        inicializarCanvasFirma('canvasFirmaCliente', 'cliente');
+    }, 60);
     document.addEventListener('click', function primerClick() {
         getAudioContext();
         document.removeEventListener('click', primerClick);
@@ -1310,6 +1413,11 @@ function iniciarSesion() {
     document.getElementById("areaLogin").classList.add("oculto");
     document.getElementById("areaPrincipal").classList.remove("oculto");
     document.getElementById("btnCerrarSesionTop").classList.remove("oculto");
+
+    setTimeout(() => {
+        inicializarCanvasFirma('canvasFirmaVendedor', 'vendedor');
+        inicializarCanvasFirma('canvasFirmaCliente', 'cliente');
+    }, 60);
 
     const badge = document.getElementById("badgeUsuario");
     badge.textContent = `👤 ${usuarioActual.usuario} (${usuarioActual.rol === 'admin' ? 'Administrador' : usuarioActual.ruta})`;
@@ -1469,12 +1577,14 @@ function actualizarSiguienteId() {
 // -------------------------------------------------------------
 // 🔄 SINCRONIZACIÓN CONTINUA CADA 2 SEGUNDOS
 // -------------------------------------------------------------
+let hashDatosPrevios = "";
+
 async function cargarReclamos(esPrimerCarga = false) {
     const indicador = document.getElementById("indicadorSincro");
     const textoSincro = document.getElementById("textoSincro");
 
     try {
-        textoSincro.textContent = "Sincronizando...";
+        if (textoSincro) textoSincro.textContent = "Sincronizando...";
         
         let datos = null;
         try {
@@ -1490,25 +1600,41 @@ async function cargarReclamos(esPrimerCarga = false) {
         }
 
         procesarDatosRecibidos(datos, esPrimerCarga);
-        textoSincro.textContent = "En línea (2s)";
-        indicador.querySelector(".punto-verde").style.background = "#00c853";
+        if (textoSincro) textoSincro.textContent = "Sincronizado (2s)";
+        if (indicador && indicador.querySelector(".punto-verde")) {
+            indicador.querySelector(".punto-verde").style.background = "#00c853";
+        }
     } catch (e) {
-        textoSincro.textContent = "Local";
-        indicador.querySelector(".punto-verde").style.background = "#ffab00";
+        if (textoSincro) textoSincro.textContent = "Local";
+        if (indicador && indicador.querySelector(".punto-verde")) {
+            indicador.querySelector(".punto-verde").style.background = "#ffab00";
+        }
     }
 }
 
 async function sincronizarEnSegundoPlano() {
     if (!usuarioActual) return;
+    const indicador = document.getElementById("indicadorSincro");
+    const textoSincro = document.getElementById("textoSincro");
+
     try {
         const resp = await fetch("/api/records");
         if (resp.ok) {
             const datos = await resp.json();
             if (Array.isArray(datos)) {
                 procesarDatosRecibidos(datos, false);
+                if (textoSincro) textoSincro.textContent = "Sincronizado (2s)";
+                if (indicador && indicador.querySelector(".punto-verde")) {
+                    indicador.querySelector(".punto-verde").style.background = "#00e676";
+                }
             }
         }
-    } catch (e) {}
+    } catch (e) {
+        if (textoSincro) textoSincro.textContent = "Reconectando...";
+        if (indicador && indicador.querySelector(".punto-verde")) {
+            indicador.querySelector(".punto-verde").style.background = "#ff9100";
+        }
+    }
 }
 
 function procesarDatosRecibidos(nuevosDatos, esPrimerCarga) {
@@ -1529,11 +1655,31 @@ function procesarDatosRecibidos(nuevosDatos, esPrimerCarga) {
         });
     }
 
+    // Hash para detectar inmediatamente cualquier cambio de estado (Aceptado, Rechazado, Entrega, Firmas, etc.)
+    const nuevoHash = JSON.stringify(nuevosDatos.map(r => ({
+        id: r.id,
+        pa: !!r.procesoAceptado,
+        pr: !!r.procesoRechazado,
+        pe: !!r.enProcesoEntrega,
+        ce: !!r.cambioEntregado,
+        fe: r.fechaCambioEntregado || '',
+        prec: !!r.productoRecibido,
+        fv: (r.firmaVendedor || '').length,
+        fc: (r.firmaCliente || '').length
+    })));
+
+    const huboCambios = (nuevoHash !== hashDatosPrevios) || esPrimerCarga;
+    hashDatosPrevios = nuevoHash;
+
     reclamosCache = nuevosDatos;
-    actualizarSiguienteId();
-    renderizarBarraCarpetas();
-    renderizarTabla();
-    actualizarGraficas();
+    localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache));
+
+    if (huboCambios) {
+        actualizarSiguienteId();
+        renderizarBarraCarpetas();
+        renderizarTabla();
+        actualizarGraficas();
+    }
 
     if (hayNuevoParaAdmin && nuevoReclamoDetectado) {
         activarNotificacionAdmin(nuevoReclamoDetectado);
@@ -1774,8 +1920,20 @@ function renderizarTabla() {
             <td>${badgeEstadoHtml}</td>
             <td>${r.fecha || '-'}</td>
             <td>${r.hora || '-'}</td>
-            <td><span style="color:#16a34a; font-weight:600; font-size:12px;">${r.firmaVendedor ? '✅ Registrada' : 'Pendiente'}</span></td>
-            <td><span style="color:#16a34a; font-weight:600; font-size:12px;">${r.firmaCliente ? '✅ Registrada' : 'Pendiente'}</span></td>
+            <td>
+                ${r.firmaVendedor 
+                    ? (String(r.firmaVendedor).startsWith('data:image') 
+                        ? `<img src="${r.firmaVendedor}" style="height:26px; max-width:65px; object-fit:contain; background:white; border:1px solid #cbd5e1; border-radius:4px; padding:1px; cursor:pointer; display:inline-block;" onclick="verDetalle('${r.id}')" title="Ver Firma Vendedor">` 
+                        : '<span style="color:#16a34a; font-weight:700; font-size:12px;">✅ Registrada</span>')
+                    : '<span style="color:#94a3b8; font-size:12px;">Pendiente</span>'}
+            </td>
+            <td>
+                ${r.firmaCliente 
+                    ? (String(r.firmaCliente).startsWith('data:image') 
+                        ? `<img src="${r.firmaCliente}" style="height:26px; max-width:65px; object-fit:contain; background:white; border:1px solid #cbd5e1; border-radius:4px; padding:1px; cursor:pointer; display:inline-block;" onclick="verDetalle('${r.id}')" title="Ver Firma Cliente">` 
+                        : '<span style="color:#16a34a; font-weight:700; font-size:12px;">✅ Registrada</span>')
+                    : '<span style="color:#94a3b8; font-size:12px;">Pendiente</span>'}
+            </td>
             <td>
                 <div class="acciones-btns">
                     <button class="btn btn-sm btn-primario" onclick="verDetalle('${r.id}')" title="Ver Detalle">👁️ Detalle</button>
@@ -1891,6 +2049,17 @@ function abrirModalGestionEstados(id) {
     }
 
     alCambiarEstadoModal('init');
+
+    // Inicializar y cargar firma del cliente en modal
+    setTimeout(() => {
+        inicializarCanvasFirma('canvasFirmaClienteModal', 'clienteModal');
+        if (r.firmaCliente) {
+            cargarFirmaEnCanvas('clienteModal', r.firmaCliente);
+        } else {
+            limpiarFirma('clienteModal');
+        }
+    }, 50);
+
     document.getElementById("modalEstados").classList.add("activo");
 }
 
@@ -1913,13 +2082,21 @@ async function guardarEstadosDesdeModal() {
     const cambioEntregado = document.getElementById("chkModalCambioEntregado").checked;
     const productoRecibido = document.getElementById("chkModalRecibido").checked;
 
+    // Obtener firma del cliente desde el canvas del modal si se trazó
+    const canvasModal = document.getElementById("canvasFirmaClienteModal");
+    let firmaClienteModalBase64 = "";
+    if (firmaClienteModalTrazada && canvasModal) {
+        firmaClienteModalBase64 = canvasModal.toDataURL("image/png");
+    }
+
     const camposActualizados = {
         procesoAceptado,
         procesoRechazado,
         enProcesoEntrega,
         cambioEntregado,
         productoRecibido,
-        fechaCambioEntregado: cambioEntregado ? (fechaHoraEntregaModal || obtenerFechaHoraFormateada()) : ""
+        fechaCambioEntregado: cambioEntregado ? (fechaHoraEntregaModal || obtenerFechaHoraFormateada()) : "",
+        ...(firmaClienteModalBase64 ? { firmaCliente: firmaClienteModalBase64 } : {})
     };
 
     // Actualizar objeto en caché
@@ -2003,6 +2180,12 @@ async function guardarReclamo() {
     const cambioEntregado = document.getElementById("chkFormCambioEntregado").checked;
     const productoRecibido = document.getElementById("chkFormRecibido").checked;
 
+    // Extraer firmas dibujadas en canvas como base64
+    const canvasVendedor = document.getElementById("canvasFirmaVendedor");
+    const canvasCliente = document.getElementById("canvasFirmaCliente");
+    const base64FirmaVendedor = (firmaVendedorTrazada && canvasVendedor) ? canvasVendedor.toDataURL("image/png") : "";
+    const base64FirmaCliente = (firmaClienteTrazada && canvasCliente) ? canvasCliente.toDataURL("image/png") : "";
+
     const nuevo = {
         id,
         voucherNumber: id,
@@ -2028,8 +2211,8 @@ async function guardarReclamo() {
         fecha,
         time: hora,
         hora,
-        firmaVendedor: document.getElementById("textoFirmaVendedor").textContent,
-        firmaCliente: document.getElementById("textoFirmaCliente").textContent,
+        firmaVendedor: base64FirmaVendedor,
+        firmaCliente: base64FirmaCliente,
         procesoAceptado,
         procesoRechazado,
         enProcesoEntrega,
@@ -2039,25 +2222,12 @@ async function guardarReclamo() {
         timestamp: new Date().toISOString()
     };
 
-    // Envío a Google Apps Script (hoja RECLAMOS con columnas A a R completas)
-    enviarActualizacionGoogleSheets(nuevo);
-
-    // Envío a servidor local
-    try {
-        await fetch("/api/records", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(nuevo)
-        });
-    } catch (e) {
-        console.warn("Backend local:", e);
-    }
-
+    // ⚡ Optimistic UI: Mostrar de inmediato en la tabla local para reflejo instantáneo
     reclamosCache.unshift(nuevo);
     idsConocidos.add(nuevo.id);
     localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache));
 
-    mostrarMensaje("mensajeAccion", `✅ ¡Reclamo ${id} guardado con éxito! Tel: ${telefono}`, "exito");
+    mostrarMensaje("mensajeAccion", `✅ ¡Reclamo ${id} registrado con éxito! Tel: ${telefono}`, "exito");
     limpiarFormulario();
     renderizarBarraCarpetas();
     renderizarTabla();
@@ -2065,63 +2235,85 @@ async function guardarReclamo() {
 
     btn.disabled = false;
     btn.textContent = "💾 Guardar Reclamo";
+
+    // Envío a Google Apps Script y servidor con reintentos automáticos
+    enviarActualizacionGoogleSheets(nuevo);
+
+    try {
+        await fetch("/api/records", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(nuevo)
+        });
+    } catch (e) {
+        console.warn("Backend local error (se sincronizará en segundo plano):", e);
+        mostrarMensaje("mensajeAccion", `⚠️ Guardado en memoria. Sincronizando con servidor y Google Sheets...`, "advertencia");
+    }
 }
 
-// Envío a Google Sheets (Hoja "RECLAMOS" columnas A-R)
-function enviarActualizacionGoogleSheets(r) {
-    try {
-        const payload = {
-            hoja: "RECLAMOS",
-            id: r.id,
-            ruta: r.ruta,
-            vendedor: r.vendedor,
-            cliente: r.cliente,
-            telefono: r.telefono,
-            factura: r.factura,
-            piloto: r.piloto || r.vendedor,
-            photo: r.photo || r.foto || "",
-            producto: r.producto,
-            motivo: r.motivo,
-            fecha: r.fecha,
-            hora: r.hora,
-            firmaVendedor: r.firmaVendedor,
-            firmaCliente: r.firmaCliente,
-            procesoAceptado: r.procesoAceptado ? "SI" : "NO",
-            procesoRechazado: r.procesoRechazado ? "SI" : "NO",
-            enProcesoEntrega: r.enProcesoEntrega ? "SI" : "NO",
-            cambioEntregado: r.cambioEntregado ? (r.fechaCambioEntregado ? `SI (${r.fechaCambioEntregado})` : "SI") : "NO",
-            productoRecibido: r.productoRecibido ? "SI" : "NO",
-            fechaCambioEntregado: r.fechaCambioEntregado || "",
-            // Orden exacto de columnas para el Apps Script:
-            "ID_Reclamo": r.id,
-            "Ruta": r.ruta,
-            "Vendedor": r.vendedor,
-            "Cliente": r.cliente,
-            "Telefono": r.telefono,
-            "Factura": r.factura,
-            "Piloto": r.piloto || r.vendedor,
-            "Producto": r.producto,
-            "Motivo": r.motivo,
-            "Fecha": r.fecha,
-            "Hora": r.hora,
-            "FirmaVendedor": r.firmaVendedor,
-            "FirmaCliente": r.firmaCliente,
-            "Proceso Aceptado": r.procesoAceptado ? "SI" : "NO",
-            "Proceso Rechazado": r.procesoRechazado ? "SI" : "NO",
-            "En Proceso de Entrega": r.enProcesoEntrega ? "SI" : "NO",
-            "Cambio Entregado": r.cambioEntregado ? (r.fechaCambioEntregado ? `SI (${r.fechaCambioEntregado})` : "SI") : "NO",
-            "Producto Recibido": r.productoRecibido ? "SI" : "NO"
-        };
+// Envío a Google Sheets con reintentos (Hoja "RECLAMOS" columnas A-R)
+async function enviarActualizacionGoogleSheets(r, maxReintentos = 3) {
+    const payload = {
+        hoja: "RECLAMOS",
+        id: r.id,
+        ruta: r.ruta,
+        vendedor: r.vendedor,
+        cliente: r.cliente,
+        telefono: r.telefono,
+        factura: r.factura,
+        piloto: r.piloto || r.vendedor,
+        photo: r.photo || r.foto || "",
+        foto: r.photo || r.foto || "",
+        producto: r.producto,
+        motivo: r.motivo,
+        fecha: r.fecha,
+        hora: r.hora,
+        firmaVendedor: r.firmaVendedor || "",
+        firmaCliente: r.firmaCliente || "",
+        procesoAceptado: r.procesoAceptado ? "SI" : "NO",
+        procesoRechazado: r.procesoRechazado ? "SI" : "NO",
+        enProcesoEntrega: r.enProcesoEntrega ? "SI" : "NO",
+        cambioEntregado: r.cambioEntregado ? (r.fechaCambioEntregado ? `SI (${r.fechaCambioEntregado})` : "SI") : "NO",
+        productoRecibido: r.productoRecibido ? "SI" : "NO",
+        fechaCambioEntregado: r.fechaCambioEntregado || "",
+        // Orden exacto de columnas para el Apps Script:
+        "ID_Reclamo": r.id,
+        "Ruta": r.ruta,
+        "Vendedor": r.vendedor,
+        "Cliente": r.cliente,
+        "Telefono": r.telefono,
+        "Factura": r.factura,
+        "Piloto": r.piloto || r.vendedor,
+        "Producto": r.producto,
+        "Motivo": r.motivo,
+        "Fecha": r.fecha,
+        "Hora": r.hora,
+        "FirmaVendedor": r.firmaVendedor || "",
+        "FirmaCliente": r.firmaCliente || "",
+        "Proceso Aceptado": r.procesoAceptado ? "SI" : "NO",
+        "Proceso Rechazado": r.procesoRechazado ? "SI" : "NO",
+        "En Proceso de Entrega": r.enProcesoEntrega ? "SI" : "NO",
+        "Cambio Entregado": r.cambioEntregado ? (r.fechaCambioEntregado ? `SI (${r.fechaCambioEntregado})` : "SI") : "NO",
+        "Producto Recibido": r.productoRecibido ? "SI" : "NO"
+    };
 
-        fetch(WEB_APP_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        }).catch(err => console.warn("Apps Script envio silencioso:", err));
-    } catch (e) {
-        console.warn("Apps Script error:", e);
+    for (let intento = 1; intento <= maxReintentos; intento++) {
+        try {
+            await fetch(WEB_APP_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            return true;
+        } catch (err) {
+            console.warn(`[Sync Google Sheets] Reintento ${intento}/${maxReintentos} tras error:`, err);
+            if (intento < maxReintentos) {
+                await new Promise(res => setTimeout(res, 1000 * intento));
+            }
+        }
     }
+    return false;
 }
 
 function limpiarFormulario() {
@@ -2130,8 +2322,11 @@ function limpiarFormulario() {
     document.getElementById("factura").value = "";
     document.getElementById("producto").value = "";
     document.getElementById("motivo").value = "";
-    document.getElementById("textoFirmaVendedor").textContent = "✍️ Click para registrar firma";
-    document.getElementById("textoFirmaCliente").textContent = "✍️ Click para registrar firma";
+    
+    // Limpiar firmas dibujadas
+    limpiarFirma('vendedor');
+    limpiarFirma('cliente');
+
     document.getElementById("textoFoto").textContent = "📷 Click para adjuntar foto";
     document.getElementById("previewFoto").classList.add("oculto");
     document.getElementById("inputFoto").value = "";
@@ -2355,8 +2550,8 @@ function verDetalle(idOReclamo) {
         ${fotoHtml}
         <div class="voucher-campo completo"><strong>Motivo del Reclamo:</strong><span>${r.motivo || '-'}</span></div>
         ${estadosVoucherHtml}
-        <div class="voucher-campo"><strong>Firma Vendedor:</strong><span>${r.firmaVendedor || 'Registrada'}</span></div>
-        <div class="voucher-campo"><strong>Firma Cliente:</strong><span>${r.firmaCliente || 'Registrada'}</span></div>
+        <div class="voucher-campo"><strong>Firma Vendedor / Piloto:</strong>${formatearFirmaParaReporte(r.firmaVendedor, 'Firma Vendedor / Piloto')}</div>
+        <div class="voucher-campo"><strong>Firma Cliente:</strong>${formatearFirmaParaReporte(r.firmaCliente, 'Firma del Cliente')}</div>
     `;
 
     document.getElementById("modalDetalle").classList.add("activo");
@@ -2389,6 +2584,9 @@ function imprimirReporteFormulario() {
     const id = document.getElementById("idReclamo").value.trim();
 
     if (cliente || producto) {
+        const canvasVendedor = document.getElementById("canvasFirmaVendedor");
+        const canvasCliente = document.getElementById("canvasFirmaCliente");
+
         const reclamoTemp = {
             id: id || "REC-REPORTE",
             ruta: document.getElementById("ruta").value || (usuarioActual ? usuarioActual.ruta : "Ruta 1"),
@@ -2402,14 +2600,15 @@ function imprimirReporteFormulario() {
             fecha: document.getElementById("fecha").value || "",
             hora: document.getElementById("hora").value || "",
             photo: fotoBase64Actual || "",
+            foto: fotoBase64Actual || "",
             procesoAceptado: document.getElementById("chkFormAceptado").checked,
             procesoRechazado: document.getElementById("chkFormRechazado").checked,
             enProcesoEntrega: document.getElementById("chkFormEntrega").checked,
             cambioEntregado: document.getElementById("chkFormCambioEntregado").checked,
             fechaCambioEntregado: fechaHoraEntregaForm || "",
             productoRecibido: document.getElementById("chkFormRecibido").checked,
-            firmaVendedor: document.getElementById("textoFirmaVendedor").textContent.includes("✅") ? document.getElementById("textoFirmaVendedor").textContent.replace("✅ Firmado por ", "") : "Registrada",
-            firmaCliente: document.getElementById("textoFirmaCliente").textContent.includes("✅") ? document.getElementById("textoFirmaCliente").textContent.replace("✅ Firmado por ", "") : "Registrada"
+            firmaVendedor: (firmaVendedorTrazada && canvasVendedor) ? canvasVendedor.toDataURL("image/png") : "",
+            firmaCliente: (firmaClienteTrazada && canvasCliente) ? canvasCliente.toDataURL("image/png") : ""
         };
         verDetalle(reclamoTemp);
         document.body.classList.add("imprimiendo-reclamo");
@@ -2434,16 +2633,155 @@ window.addEventListener("afterprint", () => {
     document.body.classList.remove("imprimiendo-reclamo");
 });
 
-function abrirFirma(tipo) {
-    const titular = tipo === 'vendedor' ? document.getElementById("vendedor").value : (document.getElementById("cliente").value || 'Cliente');
-    const firmaDigital = prompt(`Firma Digital para ${titular}:\nEscriba el nombre o código de validación:`, titular);
-    if (firmaDigital) {
-        if (tipo === 'vendedor') {
-            document.getElementById("textoFirmaVendedor").textContent = "✅ Firmado por " + firmaDigital;
+// -------------------------------------------------------------
+// ✍️ GESTIÓN DE FIRMAS DIBUJABLES EN CANVAS (RATÓN Y PANTALLA TÁCTIL)
+// -------------------------------------------------------------
+const estadoCanvasFirmas = {};
+
+function inicializarCanvasFirma(canvasId, tipo) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    // Ajustar resolución interna para pantallas de alta densidad (Retina/Móvil)
+    const anchoCSS = 220;
+    const altoCSS = 70;
+    const ratio = window.devicePixelRatio || 1;
+
+    canvas.width = anchoCSS * ratio;
+    canvas.height = altoCSS * ratio;
+    canvas.style.width = anchoCSS + "px";
+    canvas.style.height = altoCSS + "px";
+
+    const ctx = canvas.getContext("2d");
+    ctx.scale(ratio, ratio);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = "#0b2240"; // Tinta azul marino oscuro elegante
+
+    estadoCanvasFirmas[tipo] = {
+        dibujando: false,
+        canvas: canvas,
+        ctx: ctx
+    };
+
+    // Prevenir listeners duplicados
+    if (canvas._eventosAsignados) return;
+    canvas._eventosAsignados = true;
+
+    function obtenerCoordenadas(e) {
+        const rect = canvas.getBoundingClientRect();
+        let clientX, clientY;
+        if (e.touches && e.touches.length > 0) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
         } else {
-            document.getElementById("textoFirmaCliente").textContent = "✅ Firmado por " + firmaDigital;
+            clientX = e.clientX;
+            clientY = e.clientY;
         }
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
     }
+
+    function empezarDibujo(e) {
+        e.preventDefault();
+        const coords = obtenerCoordenadas(e);
+        estadoCanvasFirmas[tipo].dibujando = true;
+        ctx.beginPath();
+        ctx.moveTo(coords.x, coords.y);
+    }
+
+    function dibujar(e) {
+        if (!estadoCanvasFirmas[tipo] || !estadoCanvasFirmas[tipo].dibujando) return;
+        e.preventDefault();
+        const coords = obtenerCoordenadas(e);
+        ctx.lineTo(coords.x, coords.y);
+        ctx.stroke();
+
+        if (tipo === 'vendedor') firmaVendedorTrazada = true;
+        if (tipo === 'cliente') firmaClienteTrazada = true;
+        if (tipo === 'clienteModal') firmaClienteModalTrazada = true;
+    }
+
+    function terminarDibujo(e) {
+        if (!estadoCanvasFirmas[tipo] || !estadoCanvasFirmas[tipo].dibujando) return;
+        estadoCanvasFirmas[tipo].dibujando = false;
+    }
+
+    // Eventos de ratón
+    canvas.addEventListener("mousedown", empezarDibujo);
+    canvas.addEventListener("mousemove", dibujar);
+    window.addEventListener("mouseup", terminarDibujo);
+
+    // Eventos táctiles para teléfonos y tabletas
+    canvas.addEventListener("touchstart", empezarDibujo, { passive: false });
+    canvas.addEventListener("touchmove", dibujar, { passive: false });
+    window.addEventListener("touchend", terminarDibujo);
+    window.addEventListener("touchcancel", terminarDibujo);
+}
+
+function limpiarFirma(tipo) {
+    let canvasId = "";
+    if (tipo === 'vendedor') {
+        canvasId = "canvasFirmaVendedor";
+        firmaVendedorTrazada = false;
+    } else if (tipo === 'cliente') {
+        canvasId = "canvasFirmaCliente";
+        firmaClienteTrazada = false;
+    } else if (tipo === 'clienteModal') {
+        canvasId = "canvasFirmaClienteModal";
+        firmaClienteModalTrazada = false;
+    }
+
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function cargarFirmaEnCanvas(tipo, base64) {
+    if (!base64 || !base64.startsWith("data:image")) return;
+    let canvasId = "";
+    if (tipo === 'vendedor') {
+        canvasId = "canvasFirmaVendedor";
+        firmaVendedorTrazada = true;
+    } else if (tipo === 'cliente') {
+        canvasId = "canvasFirmaCliente";
+        firmaClienteTrazada = true;
+    } else if (tipo === 'clienteModal') {
+        canvasId = "canvasFirmaClienteModal";
+        firmaClienteModalTrazada = true;
+    }
+
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+    img.onload = function() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, 220, 70);
+    };
+    img.src = base64;
+}
+
+function formatearFirmaParaReporte(firma, etiqueta) {
+    if (!firma) {
+        return `<span style="color:#94a3b8; font-style:italic;">No registrada</span>`;
+    }
+    if (String(firma).startsWith('data:image')) {
+        return `<div class="firma-reporte-item">
+            <img src="${firma}" alt="${etiqueta}" class="imagen-firma-reporte">
+            <div class="firma-reporte-linea"></div>
+            <small style="font-size:10px; color:#475569; font-weight:700;">${etiqueta}</small>
+        </div>`;
+    }
+    return `<div class="firma-reporte-item">
+        <span style="font-weight:700; color:#1e293b; font-size:13px;">${firma}</span>
+        <div class="firma-reporte-linea"></div>
+        <small style="font-size:10px; color:#475569; font-weight:700;">${etiqueta}</small>
+    </div>`;
 }
 
 // -------------------------------------------------------------
