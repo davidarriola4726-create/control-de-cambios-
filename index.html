@@ -1510,25 +1510,37 @@ function cerrarSesion() {
 // -------------------------------------------------------------
 // 📁 RENDERIZADO DE CARPETAS POR RUTA
 // -------------------------------------------------------------
+function normalizarRuta(r) {
+    if (!r) return "";
+    return String(r).toLowerCase().replace(/\s+/g, "");
+}
+
 function renderizarBarraCarpetas() {
     const barra = document.getElementById("barraCarpetas");
+    if (!barra) return;
     barra.innerHTML = "";
 
     if (!usuarioActual) return;
 
     // Conteo por ruta
-    const conteos = { "TODAS": reclamosCache.length };
+    const conteos = { "TODAS": (reclamosCache || []).length };
     LISTA_RUTAS.forEach(r => { conteos[r.id] = 0; });
-    reclamosCache.forEach(r => {
+    (reclamosCache || []).forEach(r => {
         const rutaNom = r.ruta || "Ruta 1";
-        conteos[rutaNom] = (conteos[rutaNom] || 0) + 1;
+        const rNorm = normalizarRuta(rutaNom);
+        const match = LISTA_RUTAS.find(lr => normalizarRuta(lr.id) === rNorm);
+        if (match) {
+            conteos[match.id] = (conteos[match.id] || 0) + 1;
+        } else {
+            conteos[rutaNom] = (conteos[rutaNom] || 0) + 1;
+        }
     });
 
     if (usuarioActual.rol === "admin") {
         // Carpeta "Todas las Rutas"
         const chipTodas = document.createElement("div");
         chipTodas.className = "carpeta-chip" + (carpetaActiva === "TODAS" ? " activa" : "");
-        chipTodas.innerHTML = `<span>📁 Todas las Rutas</span> <span class="carpeta-conteo">${conteos["TODAS"]}</span>`;
+        chipTodas.innerHTML = `<span>📁 Todas las Rutas</span> <span class="carpeta-conteo">${conteos["TODAS"] || 0}</span>`;
         chipTodas.onclick = () => seleccionarCarpeta("TODAS");
         barra.appendChild(chipTodas);
 
@@ -1562,7 +1574,7 @@ function actualizarSiguienteId() {
     if (!campoId) return;
 
     let maxNum = 0;
-    reclamosCache.forEach(r => {
+    (reclamosCache || []).forEach(r => {
         const str = String(r.id || "");
         const match = str.match(/(\d+)/);
         if (match) {
@@ -1575,9 +1587,133 @@ function actualizarSiguienteId() {
 }
 
 // -------------------------------------------------------------
-// 🔄 SINCRONIZACIÓN CONTINUA CADA 2 SEGUNDOS
+// 🔄 SINCRONIZACIÓN CONTINUA CADA 2 SEGUNDOS Y LECTURA EN TIEMPO REAL
 // -------------------------------------------------------------
 let hashDatosPrevios = "";
+let sincronizandoEnCurso = false;
+
+function normalizarReclamo(item, idx = 0) {
+    if (!item) return null;
+    const id = String(item.id || item.idReclamo || item.ID_Reclamo || item.ID || item.Id || item.voucherNumber || '').trim() || 
+               (item.factura ? `REC-F${item.factura}` : `REC-${String(idx + 1).padStart(4, '0')}`);
+    
+    let ruta = String(item.ruta || item.Ruta || '').trim();
+    if (!ruta) ruta = 'Ruta 1';
+    const matchRuta = ruta.match(/ruta\s*(\d+)/i);
+    if (matchRuta) {
+        ruta = `Ruta ${matchRuta[1]}`;
+    }
+
+    const aceptado = item.procesoAceptado === true || item.procesoAceptado === 'SI' || item['Proceso Aceptado'] === 'SI' || item.Aceptado === 'SI';
+    const rechazado = item.procesoRechazado === true || item.procesoRechazado === 'SI' || item['Proceso Rechazado'] === 'SI' || item.Rechazado === 'SI';
+    const enEntrega = item.enProcesoEntrega === true || item.enProcesoEntrega === 'SI' || item['En Proceso de Entrega'] === 'SI' || item.EnEntrega === 'SI';
+    const entregado = item.cambioEntregado === true || String(item.cambioEntregado || item['Cambio Entregado'] || item.Entregado || '').includes('SI');
+    const recibido = item.productoRecibido === true || item.productoRecibido === 'SI' || item['Producto Recibido'] === 'SI' || item.Recibido === 'SI';
+
+    let fecha = String(item.fecha || item.Fecha || item.date || '').trim();
+    if (fecha.includes('T')) {
+        const dPart = fecha.split('T')[0];
+        const parts = dPart.split('-');
+        if (parts.length === 3) {
+            fecha = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        } else {
+            fecha = dPart;
+        }
+    }
+
+    let hora = String(item.hora || item.Hora || item.time || '').trim();
+    if (hora.includes('T')) {
+        const hPart = hora.split('T')[1];
+        if (hPart) hora = hPart.slice(0, 5);
+    }
+
+    return {
+        id: id,
+        voucherNumber: id,
+        idReclamo: id,
+        ruta: ruta,
+        vendedor: item.vendedor || item.Vendedor || '',
+        cliente: item.cliente || item.Cliente || '',
+        telefono: item.telefono || item.Telefono || item.clientPhone || item.phone || '',
+        factura: item.factura || item.Factura || '',
+        piloto: item.piloto || item.Piloto || item.vendedor || item.Vendedor || '',
+        photo: item.photo || item.foto || item.Photo || item.Foto || '',
+        producto: item.producto || item.Producto || '',
+        motivo: item.motivo || item.Motivo || item.description || '',
+        fecha: fecha,
+        hora: hora,
+        firmaVendedor: item.firmaVendedor || item.FirmaVendedor || item['Firma Vendedor'] || '',
+        firmaCliente: item.firmaCliente || item.FirmaCliente || item['Firma Cliente'] || '',
+        procesoAceptado: aceptado,
+        procesoRechazado: rechazado,
+        enProcesoEntrega: enEntrega,
+        cambioEntregado: entregado,
+        productoRecibido: recibido,
+        fechaCambioEntregado: item.fechaCambioEntregado || item['Fecha Cambio Entregado'] || ''
+    };
+}
+
+async function obtenerDatosFrescos() {
+    let datos = [];
+    let obtuveDatos = false;
+
+    // 1. Intento rápido vía API del servidor local
+    try {
+        const resp = await fetch("/api/records", { cache: "no-store" });
+        if (resp.ok) {
+            const arr = await resp.json();
+            if (Array.isArray(arr) && arr.length > 0) {
+                datos = arr.map((item, idx) => normalizarReclamo(item, idx)).filter(Boolean);
+                obtuveDatos = true;
+            }
+        }
+    } catch (err) {
+        console.warn("Fallo lectura /api/records:", err);
+    }
+
+    // 2. Consulta directa a Google Apps Script (tiempo real exacto con Google Sheets)
+    try {
+        const respSheets = await fetch(WEB_APP_URL, { cache: "no-store" });
+        if (respSheets.ok) {
+            const resJson = await respSheets.json();
+            const items = Array.isArray(resJson) ? resJson : (resJson.reclamos || resJson.records || resJson.data || []);
+            if (Array.isArray(items) && items.length > 0) {
+                const sheetsData = items.map((item, idx) => normalizarReclamo(item, idx)).filter(Boolean);
+                
+                const mapa = new Map();
+                // Primero datos de Google Sheets
+                sheetsData.forEach(r => { if (r && r.id) mapa.set(r.id, r); });
+                // Combinar con datos locales (estados recién cambiados o firmas)
+                datos.forEach(r => {
+                    if (r && r.id) {
+                        if (mapa.has(r.id)) {
+                            const prev = mapa.get(r.id);
+                            mapa.set(r.id, { ...prev, ...r });
+                        } else {
+                            mapa.set(r.id, r);
+                        }
+                    }
+                });
+                datos = Array.from(mapa.values());
+                obtuveDatos = true;
+            }
+        }
+    } catch (e) {
+        console.warn("Fallo lectura directa de Google Sheets:", e);
+    }
+
+    // 3. Fallback a backup en localStorage si la red falló
+    if (!obtuveDatos || datos.length === 0) {
+        const local = localStorage.getItem("myg_reclamos_backup");
+        if (local) {
+            try {
+                datos = JSON.parse(local).map((item, idx) => normalizarReclamo(item, idx)).filter(Boolean);
+            } catch (e) {}
+        }
+    }
+
+    return datos;
+}
 
 async function cargarReclamos(esPrimerCarga = false) {
     const indicador = document.getElementById("indicadorSincro");
@@ -1585,26 +1721,16 @@ async function cargarReclamos(esPrimerCarga = false) {
 
     try {
         if (textoSincro) textoSincro.textContent = "Sincronizando...";
-        
-        let datos = null;
-        try {
-            const resp = await fetch("/api/records");
-            if (resp.ok) {
-                datos = await resp.json();
-            }
-        } catch (err) {}
 
-        if (!datos || !Array.isArray(datos) || datos.length === 0) {
-            const local = localStorage.getItem("myg_reclamos_backup");
-            datos = local ? JSON.parse(local) : [];
-        }
-
+        const datos = await obtenerDatosFrescos();
         procesarDatosRecibidos(datos, esPrimerCarga);
+
         if (textoSincro) textoSincro.textContent = "Sincronizado (2s)";
         if (indicador && indicador.querySelector(".punto-verde")) {
             indicador.querySelector(".punto-verde").style.background = "#00c853";
         }
     } catch (e) {
+        console.warn("Error en cargarReclamos:", e);
         if (textoSincro) textoSincro.textContent = "Local";
         if (indicador && indicador.querySelector(".punto-verde")) {
             indicador.querySelector(".punto-verde").style.background = "#ffab00";
@@ -1613,20 +1739,18 @@ async function cargarReclamos(esPrimerCarga = false) {
 }
 
 async function sincronizarEnSegundoPlano() {
-    if (!usuarioActual) return;
+    if (!usuarioActual || sincronizandoEnCurso) return;
+    sincronizandoEnCurso = true;
     const indicador = document.getElementById("indicadorSincro");
     const textoSincro = document.getElementById("textoSincro");
 
     try {
-        const resp = await fetch("/api/records");
-        if (resp.ok) {
-            const datos = await resp.json();
-            if (Array.isArray(datos)) {
-                procesarDatosRecibidos(datos, false);
-                if (textoSincro) textoSincro.textContent = "Sincronizado (2s)";
-                if (indicador && indicador.querySelector(".punto-verde")) {
-                    indicador.querySelector(".punto-verde").style.background = "#00e676";
-                }
+        const datos = await obtenerDatosFrescos();
+        if (datos && Array.isArray(datos)) {
+            procesarDatosRecibidos(datos, false);
+            if (textoSincro) textoSincro.textContent = "Sincronizado (2s)";
+            if (indicador && indicador.querySelector(".punto-verde")) {
+                indicador.querySelector(".punto-verde").style.background = "#00e676";
             }
         }
     } catch (e) {
@@ -1634,6 +1758,8 @@ async function sincronizarEnSegundoPlano() {
         if (indicador && indicador.querySelector(".punto-verde")) {
             indicador.querySelector(".punto-verde").style.background = "#ff9100";
         }
+    } finally {
+        sincronizandoEnCurso = false;
     }
 }
 
@@ -1870,14 +1996,20 @@ function renderizarTabla() {
     const tbody = document.getElementById("cuerpoTabla");
     tbody.innerHTML = "";
 
-    let lista = reclamosCache;
+    let lista = reclamosCache || [];
 
     // 🔒 RESTRICCIÓN DE ACCESO: Cada ruta ve SOLO lo suyo
     if (usuarioActual && usuarioActual.rol === "ruta") {
-        lista = reclamosCache.filter(r => r.ruta === usuarioActual.ruta);
+        const rutaNorm = normalizarRuta(usuarioActual.ruta);
+        lista = (reclamosCache || []).filter(r => normalizarRuta(r.ruta) === rutaNorm);
     } else if (usuarioActual && usuarioActual.rol === "admin") {
-        if (carpetaActiva !== "TODAS") {
-            lista = reclamosCache.filter(r => r.ruta === carpetaActiva);
+        // 🔑 ADMINISTRADOR: SIN FILTRO por defecto (ve TODOS los reclamos de TODAS las rutas)
+        if (carpetaActiva && carpetaActiva !== "TODAS") {
+            const carpetaNorm = normalizarRuta(carpetaActiva);
+            lista = (reclamosCache || []).filter(r => normalizarRuta(r.ruta) === carpetaNorm);
+        } else {
+            // "TODAS" -> Sin ningún filtro, ve la totalidad absoluta
+            lista = reclamosCache || [];
         }
     }
 
@@ -2808,11 +2940,13 @@ function formatearFirmaParaReporte(firma, etiqueta) {
 function actualizarGraficas() {
     if (!window.Chart) return;
 
-    let datosGraficas = reclamosCache;
+    let datosGraficas = reclamosCache || [];
     if (usuarioActual && usuarioActual.rol === "ruta") {
-        datosGraficas = reclamosCache.filter(r => r.ruta === usuarioActual.ruta);
-    } else if (usuarioActual && usuarioActual.rol === "admin" && carpetaActiva !== "TODAS") {
-        datosGraficas = reclamosCache.filter(r => r.ruta === carpetaActiva);
+        const rutaNorm = normalizarRuta(usuarioActual.ruta);
+        datosGraficas = (reclamosCache || []).filter(r => normalizarRuta(r.ruta) === rutaNorm);
+    } else if (usuarioActual && usuarioActual.rol === "admin" && carpetaActiva && carpetaActiva !== "TODAS") {
+        const carpetaNorm = normalizarRuta(carpetaActiva);
+        datosGraficas = (reclamosCache || []).filter(r => normalizarRuta(r.ruta) === carpetaNorm);
     }
 
     // 1. Reclamos por Ruta

@@ -77,10 +77,10 @@ async function sincronizarDesdeGoogleSheets() {
       let claims = getClaims();
       let huboCambios = false;
 
-      for (const item of items) {
-        const id = item.idReclamo || item.ID_Reclamo || item.id || item.ID;
-        if (!id) continue;
-        const index = claims.findIndex((c: any) => c.id === id || c.voucherNumber === id);
+      for (let idx = 0; idx < items.length; idx++) {
+        const item = items[idx];
+        const id = String(item.idReclamo || item.ID_Reclamo || item.id || item.ID || '').trim() || (item.factura ? `REC-F${item.factura}` : `REC-${String(idx + 1).padStart(4, '0')}`);
+        const index = claims.findIndex((c: any) => (c.id && c.id === id) || (c.voucherNumber && c.voucherNumber === id));
         
         const aceptado = item.procesoAceptado === 'SI' || item['Proceso Aceptado'] === 'SI' || item.Aceptado === 'SI';
         const rechazado = item.procesoRechazado === 'SI' || item['Proceso Rechazado'] === 'SI' || item.Rechazado === 'SI';
@@ -146,9 +146,9 @@ async function sincronizarDesdeGoogleSheets() {
   }
 }
 
-// Ejecutar sincronización al inicio y periódicamente cada 5 segundos
-setTimeout(sincronizarDesdeGoogleSheets, 1500);
-setInterval(sincronizarDesdeGoogleSheets, 5000);
+// Ejecutar sincronización al inicio y periódicamente cada 2.5 segundos
+setTimeout(sincronizarDesdeGoogleSheets, 1000);
+setInterval(sincronizarDesdeGoogleSheets, 2500);
 
 // API Routes
 app.get('/api/records', (req, res) => {
