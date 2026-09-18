@@ -779,7 +779,7 @@
         <h2 class="login-titulo">Iniciar Sesión</h2>
         <div class="input-grupo">
             <label for="usuario">Usuario / Nombre</label>
-            <input type="text" id="usuario" placeholder="Admin, Brayan Gomez, Melvin Sequeen..." autocomplete="username">
+            <input type="text" id="usuario" placeholder="Admin, Brayan Gómez, Melvin Sequeen..." autocomplete="username">
         </div>
         <div class="input-grupo">
             <label for="contrasena">Contraseña</label>
@@ -1124,58 +1124,64 @@ const LOGO_URL = "/logo.png";
 // 🔑 USUARIOS Y CONTRASEÑAS EXACTAMENTE SOLICITADOS
 // -------------------------------------------------------------
 const USUARIOS = {
-    // Administrador: ve todos los reclamos, puede editar todo, marcar estados, borrar
-    "admin": { usuario: "Admin", pass: "MYG2026", rol: "admin", ruta: "TODAS", vendedor: "Administrador General", piloto: "Administrador General" },
+    // 🔐 Administrador → Usuario: Admin | Contraseña: Mg2026
+    "admin": { usuario: "Admin", pass: "Mg2026", passAlt: "MYG2026", rol: "admin", ruta: "TODAS", vendedor: "Administrador General", piloto: "Administrador General" },
     
-    // Ruta 1: Brayan Gomez | ruta1myg
-    "ruta 1": { usuario: "Ruta 1", pass: "ruta1myg", rol: "ruta", ruta: "Ruta 1", vendedor: "Brayan Gomez", piloto: "Brayan Gomez" },
-    "brayan gomez": { usuario: "Ruta 1", pass: "ruta1myg", rol: "ruta", ruta: "Ruta 1", vendedor: "Brayan Gomez", piloto: "Brayan Gomez" },
+    // 🚚 Ruta 1 → Brayan Gómez ✅ (escrito con Y) | Contraseña: ruta1mg
+    "ruta 1": { usuario: "Ruta 1", pass: "ruta1mg", passAlt: "ruta1myg", rol: "ruta", ruta: "Ruta 1", vendedor: "Brayan Gómez", piloto: "Brayan Gómez" },
+    "brayan gómez": { usuario: "Ruta 1", pass: "ruta1mg", passAlt: "ruta1myg", rol: "ruta", ruta: "Ruta 1", vendedor: "Brayan Gómez", piloto: "Brayan Gómez" },
+    "brayan gomez": { usuario: "Ruta 1", pass: "ruta1mg", passAlt: "ruta1myg", rol: "ruta", ruta: "Ruta 1", vendedor: "Brayan Gómez", piloto: "Brayan Gómez" },
     
-    // Ruta 2: Melvin Sequeen | ruta2myg
-    "ruta 2": { usuario: "Ruta 2", pass: "ruta2myg", rol: "ruta", ruta: "Ruta 2", vendedor: "Melvin Sequeen", piloto: "Melvin Sequeen" },
-    "melvin sequeen": { usuario: "Ruta 2", pass: "ruta2myg", rol: "ruta", ruta: "Ruta 2", vendedor: "Melvin Sequeen", piloto: "Melvin Sequeen" },
+    // 🚚 Ruta 2 → Melvin Sequeen | Contraseña: ruta2mg
+    "ruta 2": { usuario: "Ruta 2", pass: "ruta2mg", passAlt: "ruta2myg", rol: "ruta", ruta: "Ruta 2", vendedor: "Melvin Sequeen", piloto: "Melvin Sequeen" },
+    "melvin sequeen": { usuario: "Ruta 2", pass: "ruta2mg", passAlt: "ruta2myg", rol: "ruta", ruta: "Ruta 2", vendedor: "Melvin Sequeen", piloto: "Melvin Sequeen" },
     
-    // Ruta 3: Melvin Gómez | ruta3myg
-    "ruta 3": { usuario: "Ruta 3", pass: "ruta3myg", rol: "ruta", ruta: "Ruta 3", vendedor: "Melvin Gómez", piloto: "Melvin Gómez" },
-    "melvin gómez": { usuario: "Ruta 3", pass: "ruta3myg", rol: "ruta", ruta: "Ruta 3", vendedor: "Melvin Gómez", piloto: "Melvin Gómez" },
-    "melvin gomez": { usuario: "Ruta 3", pass: "ruta3myg", rol: "ruta", ruta: "Ruta 3", vendedor: "Melvin Gómez", piloto: "Melvin Gómez" },
+    // 🚚 Ruta 3 → Melvin Gómez | Contraseña: ruta3mg
+    "ruta 3": { usuario: "Ruta 3", pass: "ruta3mg", passAlt: "ruta3myg", rol: "ruta", ruta: "Ruta 3", vendedor: "Melvin Gómez", piloto: "Melvin Gómez" },
+    "melvin gómez": { usuario: "Ruta 3", pass: "ruta3mg", passAlt: "ruta3myg", rol: "ruta", ruta: "Ruta 3", vendedor: "Melvin Gómez", piloto: "Melvin Gómez" },
+    "melvin gomez": { usuario: "Ruta 3", pass: "ruta3mg", passAlt: "ruta3myg", rol: "ruta", ruta: "Ruta 3", vendedor: "Melvin Gómez", piloto: "Melvin Gómez" },
     
-    // Ruta 4: Marcos Juárez | ruta4myg
-    "ruta 4": { usuario: "Ruta 4", pass: "ruta4myg", rol: "ruta", ruta: "Ruta 4", vendedor: "Marcos Juárez", piloto: "Marcos Juárez" },
-    "marcos juárez": { usuario: "Ruta 4", pass: "ruta4myg", rol: "ruta", ruta: "Ruta 4", vendedor: "Marcos Juárez", piloto: "Marcos Juárez" },
-    "marcos juarez": { usuario: "Ruta 4", pass: "ruta4myg", rol: "ruta", ruta: "Ruta 4", vendedor: "Marcos Juárez", piloto: "Marcos Juárez" },
+    // 🚚 Ruta 4 → Marcos Juárez | Contraseña: ruta4mg
+    "ruta 4": { usuario: "Ruta 4", pass: "ruta4mg", passAlt: "ruta4myg", rol: "ruta", ruta: "Ruta 4", vendedor: "Marcos Juárez", piloto: "Marcos Juárez" },
+    "marcos juárez": { usuario: "Ruta 4", pass: "ruta4mg", passAlt: "ruta4myg", rol: "ruta", ruta: "Ruta 4", vendedor: "Marcos Juárez", piloto: "Marcos Juárez" },
+    "marcos juarez": { usuario: "Ruta 4", pass: "ruta4mg", passAlt: "ruta4myg", rol: "ruta", ruta: "Ruta 4", vendedor: "Marcos Juárez", piloto: "Marcos Juárez" },
     
-    // Ruta 5: Ruta 5 | ruta5myg
-    "ruta 5": { usuario: "Ruta 5", pass: "ruta5myg", rol: "ruta", ruta: "Ruta 5", vendedor: "Ruta 5", piloto: "Ruta 5" },
+    // 🚚 Ruta 5 → Ruta 5 | Contraseña: ruta5mg
+    "ruta 5": { usuario: "Ruta 5", pass: "ruta5mg", passAlt: "ruta5myg", rol: "ruta", ruta: "Ruta 5", vendedor: "Ruta 5", piloto: "Ruta 5" },
     
-    // Ruta 6: Gustavo Gómez | ruta6myg
-    "ruta 6": { usuario: "Ruta 6", pass: "ruta6myg", rol: "ruta", ruta: "Ruta 6", vendedor: "Gustavo Gómez", piloto: "Gustavo Gómez" },
-    "gustavo gómez": { usuario: "Ruta 6", pass: "ruta6myg", rol: "ruta", ruta: "Ruta 6", vendedor: "Gustavo Gómez", piloto: "Gustavo Gómez" },
-    "gustavo gomez": { usuario: "Ruta 6", pass: "ruta6myg", rol: "ruta", ruta: "Ruta 6", vendedor: "Gustavo Gómez", piloto: "Gustavo Gómez" },
+    // 🚚 Ruta 6 → Gustavo Gómez | Contraseña: ruta6mg
+    "ruta 6": { usuario: "Ruta 6", pass: "ruta6mg", passAlt: "ruta6myg", rol: "ruta", ruta: "Ruta 6", vendedor: "Gustavo Gómez", piloto: "Gustavo Gómez" },
+    "gustavo gómez": { usuario: "Ruta 6", pass: "ruta6mg", passAlt: "ruta6myg", rol: "ruta", ruta: "Ruta 6", vendedor: "Gustavo Gómez", piloto: "Gustavo Gómez" },
+    "gustavo gomez": { usuario: "Ruta 6", pass: "ruta6mg", passAlt: "ruta6myg", rol: "ruta", ruta: "Ruta 6", vendedor: "Gustavo Gómez", piloto: "Gustavo Gómez" },
     
-    // Ruta 7: Ruta 7 | ruta7myg
-    "ruta 7": { usuario: "Ruta 7", pass: "ruta7myg", rol: "ruta", ruta: "Ruta 7", vendedor: "Ruta 7", piloto: "Ruta 7" },
+    // 🚚 Ruta 7 → Ruta 7 | Contraseña: ruta7mg
+    "ruta 7": { usuario: "Ruta 7", pass: "ruta7mg", passAlt: "ruta7myg", rol: "ruta", ruta: "Ruta 7", vendedor: "Ruta 7", piloto: "Ruta 7" },
     
-    // Ruta 8: Marvin Otoniel | ruta8myg
-    "ruta 8": { usuario: "Ruta 8", pass: "ruta8myg", rol: "ruta", ruta: "Ruta 8", vendedor: "Marvin Otoniel", piloto: "Marvin Otoniel" },
-    "marvin otoniel": { usuario: "Ruta 8", pass: "ruta8myg", rol: "ruta", ruta: "Ruta 8", vendedor: "Marvin Otoniel", piloto: "Marvin Otoniel" },
+    // 🚚 Ruta 8 → Marvin Otoniel | Contraseña: ruta8mg
+    "ruta 8": { usuario: "Ruta 8", pass: "ruta8mg", passAlt: "ruta8myg", rol: "ruta", ruta: "Ruta 8", vendedor: "Marvin Otoniel", piloto: "Marvin Otoniel" },
+    "marvin otoniel": { usuario: "Ruta 8", pass: "ruta8mg", passAlt: "ruta8myg", rol: "ruta", ruta: "Ruta 8", vendedor: "Marvin Otoniel", piloto: "Marvin Otoniel" },
     
-    // Ruta 9: Sergio Catú | ruta9myg
-    "ruta 9": { usuario: "Ruta 9", pass: "ruta9myg", rol: "ruta", ruta: "Ruta 9", vendedor: "Sergio Catú", piloto: "Sergio Catú" },
-    "sergio catú": { usuario: "Ruta 9", pass: "ruta9myg", rol: "ruta", ruta: "Ruta 9", vendedor: "Sergio Catú", piloto: "Sergio Catú" },
-    "sergio catu": { usuario: "Ruta 9", pass: "ruta9myg", rol: "ruta", ruta: "Ruta 9", vendedor: "Sergio Catú", piloto: "Sergio Catú" },
+    // 🚚 Ruta 9 → Sergio Catú | Contraseña: ruta9mg
+    "ruta 9": { usuario: "Ruta 9", pass: "ruta9mg", passAlt: "ruta9myg", rol: "ruta", ruta: "Ruta 9", vendedor: "Sergio Catú", piloto: "Sergio Catú" },
+    "sergio catú": { usuario: "Ruta 9", pass: "ruta9mg", passAlt: "ruta9myg", rol: "ruta", ruta: "Ruta 9", vendedor: "Sergio Catú", piloto: "Sergio Catú" },
+    "sergio catu": { usuario: "Ruta 9", pass: "ruta9mg", passAlt: "ruta9myg", rol: "ruta", ruta: "Ruta 9", vendedor: "Sergio Catú", piloto: "Sergio Catú" },
     
-    // Ruta 10: Edgar Guzmán | ruta10myg
-    "ruta 10": { usuario: "Ruta 10", pass: "ruta10myg", rol: "ruta", ruta: "Ruta 10", vendedor: "Edgar Guzmán", piloto: "Edgar Guzmán" },
-    "edgar guzmán": { usuario: "Ruta 10", pass: "ruta10myg", rol: "ruta", ruta: "Ruta 10", vendedor: "Edgar Guzmán", piloto: "Edgar Guzmán" },
-    "edgar guzman": { usuario: "Ruta 10", pass: "ruta10myg", rol: "ruta", ruta: "Ruta 10", vendedor: "Edgar Guzmán", piloto: "Edgar Guzmán" },
+    // 🚚 Ruta 10 → Edgar Guzmán | Contraseña: ruta10mg
+    "ruta 10": { usuario: "Ruta 10", pass: "ruta10mg", passAlt: "ruta10myg", rol: "ruta", ruta: "Ruta 10", vendedor: "Edgar Guzmán", piloto: "Edgar Guzmán" },
+    "edgar guzmán": { usuario: "Ruta 10", pass: "ruta10mg", passAlt: "ruta10myg", rol: "ruta", ruta: "Ruta 10", vendedor: "Edgar Guzmán", piloto: "Edgar Guzmán" },
+    "edgar guzman": { usuario: "Ruta 10", pass: "ruta10mg", passAlt: "ruta10myg", rol: "ruta", ruta: "Ruta 10", vendedor: "Edgar Guzmán", piloto: "Edgar Guzmán" },
     
-    // Ruta 11: Ruta 11 | ruta11myg
-    "ruta 11": { usuario: "Ruta 11", pass: "ruta11myg", rol: "ruta", ruta: "Ruta 11", vendedor: "Ruta 11", piloto: "Ruta 11" }
+    // 🚚 Ruta 11 → Esa… | Contraseña: ruta11mg
+    "ruta 11": { usuario: "Ruta 11", pass: "ruta11mg", passAlt: "ruta11myg", rol: "ruta", ruta: "Ruta 11", vendedor: "Esaú", piloto: "Esaú" },
+    "esaú": { usuario: "Ruta 11", pass: "ruta11mg", passAlt: "ruta11myg", rol: "ruta", ruta: "Ruta 11", vendedor: "Esaú", piloto: "Esaú" },
+    "esau": { usuario: "Ruta 11", pass: "ruta11mg", passAlt: "ruta11myg", rol: "ruta", ruta: "Ruta 11", vendedor: "Esaú", piloto: "Esaú" },
+    "esa…": { usuario: "Ruta 11", pass: "ruta11mg", passAlt: "ruta11myg", rol: "ruta", ruta: "Ruta 11", vendedor: "Esaú", piloto: "Esaú" },
+    "esa...": { usuario: "Ruta 11", pass: "ruta11mg", passAlt: "ruta11myg", rol: "ruta", ruta: "Ruta 11", vendedor: "Esaú", piloto: "Esaú" },
+    "esa": { usuario: "Ruta 11", pass: "ruta11mg", passAlt: "ruta11myg", rol: "ruta", ruta: "Ruta 11", vendedor: "Esaú", piloto: "Esaú" }
 };
 
 const LISTA_RUTAS = [
-    { id: "Ruta 1", nombre: "Ruta 1 - Brayan Gomez" },
+    { id: "Ruta 1", nombre: "Ruta 1 - Brayan Gómez" },
     { id: "Ruta 2", nombre: "Ruta 2 - Melvin Sequeen" },
     { id: "Ruta 3", nombre: "Ruta 3 - Melvin Gómez" },
     { id: "Ruta 4", nombre: "Ruta 4 - Marcos Juárez" },
@@ -1185,7 +1191,7 @@ const LISTA_RUTAS = [
     { id: "Ruta 8", nombre: "Ruta 8 - Marvin Otoniel" },
     { id: "Ruta 9", nombre: "Ruta 9 - Sergio Catú" },
     { id: "Ruta 10", nombre: "Ruta 10 - Edgar Guzmán" },
-    { id: "Ruta 11", nombre: "Ruta 11" }
+    { id: "Ruta 11", nombre: "Ruta 11 - Esaú" }
 ];
 
 let usuarioActual = null;
@@ -1297,7 +1303,13 @@ function iniciarSesion() {
         }
     }
 
-    if (!match || match.pass !== pInput) {
+    const passValida = match && (
+        match.pass === pInput || 
+        match.pass.toLowerCase() === pInput.toLowerCase() ||
+        (match.passAlt && (match.passAlt === pInput || match.passAlt.toLowerCase() === pInput.toLowerCase()))
+    );
+
+    if (!match || !passValida) {
         msg.textContent = "❌ Usuario o contraseña incorrectos.";
         msg.style.display = "block";
         return;
