@@ -1197,6 +1197,16 @@ const LISTA_RUTAS = [
 let usuarioActual = null;
 let reclamosCache = [];
 let idsConocidos = new Set();
+let idsEliminados = new Set();
+try {
+    const _savedDel = localStorage.getItem("myg_reclamos_eliminados");
+    if (_savedDel) {
+        const _arr = JSON.parse(_savedDel);
+        if (Array.isArray(_arr)) {
+            _arr.forEach(x => idsEliminados.add(String(x).trim().toLowerCase()));
+        }
+    }
+} catch (e) {}
 let temporizadorRefresco = null;
 let reclamoAEliminarId = null;
 let reclamoEnEdicionEstado = null;
@@ -1461,21 +1471,49 @@ function seleccionarCarpeta(rutaId) {
     actualizarGraficas();
 }
 
+function extraerNumeroCorrelativo(str) {
+    if (!str) return 0;
+    const s = String(str).trim();
+    if (s.toUpperCase().includes("TEST")) return 0;
+
+    // Patrón 1: N° 00001, N°00001, N° 1
+    let m = s.match(/N[°º\.]?\s*(\d+)/i);
+    if (m) {
+        const val = parseInt(m[1], 10);
+        return isNaN(val) ? 0 : val;
+    }
+
+    // Patrón 2: Solo dígitos como "00001", "1"
+    m = s.match(/^(\d+)$/);
+    if (m) {
+        const val = parseInt(m[1], 10);
+        return isNaN(val) ? 0 : val;
+    }
+
+    // Patrón 3: REC-00001 o REC-0001 (excluyendo REC-F facturas)
+    m = s.match(/^REC-(\d+)$/i);
+    if (m) {
+        const val = parseInt(m[1], 10);
+        return isNaN(val) ? 0 : val;
+    }
+
+    return 0;
+}
+
 function actualizarSiguienteId() {
     const campoId = document.getElementById("idReclamo");
     if (!campoId) return;
 
     let maxNum = 0;
-    reclamosCache.forEach(r => {
-        const str = String(r.id || "");
-        const match = str.match(/(\d+)/);
-        if (match) {
-            const num = parseInt(match[1], 10);
-            if (num > maxNum) maxNum = num;
-        }
+    (reclamosCache || []).forEach(r => {
+        const n1 = extraerNumeroCorrelativo(r.id);
+        const n2 = extraerNumeroCorrelativo(r.idReclamo);
+        const n3 = extraerNumeroCorrelativo(r.voucherNumber);
+        const n = Math.max(n1, n2, n3);
+        if (n > maxNum) maxNum = n;
     });
     const sig = maxNum + 1;
-    campoId.value = "REC-" + String(sig).padStart(4, '0');
+    campoId.value = "N° " + String(sig).padStart(5, '0');
 }
 
 // -------------------------------------------------------------
@@ -1488,6 +1526,17 @@ async function cargarReclamos(esPrimerCarga = false) {
     try {
         textoSincro.textContent = "Sincronizando...";
         
+        try {
+            const respDel = await fetch("/api/deleted-ids");
+            if (respDel.ok) {
+                const arrDel = await respDel.json();
+                if (Array.isArray(arrDel)) {
+                    arrDel.forEach(x => idsEliminados.add(String(x).trim().toLowerCase()));
+                    localStorage.setItem("myg_reclamos_eliminados", JSON.stringify(Array.from(idsEliminados)));
+                }
+            }
+        } catch (e) {}
+
         let datos = null;
         try {
             const resp = await fetch("/api/records");
@@ -1499,6 +1548,15 @@ async function cargarReclamos(esPrimerCarga = false) {
         if (!datos || !Array.isArray(datos) || datos.length === 0) {
             const local = localStorage.getItem("myg_reclamos_backup");
             datos = local ? JSON.parse(local) : [];
+        }
+
+        if (Array.isArray(datos)) {
+            datos = datos.filter(r => {
+                if (!r || !r.id) return false;
+                const idNorm = String(r.id).trim().toLowerCase();
+                const vnNorm = String(r.voucherNumber || '').trim().toLowerCase();
+                return !idsEliminados.has(idNorm) && !idsEliminados.has(vnNorm);
+            });
         }
 
         procesarDatosRecibidos(datos, esPrimerCarga);
@@ -1515,8 +1573,14 @@ async function sincronizarEnSegundoPlano() {
     try {
         const resp = await fetch("/api/records");
         if (resp.ok) {
-            const datos = await resp.json();
+            let datos = await resp.json();
             if (Array.isArray(datos)) {
+                datos = datos.filter(r => {
+                    if (!r || !r.id) return false;
+                    const idNorm = String(r.id).trim().toLowerCase();
+                    const vnNorm = String(r.voucherNumber || '').trim().toLowerCase();
+                    return !idsEliminados.has(idNorm) && !idsEliminados.has(vnNorm);
+                });
                 procesarDatosRecibidos(datos, false);
             }
         }
@@ -1752,7 +1816,14 @@ function renderizarTabla() {
         return;
     }
 
-    lista.sort((a, b) => (b.id || "").localeCompare(a.id || ""));
+    lista.sort((a, b) => {
+        const numA = extraerNumeroCorrelativo(a.id);
+        const numB = extraerNumeroCorrelativo(b.id);
+        if (numA && numB && numA !== numB) {
+            return numB - numA;
+        }
+        return (b.id || "").localeCompare(a.id || "");
+    });
 
     lista.forEach(r => {
         const tr = document.createElement("tr");
@@ -2189,18 +2260,23 @@ async function ejecutarEliminacion() {
     if (!reclamoAEliminarId || !usuarioActual || usuarioActual.rol !== "admin") return;
 
     const id = reclamoAEliminarId;
+    const idNorm = id.trim().toLowerCase();
     const btn = document.getElementById("btnConfirmarEliminar");
     btn.disabled = true;
     btn.textContent = "Eliminando...";
 
-    // 1. Eliminar en el backend local
+    // 1. Agregar a lista negra de eliminados inmediatamente para evitar duplicación o reaparición
+    idsEliminados.add(idNorm);
+    localStorage.setItem("myg_reclamos_eliminados", JSON.stringify(Array.from(idsEliminados)));
+
+    // 2. Eliminar en el backend local
     try {
         await fetch(`/api/records/${encodeURIComponent(id)}`, { method: "DELETE" });
     } catch (e) {
         console.warn("Error borrando en backend:", e);
     }
 
-    // 2. Sincronizar eliminación con Google Sheets
+    // 3. Sincronizar eliminación completa con Google Sheets
     try {
         fetch(WEB_APP_URL, {
             method: "POST",
@@ -2208,24 +2284,49 @@ async function ejecutarEliminacion() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 action: "eliminar",
+                metodo: "eliminar",
+                delete: true,
+                hoja: "RECLAMOS",
                 id: id,
-                ID_Reclamo: id
+                ID_Reclamo: id,
+                idReclamo: id,
+                ID: id,
+                voucherNumber: id
             })
-        }).catch(err => console.warn("Google Sheets sync delete:", err));
+        }).catch(err => console.warn("Google Sheets sync delete 1:", err));
+
+        fetch(WEB_APP_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                action: "delete",
+                hoja: "RECLAMOS",
+                id: id,
+                ID_Reclamo: id,
+                idReclamo: id,
+                ID: id
+            })
+        }).catch(err => console.warn("Google Sheets sync delete 2:", err));
     } catch (e) {
         console.warn("Google Sheets error:", e);
     }
 
-    // 3. Actualizar memoria y almacenamiento local
-    reclamosCache = reclamosCache.filter(r => r.id !== id && r.voucherNumber !== id);
+    // 4. Actualizar memoria y almacenamiento local
+    reclamosCache = reclamosCache.filter(r => {
+        const rid = String(r.id || '').trim().toLowerCase();
+        const rvn = String(r.voucherNumber || '').trim().toLowerCase();
+        return rid !== idNorm && rvn !== idNorm;
+    });
     idsConocidos.delete(id);
+    idsConocidos.delete(idNorm);
     localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache));
 
     cerrarModalEliminar();
     btn.disabled = false;
     btn.textContent = "🗑️ Eliminar";
 
-    mostrarMensaje("mensajeAccion", `🗑️ Reclamo ${id} eliminado exitosamente en vivo.`, "exito");
+    mostrarMensaje("mensajeAccion", `🗑️ Reclamo ${id} eliminado exitosamente.`, "exito");
     actualizarSiguienteId();
     renderizarBarraCarpetas();
     renderizarTabla();
@@ -2251,6 +2352,12 @@ async function pedirConfirmacionLimpiarTodo() {
 }
 
 async function ejecutarLimpiarTodo() {
+    (reclamosCache || []).forEach(r => {
+        if (r.id) idsEliminados.add(String(r.id).trim().toLowerCase());
+        if (r.voucherNumber) idsEliminados.add(String(r.voucherNumber).trim().toLowerCase());
+    });
+    localStorage.setItem("myg_reclamos_eliminados", JSON.stringify(Array.from(idsEliminados)));
+
     try {
         await fetch("/api/records", { method: "DELETE" });
     } catch (e) {
@@ -2262,7 +2369,7 @@ async function ejecutarLimpiarTodo() {
             method: "POST",
             mode: "no-cors",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "limpiarTodo" })
+            body: JSON.stringify({ action: "limpiarTodo", hoja: "RECLAMOS" })
         }).catch(err => console.warn("Google Sheets sync limpiar todo:", err));
     } catch (e) {}
 

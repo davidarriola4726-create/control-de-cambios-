@@ -22,10 +22,46 @@ if (!fs.existsSync(claimsFile)) {
   fs.writeFileSync(claimsFile, JSON.stringify([], null, 2), 'utf8');
 }
 
+const deletedFile = path.join(dataDir, 'deleted_ids.json');
+if (!fs.existsSync(deletedFile)) {
+  fs.writeFileSync(deletedFile, JSON.stringify([], null, 2), 'utf8');
+}
+
+function getDeletedIds(): Set<string> {
+  try {
+    if (fs.existsSync(deletedFile)) {
+      const raw = fs.readFileSync(deletedFile, 'utf8');
+      const list = JSON.parse(raw);
+      if (Array.isArray(list)) {
+        return new Set(list.map(x => String(x).trim().toLowerCase()));
+      }
+    }
+  } catch (e) {
+    console.error('Error reading deleted_ids:', e);
+  }
+  return new Set<string>();
+}
+
+function saveDeletedIds(ids: Set<string>) {
+  try {
+    fs.writeFileSync(deletedFile, JSON.stringify(Array.from(ids), null, 2), 'utf8');
+  } catch (err) {
+    console.error('Error saving deleted_ids:', err);
+  }
+}
+
 function getClaims(): any[] {
   try {
     const raw = fs.readFileSync(claimsFile, 'utf8');
-    return JSON.parse(raw);
+    const list = JSON.parse(raw);
+    if (!Array.isArray(list)) return [];
+    const deleted = getDeletedIds();
+    if (deleted.size === 0) return list;
+    return list.filter((c: any) => {
+      const cid = String(c.id || '').trim().toLowerCase();
+      const cv = String(c.voucherNumber || '').trim().toLowerCase();
+      return !deleted.has(cid) && !deleted.has(cv);
+    });
   } catch (err) {
     return [];
   }
@@ -75,12 +111,28 @@ async function sincronizarDesdeGoogleSheets() {
     
     if (Array.isArray(items) && items.length > 0) {
       let claims = getClaims();
+      const deletedIds = getDeletedIds();
       let huboCambios = false;
 
       for (let idx = 0; idx < items.length; idx++) {
         const item = items[idx];
-        const id = String(item.idReclamo || item.ID_Reclamo || item.id || item.ID || '').trim() || (item.factura ? `REC-F${item.factura}` : `REC-${String(idx + 1).padStart(4, '0')}`);
-        const index = claims.findIndex((c: any) => (c.id && c.id === id) || (c.voucherNumber && c.voucherNumber === id));
+        let rawId = String(item.idReclamo || item.ID_Reclamo || item.id || item.ID || item.voucherNumber || '').trim();
+        if (rawId && rawId.startsWith("REC-F") && item.factura && rawId === `REC-F${item.factura}`) {
+          rawId = '';
+        }
+        const id = rawId || `N° ${String(idx + 1).padStart(5, '0')}`;
+        const idNorm = id.trim().toLowerCase();
+
+        // Si fue eliminado por el administrador, NUNCA volver a añadirlo ni duplicarlo
+        if (deletedIds.has(idNorm)) {
+          continue;
+        }
+
+        const index = claims.findIndex((c: any) => {
+          const cid = String(c.id || '').trim().toLowerCase();
+          const cv = String(c.voucherNumber || '').trim().toLowerCase();
+          return (cid && cid === idNorm) || (cv && cv === idNorm);
+        });
         
         const aceptado = item.procesoAceptado === 'SI' || item['Proceso Aceptado'] === 'SI' || item.Aceptado === 'SI';
         const rechazado = item.procesoRechazado === 'SI' || item['Proceso Rechazado'] === 'SI' || item.Rechazado === 'SI';
@@ -134,6 +186,18 @@ async function sincronizarDesdeGoogleSheets() {
             huboCambios = true;
           }
         }
+      }
+
+      // Asegurar que ningún reclamo en claims esté en la lista de eliminados
+      const claimsFiltrados = claims.filter((c: any) => {
+        const cid = String(c.id || '').trim().toLowerCase();
+        const cv = String(c.voucherNumber || '').trim().toLowerCase();
+        return !deletedIds.has(cid) && !deletedIds.has(cv);
+      });
+
+      if (claimsFiltrados.length !== claims.length) {
+        claims = claimsFiltrados;
+        huboCambios = true;
       }
 
       if (huboCambios) {
@@ -252,25 +316,66 @@ app.patch('/api/records/:id', (req, res) => {
   }
 });
 
+app.get('/api/deleted-ids', (req, res) => {
+  res.json(Array.from(getDeletedIds()));
+});
+
 app.delete('/api/records', (req, res) => {
+  const claims = getClaims();
+  const deletedIds = getDeletedIds();
+  claims.forEach((c: any) => {
+    if (c.id) deletedIds.add(String(c.id).trim().toLowerCase());
+    if (c.voucherNumber) deletedIds.add(String(c.voucherNumber).trim().toLowerCase());
+  });
+  saveDeletedIds(deletedIds);
   saveClaims([]);
+
+  enviarAGoogleSheetsConReintentos({
+    action: "limpiarTodo",
+    hoja: "RECLAMOS"
+  });
+
   res.json({ success: true, count: 0 });
 });
 
 app.delete('/api/records/:id', (req, res) => {
-  const { id } = req.params;
+  const rawId = decodeURIComponent(req.params.id).trim();
+  const idNorm = rawId.toLowerCase();
+
+  const deletedIds = getDeletedIds();
+  deletedIds.add(idNorm);
+  saveDeletedIds(deletedIds);
+
   let claims = getClaims();
-  claims = claims.filter((c: any) => c.id !== id && c.voucherNumber !== id);
+  claims = claims.filter((c: any) => {
+    const cId = String(c.id || '').trim().toLowerCase();
+    const cVoucher = String(c.voucherNumber || '').trim().toLowerCase();
+    return cId !== idNorm && cVoucher !== idNorm;
+  });
   saveClaims(claims);
 
   enviarAGoogleSheetsConReintentos({
     action: "eliminar",
+    metodo: "eliminar",
+    delete: true,
     hoja: "RECLAMOS",
-    id: id,
-    ID_Reclamo: id
+    id: rawId,
+    ID_Reclamo: rawId,
+    idReclamo: rawId,
+    ID: rawId,
+    voucherNumber: rawId
   });
 
-  res.json({ success: true, id });
+  enviarAGoogleSheetsConReintentos({
+    action: "delete",
+    hoja: "RECLAMOS",
+    id: rawId,
+    ID_Reclamo: rawId,
+    idReclamo: rawId,
+    ID: rawId
+  });
+
+  res.json({ success: true, id: rawId });
 });
 
 // Serve static assets and index.html
