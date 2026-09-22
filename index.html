@@ -884,9 +884,22 @@
 
     <!-- 📝 FORMULARIO DE RECLAMO -->
     <div class="form-card" id="formCardNuevo">
-        <h2 style="color:var(--primario); margin-bottom:22px; display:flex; align-items:center; gap:10px; font-size:20px; font-weight:800;">
-            <span>📝</span> Nuevo Reclamo / Cambio de Producto
+        <h2 id="tituloFormulario" style="color:var(--primario); margin-bottom:22px; display:flex; align-items:center; gap:10px; font-size:20px; font-weight:800;">
+            <span id="iconoTituloFormulario">📝</span> <span id="textoTituloFormulario">Nuevo Reclamo / Cambio de Producto</span>
         </h2>
+        
+        <!-- Banner de modo edición para evitar duplicados y dar claridad total -->
+        <div id="bannerModoEdicion" class="oculto" style="background:#e0f2fe; border:1.5px solid #0284c7; border-radius:10px; padding:12px 16px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-size:22px;">✏️</span>
+                <div>
+                    <strong style="color:#0369a1; font-size:14px;" id="textoModoEdicion">Modo Edición: Editando Reclamo</strong>
+                    <p style="margin:0; font-size:12px; color:#0c4a6e;">Al guardar los cambios se actualizará este mismo registro sin crear filas duplicadas.</p>
+                </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-peligro" onclick="cancelarEdicion()">❌ Cancelar Edición</button>
+        </div>
+
         <div class="form-grid">
             <div class="input-grupo">
                 <label>N° Reclamo (ID Consecutivo)</label>
@@ -903,6 +916,12 @@
             <div class="input-grupo">
                 <label>Nombre del Cliente <span style="color:var(--peligro); font-weight:900;">*</span></label>
                 <input type="text" id="cliente" placeholder="Nombre completo del cliente..." required>
+            </div>
+
+            <!-- 📍 DIRECCIÓN DEL CLIENTE (OBLIGATORIO - COLUMNA S) -->
+            <div class="input-grupo">
+                <label>📍 Dirección del Cliente <span style="color:var(--peligro); font-weight:900;">*</span></label>
+                <input type="text" id="direccion" placeholder="Dirección completa del cliente..." required>
             </div>
 
             <!-- 📞 TELÉFONO DEL CLIENTE (OBLIGATORIO: NÚMEROS Y GUIONES) -->
@@ -929,6 +948,13 @@
                 <label>Producto con Falla <span style="color:var(--peligro); font-weight:900;">*</span></label>
                 <input type="text" id="producto" placeholder="Descripción del producto..." required>
             </div>
+
+            <!-- 📦 CANTIDAD DE PRODUCTO (OBLIGATORIO NUMÉRICO - COLUMNA T) -->
+            <div class="input-grupo">
+                <label>📦 Cantidad de Producto <span style="color:var(--peligro); font-weight:900;">*</span></label>
+                <input type="number" id="cantidad" placeholder="Ej: 1, 5, 10..." min="1" step="1" required>
+            </div>
+
             <div class="input-grupo">
                 <label>Fecha</label>
                 <input type="date" id="fecha">
@@ -1049,7 +1075,7 @@
         </div>
 
         <!-- 📊 TABLA CON TODAS LAS COLUMNAS Y EL ESTADO -->
-        <!-- ID Reclamo | Ruta | Vendedor | Cliente | 📞 Teléfono | Factura | Piloto | Photo | Producto | Estado | Fecha | Hora | FirmaVendedor | FirmaCliente | Acciones -->
+        <!-- ID Reclamo | Ruta | Vendedor | Cliente | 📍 Dirección | 📞 Teléfono | Factura | Piloto | Photo | Producto | 📦 Cant. | Estado | Fecha | Hora | FirmaVendedor | FirmaCliente | Acciones -->
         <div class="tabla-contenedor">
             <table>
                 <thead>
@@ -1058,11 +1084,13 @@
                         <th>Ruta</th>
                         <th>Vendedor</th>
                         <th>Cliente</th>
+                        <th>📍 Dirección</th>
                         <th>📞 Teléfono</th>
                         <th>Factura</th>
                         <th>Piloto</th>
                         <th>Photo</th>
                         <th>Producto</th>
+                        <th>📦 Cant.</th>
                         <th>Estado</th>
                         <th>Fecha</th>
                         <th>Hora</th>
@@ -1073,7 +1101,7 @@
                 </thead>
                 <tbody id="cuerpoTabla">
                     <tr>
-                        <td colspan="15" style="text-align:center; padding:30px; color:var(--textoClaro);">
+                        <td colspan="17" style="text-align:center; padding:30px; color:var(--textoClaro);">
                             Cargando reclamos...
                         </td>
                     </tr>
@@ -1621,6 +1649,10 @@ function extraerNumeroCorrelativo(str) {
 }
 
 function actualizarSiguienteId() {
+    if (reclamoEnEdicionId) {
+        // En modo edición, nunca sobreescribir el ID del reclamo que se está editando
+        return;
+    }
     const campoId = document.getElementById("idReclamo");
     if (!campoId) return;
 
@@ -1664,6 +1696,11 @@ function normalizarReclamo(item, idx = 0) {
     const entregado = item.cambioEntregado === true || String(item.cambioEntregado || item['Cambio Entregado'] || item.Entregado || '').includes('SI');
     const recibido = item.productoRecibido === true || item.productoRecibido === 'SI' || item['Producto Recibido'] === 'SI' || item.Recibido === 'SI';
 
+    // 📍 Dirección del Cliente (Columna S) y 📦 Cantidad de Producto (Columna T)
+    const direccion = String(item.direccion || item.Direccion || item['Dirección'] || item.direccionCliente || item.DireccionCliente || item['Dirección del Cliente'] || item['Direccion del Cliente'] || item.clientAddress || '').trim();
+    const rawCant = item.cantidad ?? item.Cantidad ?? item.cantidadProducto ?? item.CantidadProducto ?? item['Cantidad de Producto'] ?? item.quantity ?? 1;
+    const cantidad = (isNaN(Number(rawCant)) || Number(rawCant) <= 0) ? 1 : Number(rawCant);
+
     let fecha = String(item.fecha || item.Fecha || item.date || '').trim();
     if (fecha.includes('T')) {
         const dPart = fecha.split('T')[0];
@@ -1688,11 +1725,17 @@ function normalizarReclamo(item, idx = 0) {
         ruta: ruta,
         vendedor: item.vendedor || item.Vendedor || '',
         cliente: item.cliente || item.Cliente || '',
+        direccion: direccion,
+        direccionCliente: direccion,
+        clientAddress: direccion,
         telefono: item.telefono || item.Telefono || item.clientPhone || item.phone || '',
         factura: item.factura || item.Factura || '',
         piloto: item.piloto || item.Piloto || item.vendedor || item.Vendedor || '',
         photo: item.photo || item.foto || item.Photo || item.Foto || '',
         producto: item.producto || item.Producto || '',
+        cantidad: cantidad,
+        cantidadProducto: cantidad,
+        quantity: cantidad,
         motivo: item.motivo || item.Motivo || item.description || '',
         fecha: fecha,
         hora: hora,
@@ -1841,6 +1884,21 @@ function procesarDatosRecibidos(nuevosDatos, esPrimerCarga) {
     let hayNuevoParaAdmin = false;
     let nuevoReclamoDetectado = null;
 
+    // Deduplicar estrictamente por ID para evitar duplicados en memoria
+    const mapaUnico = new Map();
+    (nuevosDatos || []).forEach(r => {
+        if (!r || !r.id) return;
+        const key = String(r.id || r.voucherNumber).trim().toLowerCase();
+        if (idsEliminados && idsEliminados.has(key)) return;
+        if (mapaUnico.has(key)) {
+            const anterior = mapaUnico.get(key);
+            mapaUnico.set(key, { ...anterior, ...r });
+        } else {
+            mapaUnico.set(key, r);
+        }
+    });
+    nuevosDatos = Array.from(mapaUnico.values());
+
     if (esPrimerCarga) {
         nuevosDatos.forEach(r => idsConocidos.add(r.id));
     } else {
@@ -1855,9 +1913,16 @@ function procesarDatosRecibidos(nuevosDatos, esPrimerCarga) {
         });
     }
 
-    // Hash para detectar inmediatamente cualquier cambio de estado (Aceptado, Rechazado, Entrega, Firmas, etc.)
+    // Hash para detectar inmediatamente cualquier cambio (estados, dirección, cantidad, etc.)
     const nuevoHash = JSON.stringify(nuevosDatos.map(r => ({
         id: r.id,
+        dir: r.direccion || '',
+        cant: r.cantidad || 1,
+        cli: r.cliente || '',
+        tel: r.telefono || '',
+        fac: r.factura || '',
+        prod: r.producto || '',
+        mot: r.motivo || '',
         pa: !!r.procesoAceptado,
         pr: !!r.procesoRechazado,
         pe: !!r.enProcesoEntrega,
@@ -2125,11 +2190,13 @@ function renderizarTabla() {
             <td><span style="background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:6px; font-weight:700; font-size:12px;">${r.ruta || '-'}</span></td>
             <td>${r.vendedor || '-'}</td>
             <td><strong>${r.cliente || '-'}</strong></td>
+            <td><span style="color:#334155; font-size:12px; display:inline-block; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${r.direccion || r.direccionCliente || r.clientAddress || '-'}">📍 ${r.direccion || r.direccionCliente || r.clientAddress || '-'}</span></td>
             <td><span style="color:#0F52BA; font-weight:700;">📞 ${telCliente}</span></td>
             <td>${r.factura || '-'}</td>
             <td><span style="color:#334155; font-size:12px;">${r.piloto || r.vendedor || '-'}</span></td>
             <td style="text-align:center;">${celdaFoto}</td>
             <td>${r.producto || '-'}</td>
+            <td style="text-align:center;"><span style="background:#f1f5f9; color:#1e293b; padding:2px 7px; border-radius:6px; font-weight:800; font-size:12px; border:1px solid #cbd5e1;">📦 ${r.cantidad || r.cantidadProducto || r.quantity || 1}</span></td>
             <td>${badgeEstadoHtml}</td>
             <td>${r.fecha || '-'}</td>
             <td>${r.hora || '-'}</td>
@@ -2149,6 +2216,7 @@ function renderizarTabla() {
             </td>
             <td>
                 <div class="acciones-btns">
+                    <button class="btn btn-sm" style="background:#f59e0b; color:white;" onclick="cargarReclamoParaEditar('${r.id}')" title="Modificar Reclamo y Campos">✏️ Editar</button>
                     <button class="btn btn-sm btn-primario" onclick="verDetalle('${r.id}')" title="Ver Detalle">👁️ Detalle</button>
                     <button class="btn btn-sm btn-exito" onclick="imprimirReporteReclamo('${r.id}')" title="Imprimir Reporte">🖨️ Imprimir Reporte</button>
                     <button class="btn btn-sm" style="background:#0284c7; color:white;" onclick="abrirModalGestionEstados('${r.id}')" title="${esAdmin ? 'Gestionar Estados' : 'Ver Estados'}">⚙️ Estado</button>
@@ -2312,16 +2380,16 @@ async function guardarEstadosDesdeModal() {
         ...(firmaClienteModalBase64 ? { firmaCliente: firmaClienteModalBase64 } : {})
     };
 
-    // Actualizar objeto en caché
-    const index = reclamosCache.findIndex(x => x.id === id);
+    // Actualizar objeto en caché en su posición exacta (sin duplicar)
+    const index = reclamosCache.findIndex(x => x.id === id || x.voucherNumber === id);
     if (index !== -1) {
         reclamosCache[index] = { ...reclamosCache[index], ...camposActualizados };
     }
     localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache));
 
-    // Actualizar en backend local (PUT/PATCH)
+    // Actualizar en backend local (PUT /api/records/:id)
     try {
-        await fetch(`/api/records/${id}`, {
+        await fetch(`/api/records/${encodeURIComponent(id)}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(reclamosCache[index])
@@ -2330,8 +2398,8 @@ async function guardarEstadosDesdeModal() {
         console.warn("Error actualizando backend:", e);
     }
 
-    // Sincronizar actualización con Google Sheets hoja "RECLAMOS"
-    enviarActualizacionGoogleSheets(reclamosCache[index]);
+    // Sincronizar actualización con Google Sheets hoja "RECLAMOS" (modo actualización por ID)
+    enviarActualizacionGoogleSheets(reclamosCache[index], true);
 
     cerrarModalEstados();
     btn.disabled = false;
@@ -2344,18 +2412,166 @@ async function guardarEstadosDesdeModal() {
 }
 
 // -------------------------------------------------------------
-// 💾 GUARDAR RECLAMO CON TELÉFONO OBLIGATORIO Y ENVÍO A HOJA "RECLAMOS"
+// ✏️ MODO EDICIÓN DE RECLAMO (MODIFICAR SIN DUPLICAR)
+// -------------------------------------------------------------
+let reclamoEnEdicionId = null;
+
+function cargarReclamoParaEditar(id) {
+    const idNorm = String(id || '').trim().toLowerCase();
+    const r = reclamosCache.find(x => {
+        const cid = String(x.id || '').trim().toLowerCase();
+        const cv = String(x.voucherNumber || '').trim().toLowerCase();
+        return cid === idNorm || cv === idNorm;
+    });
+
+    if (!r) {
+        mostrarMensaje("mensajeAccion", `❌ No se encontró el reclamo ${id}`, "error");
+        return;
+    }
+
+    reclamoEnEdicionId = r.id;
+
+    // Rellenar campos del formulario
+    document.getElementById("idReclamo").value = r.id;
+    document.getElementById("ruta").value = r.ruta || (usuarioActual ? usuarioActual.ruta : "Ruta 1");
+    document.getElementById("vendedor").value = r.vendedor || (usuarioActual ? usuarioActual.vendedor : "");
+    document.getElementById("piloto").value = r.piloto || r.vendedor || (usuarioActual ? usuarioActual.vendedor : "");
+    document.getElementById("cliente").value = r.cliente || "";
+    document.getElementById("direccion").value = r.direccion || r.direccionCliente || r.clientAddress || "";
+    document.getElementById("telefono").value = r.telefono || r.clientPhone || r.phone || "";
+    document.getElementById("factura").value = r.factura || "";
+    document.getElementById("producto").value = r.producto || "";
+    document.getElementById("cantidad").value = r.cantidad || r.cantidadProducto || r.quantity || 1;
+    document.getElementById("motivo").value = r.motivo || r.description || "";
+    
+    if (r.fecha) {
+        const parts = r.fecha.split('/');
+        if (parts.length === 3) {
+            document.getElementById("fecha").value = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        } else {
+            document.getElementById("fecha").value = r.fecha;
+        }
+    }
+    if (r.hora) {
+        document.getElementById("hora").value = r.hora;
+    }
+
+    // Cargar foto si existe
+    if (r.photo || r.foto) {
+        fotoBase64Actual = r.photo || r.foto;
+        document.getElementById("previewFoto").src = fotoBase64Actual;
+        document.getElementById("previewFoto").classList.remove("oculto");
+        document.getElementById("textoFoto").textContent = "📷 Foto adjunta (click para cambiar)";
+    } else {
+        fotoBase64Actual = "";
+        document.getElementById("previewFoto").classList.add("oculto");
+        document.getElementById("textoFoto").textContent = "📷 Click para adjuntar foto";
+    }
+
+    // Checkboxes de estado
+    document.getElementById("chkFormAceptado").checked = !!r.procesoAceptado;
+    document.getElementById("chkFormRechazado").checked = !!r.procesoRechazado;
+    document.getElementById("chkFormEntrega").checked = !!r.enProcesoEntrega;
+    document.getElementById("chkFormCambioEntregado").checked = !!r.cambioEntregado;
+    document.getElementById("chkFormRecibido").checked = !!r.productoRecibido;
+    fechaHoraEntregaForm = r.fechaCambioEntregado || "";
+    document.getElementById("textoFechaEntregaForm").textContent = fechaHoraEntregaForm ? `(${fechaHoraEntregaForm})` : "";
+
+    alCambiarEstadoFormulario('init');
+
+    // Cargar firmas en canvas si existen
+    if (r.firmaVendedor && String(r.firmaVendedor).startsWith('data:image')) {
+        const canvasV = document.getElementById("canvasFirmaVendedor");
+        if (canvasV) {
+            const ctxV = canvasV.getContext("2d");
+            const imgV = new Image();
+            imgV.onload = () => {
+                ctxV.clearRect(0, 0, canvasV.width, canvasV.height);
+                ctxV.drawImage(imgV, 0, 0, canvasV.width, canvasV.height);
+                firmaVendedorTrazada = true;
+                const estV = document.getElementById("estadoFirmaVendedor");
+                if (estV) {
+                    estV.textContent = "Firmado";
+                    estV.classList.add("activo");
+                }
+            };
+            imgV.src = r.firmaVendedor;
+        }
+    }
+    if (r.firmaCliente && String(r.firmaCliente).startsWith('data:image')) {
+        const canvasC = document.getElementById("canvasFirmaCliente");
+        if (canvasC) {
+            const ctxC = canvasC.getContext("2d");
+            const imgC = new Image();
+            imgC.onload = () => {
+                ctxC.clearRect(0, 0, canvasC.width, canvasC.height);
+                ctxC.drawImage(imgC, 0, 0, canvasC.width, canvasC.height);
+                firmaClienteTrazada = true;
+                const estC = document.getElementById("estadoFirmaCliente");
+                if (estC) {
+                    estC.textContent = "Firmado";
+                    estC.classList.add("activo");
+                }
+            };
+            imgC.src = r.firmaCliente;
+        }
+    }
+
+    // Configurar interfaz de modo edición
+    const banner = document.getElementById("bannerModoEdicion");
+    if (banner) banner.classList.remove("oculto");
+    const textoBanner = document.getElementById("textoModoEdicion");
+    if (textoBanner) textoBanner.textContent = `Modo Edición: Editando Reclamo ${r.id}`;
+    const textoTitulo = document.getElementById("textoTituloFormulario");
+    if (textoTitulo) textoTitulo.textContent = `Modificar Reclamo ${r.id}`;
+    const iconoTitulo = document.getElementById("iconoTituloFormulario");
+    if (iconoTitulo) iconoTitulo.textContent = "✏️";
+    const btnGuardar = document.getElementById("btnGuardar");
+    if (btnGuardar) btnGuardar.textContent = `💾 Actualizar Reclamo (${r.id})`;
+
+    // Scroll hacia el formulario
+    document.getElementById("formCardNuevo").scrollIntoView({ behavior: "smooth", block: "start" });
+    mostrarMensaje("mensajeAccion", `✏️ Editando el reclamo ${r.id}. Modifique los campos deseados y guarde para actualizar sin crear duplicados.`, "exito");
+}
+
+function cancelarEdicion() {
+    reclamoEnEdicionId = null;
+    const banner = document.getElementById("bannerModoEdicion");
+    if (banner) banner.classList.add("oculto");
+    const textoTitulo = document.getElementById("textoTituloFormulario");
+    if (textoTitulo) textoTitulo.textContent = "Nuevo Reclamo / Cambio de Producto";
+    const iconoTitulo = document.getElementById("iconoTituloFormulario");
+    if (iconoTitulo) iconoTitulo.textContent = "📝";
+    const btnGuardar = document.getElementById("btnGuardar");
+    if (btnGuardar) {
+        btnGuardar.textContent = "💾 Guardar Reclamo";
+        btnGuardar.disabled = false;
+    }
+    actualizarSiguienteId();
+}
+
+// -------------------------------------------------------------
+// 💾 GUARDAR RECLAMO (CREACIÓN O ACTUALIZACIÓN SIN DUPLICADOS)
 // -------------------------------------------------------------
 async function guardarReclamo() {
     const cliente = document.getElementById("cliente").value.trim();
+    const direccion = document.getElementById("direccion").value.trim();
     const telefono = document.getElementById("telefono").value.trim();
     const factura = document.getElementById("factura").value.trim();
     const producto = document.getElementById("producto").value.trim();
+    const rawCantidad = document.getElementById("cantidad").value.trim();
     const motivo = document.getElementById("motivo").value.trim();
 
     if (!cliente) {
         mostrarMensaje("mensajeAccion", "❌ El Nombre del Cliente es obligatorio.", "error");
         document.getElementById("cliente").focus();
+        return;
+    }
+
+    // 📍 Dirección del Cliente — campo de texto, obligatorio → Columna S
+    if (!direccion) {
+        mostrarMensaje("mensajeAccion", "❌ La Dirección del Cliente es obligatoria.", "error");
+        document.getElementById("direccion").focus();
         return;
     }
 
@@ -2372,8 +2588,29 @@ async function guardarReclamo() {
         return;
     }
 
-    if (!factura || !producto || !motivo) {
-        mostrarMensaje("mensajeAccion", "❌ Por favor complete todos los campos obligatorios marcados con (*).", "error");
+    if (!factura) {
+        mostrarMensaje("mensajeAccion", "❌ El N° de Factura es obligatorio.", "error");
+        document.getElementById("factura").focus();
+        return;
+    }
+
+    if (!producto) {
+        mostrarMensaje("mensajeAccion", "❌ El Producto con Falla es obligatorio.", "error");
+        document.getElementById("producto").focus();
+        return;
+    }
+
+    // 📦 Cantidad de Producto — campo numérico, obligatorio → Columna T
+    const cantidad = parseInt(rawCantidad, 10);
+    if (isNaN(cantidad) || cantidad <= 0) {
+        mostrarMensaje("mensajeAccion", "❌ La Cantidad de Producto debe ser un número entero mayor a 0.", "error");
+        document.getElementById("cantidad").focus();
+        return;
+    }
+
+    if (!motivo) {
+        mostrarMensaje("mensajeAccion", "❌ El Motivo del Reclamo es obligatorio.", "error");
+        document.getElementById("motivo").focus();
         return;
     }
 
@@ -2381,7 +2618,7 @@ async function guardarReclamo() {
     btn.disabled = true;
     btn.textContent = "⏳ Guardando...";
 
-    const id = document.getElementById("idReclamo").value;
+    const id = document.getElementById("idReclamo").value.trim();
     const ruta = document.getElementById("ruta").value;
     const vendedor = document.getElementById("vendedor").value;
     const piloto = document.getElementById("piloto").value; // 🚚 Automático = Vendedor
@@ -2401,7 +2638,17 @@ async function guardarReclamo() {
     const base64FirmaVendedor = (firmaVendedorTrazada && canvasVendedor) ? canvasVendedor.toDataURL("image/png") : "";
     const base64FirmaCliente = (firmaClienteTrazada && canvasCliente) ? canvasCliente.toDataURL("image/png") : "";
 
-    const nuevo = {
+    // 🔍 Detectar si es una modificación de un reclamo existente para NUNCA duplicar
+    const idNorm = id.toLowerCase();
+    const indexExistente = reclamosCache.findIndex(x => {
+        const cid = String(x.id || '').trim().toLowerCase();
+        const cv = String(x.voucherNumber || '').trim().toLowerCase();
+        return cid === idNorm || cv === idNorm;
+    });
+
+    const esModificacion = (reclamoEnEdicionId !== null) || (indexExistente !== -1);
+
+    const datosReclamo = {
         id,
         voucherNumber: id,
         routeId: ruta.toUpperCase().replace(/\s+/g, '-'),
@@ -2412,6 +2659,9 @@ async function guardarReclamo() {
         piloto,
         clientName: cliente,
         cliente,
+        direccion,
+        direccionCliente: direccion,
+        clientAddress: direccion,
         clientPhone: telefono,
         telefono,
         invoiceNumber: factura,
@@ -2420,14 +2670,17 @@ async function guardarReclamo() {
         foto: fotoBase64Actual,
         productName: producto,
         producto,
+        cantidad,
+        cantidadProducto: cantidad,
+        quantity: cantidad,
         description: motivo,
         motivo,
         date: fecha,
         fecha,
         time: hora,
         hora,
-        firmaVendedor: base64FirmaVendedor,
-        firmaCliente: base64FirmaCliente,
+        firmaVendedor: base64FirmaVendedor || (esModificacion && indexExistente !== -1 ? reclamosCache[indexExistente].firmaVendedor : ""),
+        firmaCliente: base64FirmaCliente || (esModificacion && indexExistente !== -1 ? reclamosCache[indexExistente].firmaCliente : ""),
         procesoAceptado,
         procesoRechazado,
         enProcesoEntrega,
@@ -2437,79 +2690,138 @@ async function guardarReclamo() {
         timestamp: new Date().toISOString()
     };
 
-    // ⚡ Optimistic UI: Mostrar de inmediato en la tabla local para reflejo instantáneo
-    reclamosCache.unshift(nuevo);
-    idsConocidos.add(nuevo.id);
-    localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache));
+    if (esModificacion) {
+        // 🔄 ACTUALIZACIÓN: Modificar el registro existente en su posición, NUNCA crear fila nueva
+        const idxActualizar = indexExistente !== -1 ? indexExistente : reclamosCache.findIndex(x => x.id === reclamoEnEdicionId);
+        if (idxActualizar !== -1) {
+            reclamosCache[idxActualizar] = { ...reclamosCache[idxActualizar], ...datosReclamo };
+        } else {
+            reclamosCache.unshift(datosReclamo);
+        }
+        localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache));
 
-    mostrarMensaje("mensajeAccion", `✅ ¡Reclamo ${id} registrado con éxito! Tel: ${telefono}`, "exito");
-    limpiarFormulario();
-    renderizarBarraCarpetas();
-    renderizarTabla();
-    actualizarGraficas();
+        mostrarMensaje("mensajeAccion", `✅ ¡Reclamo ${id} actualizado correctamente sin duplicados!`, "exito");
+        cancelarEdicion();
+        limpiarFormulario();
+        renderizarBarraCarpetas();
+        renderizarTabla();
+        actualizarGraficas();
 
-    btn.disabled = false;
-    btn.textContent = "💾 Guardar Reclamo";
+        // Enviar al servidor local vía PUT /api/records/:id para actualizar
+        try {
+            await fetch(`/api/records/${encodeURIComponent(id)}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(datosReclamo)
+            });
+        } catch (e) {
+            console.warn("Backend local error:", e);
+        }
 
-    // Envío a Google Apps Script y servidor con reintentos automáticos
-    enviarActualizacionGoogleSheets(nuevo);
+        // Sincronizar actualización con Google Sheets (action: "actualizar")
+        enviarActualizacionGoogleSheets(datosReclamo, true);
 
-    try {
-        await fetch("/api/records", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(nuevo)
-        });
-    } catch (e) {
-        console.warn("Backend local error (se sincronizará en segundo plano):", e);
-        mostrarMensaje("mensajeAccion", `⚠️ Guardado en memoria. Sincronizando con servidor y Google Sheets...`, "advertencia");
+    } else {
+        // 🆕 NUEVO REGISTRO
+        reclamosCache.unshift(datosReclamo);
+        idsConocidos.add(datosReclamo.id);
+        localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache));
+
+        mostrarMensaje("mensajeAccion", `✅ ¡Reclamo ${id} registrado con éxito! Tel: ${telefono}`, "exito");
+        limpiarFormulario();
+        renderizarBarraCarpetas();
+        renderizarTabla();
+        actualizarGraficas();
+
+        btn.disabled = false;
+        btn.textContent = "💾 Guardar Reclamo";
+
+        // Envío a Google Apps Script y servidor
+        enviarActualizacionGoogleSheets(datosReclamo, false);
+
+        try {
+            await fetch("/api/records", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(datosReclamo)
+            });
+        } catch (e) {
+            console.warn("Backend local error:", e);
+        }
     }
 }
 
-// Envío a Google Sheets con reintentos (Hoja "RECLAMOS" columnas A-R)
-async function enviarActualizacionGoogleSheets(r, maxReintentos = 3) {
+// Envío a Google Sheets con reintentos (Hoja "RECLAMOS" columnas A-T)
+// S = Dirección del Cliente, T = Cantidad de Producto
+async function enviarActualizacionGoogleSheets(r, esActualizacion = false, maxReintentos = 3) {
+    const direccion = r.direccion || r.direccionCliente || r.clientAddress || "";
+    const rawCant = r.cantidad ?? r.cantidadProducto ?? r.quantity ?? 1;
+    const cantidad = (isNaN(Number(rawCant)) || Number(rawCant) <= 0) ? 1 : Number(rawCant);
+
     const payload = {
+        action: esActualizacion ? "actualizar" : "guardar",
+        metodo: esActualizacion ? "actualizar" : "guardar",
+        tipo: esActualizacion ? "actualizar" : "guardar",
         hoja: "RECLAMOS",
         id: r.id,
+        ID_Reclamo: r.id,
+        idReclamo: r.id,
+        ID: r.id,
+        voucherNumber: r.id,
         ruta: r.ruta,
+        Ruta: r.ruta,
         vendedor: r.vendedor,
+        Vendedor: r.vendedor,
         cliente: r.cliente,
+        Cliente: r.cliente,
         telefono: r.telefono,
+        Telefono: r.telefono,
         factura: r.factura,
+        Factura: r.factura,
         piloto: r.piloto || r.vendedor,
+        Piloto: r.piloto || r.vendedor,
         photo: r.photo || r.foto || "",
         foto: r.photo || r.foto || "",
         producto: r.producto,
+        Producto: r.producto,
         motivo: r.motivo,
+        Motivo: r.motivo,
         fecha: r.fecha,
+        Fecha: r.fecha,
         hora: r.hora,
+        Hora: r.hora,
         firmaVendedor: r.firmaVendedor || "",
+        FirmaVendedor: r.firmaVendedor || "",
         firmaCliente: r.firmaCliente || "",
+        FirmaCliente: r.firmaCliente || "",
         procesoAceptado: r.procesoAceptado ? "SI" : "NO",
-        procesoRechazado: r.procesoRechazado ? "SI" : "NO",
-        enProcesoEntrega: r.enProcesoEntrega ? "SI" : "NO",
-        cambioEntregado: r.cambioEntregado ? (r.fechaCambioEntregado ? `SI (${r.fechaCambioEntregado})` : "SI") : "NO",
-        productoRecibido: r.productoRecibido ? "SI" : "NO",
-        fechaCambioEntregado: r.fechaCambioEntregado || "",
-        // Orden exacto de columnas para el Apps Script:
-        "ID_Reclamo": r.id,
-        "Ruta": r.ruta,
-        "Vendedor": r.vendedor,
-        "Cliente": r.cliente,
-        "Telefono": r.telefono,
-        "Factura": r.factura,
-        "Piloto": r.piloto || r.vendedor,
-        "Producto": r.producto,
-        "Motivo": r.motivo,
-        "Fecha": r.fecha,
-        "Hora": r.hora,
-        "FirmaVendedor": r.firmaVendedor || "",
-        "FirmaCliente": r.firmaCliente || "",
         "Proceso Aceptado": r.procesoAceptado ? "SI" : "NO",
+        procesoRechazado: r.procesoRechazado ? "SI" : "NO",
         "Proceso Rechazado": r.procesoRechazado ? "SI" : "NO",
+        enProcesoEntrega: r.enProcesoEntrega ? "SI" : "NO",
         "En Proceso de Entrega": r.enProcesoEntrega ? "SI" : "NO",
+        cambioEntregado: r.cambioEntregado ? (r.fechaCambioEntregado ? `SI (${r.fechaCambioEntregado})` : "SI") : "NO",
         "Cambio Entregado": r.cambioEntregado ? (r.fechaCambioEntregado ? `SI (${r.fechaCambioEntregado})` : "SI") : "NO",
-        "Producto Recibido": r.productoRecibido ? "SI" : "NO"
+        productoRecibido: r.productoRecibido ? "SI" : "NO",
+        "Producto Recibido": r.productoRecibido ? "SI" : "NO",
+        fechaCambioEntregado: r.fechaCambioEntregado || "",
+        "Fecha Cambio Entregado": r.fechaCambioEntregado || "",
+        // 📍 Columna S: Dirección del Cliente
+        direccion: direccion,
+        Direccion: direccion,
+        "Dirección": direccion,
+        direccionCliente: direccion,
+        DireccionCliente: direccion,
+        "Dirección del Cliente": direccion,
+        "Direccion del Cliente": direccion,
+        clientAddress: direccion,
+        // 📦 Columna T: Cantidad de Producto
+        cantidad: cantidad,
+        Cantidad: cantidad,
+        cantidadProducto: cantidad,
+        CantidadProducto: cantidad,
+        "Cantidad de Producto": cantidad,
+        quantity: cantidad
     };
 
     for (let intento = 1; intento <= maxReintentos; intento++) {
@@ -2533,11 +2845,15 @@ async function enviarActualizacionGoogleSheets(r, maxReintentos = 3) {
 
 function limpiarFormulario() {
     document.getElementById("cliente").value = "";
+    document.getElementById("direccion").value = "";
     document.getElementById("telefono").value = "";
     document.getElementById("factura").value = "";
     document.getElementById("producto").value = "";
+    document.getElementById("cantidad").value = "";
     document.getElementById("motivo").value = "";
     
+    cancelarEdicion();
+
     // Limpiar firmas dibujadas
     limpiarFirma('vendedor');
     limpiarFirma('cliente');
@@ -2790,12 +3106,20 @@ function verDetalle(idOReclamo) {
         <div class="voucher-campo"><strong>Vendedor:</strong><span>${r.vendedor || '-'}</span></div>
         <div class="voucher-campo"><strong>Piloto:</strong><span>${r.piloto || r.vendedor || '-'}</span></div>
         <div class="voucher-campo"><strong>Cliente:</strong><span>${r.cliente || '-'}</span></div>
+        <div class="voucher-campo" style="background:#F8FAFC; border-color:#cbd5e1;">
+            <strong style="color:#0369a1;">📍 Dirección del Cliente:</strong>
+            <span style="font-weight:700; color:#1e293b;">${r.direccion || r.direccionCliente || r.clientAddress || '-'}</span>
+        </div>
         <div class="voucher-campo" style="background:#E3F2FD; border-color:#0091EA;">
             <strong style="color:#0F52BA;">📞 Teléfono del Cliente:</strong>
-            <span style="color:#0F52BA; font-size:15px;">${r.telefono || r.clientPhone || r.phone || '-'}</span>
+            <span style="color:#0F52BA; font-size:15px; font-weight:700;">${r.telefono || r.clientPhone || r.phone || '-'}</span>
         </div>
         <div class="voucher-campo"><strong>N° Factura:</strong><span>${r.factura || '-'}</span></div>
         <div class="voucher-campo"><strong>Producto con Falla:</strong><span>${r.producto || '-'}</span></div>
+        <div class="voucher-campo" style="background:#F1F5F9; border-color:#cbd5e1;">
+            <strong style="color:var(--primario);">📦 Cantidad:</strong>
+            <span style="font-weight:800; color:var(--primario); font-size:14px;">${r.cantidad || r.cantidadProducto || r.quantity || 1} unidad(es)</span>
+        </div>
         <div class="voucher-campo"><strong>Fecha:</strong><span>${r.fecha || '-'}</span></div>
         <div class="voucher-campo"><strong>Hora:</strong><span>${r.hora || '-'}</span></div>
         ${fotoHtml}
@@ -2844,9 +3168,13 @@ function imprimirReporteFormulario() {
             vendedor: document.getElementById("vendedor").value || (usuarioActual ? usuarioActual.vendedor : ""),
             piloto: document.getElementById("piloto").value || document.getElementById("vendedor").value || "",
             cliente: cliente || "Cliente no especificado",
+            direccion: document.getElementById("direccion").value.trim() || "-",
+            direccionCliente: document.getElementById("direccion").value.trim() || "-",
             telefono: document.getElementById("telefono").value || "-",
             factura: document.getElementById("factura").value || "-",
             producto: producto || "Producto no especificado",
+            cantidad: parseInt(document.getElementById("cantidad").value, 10) || 1,
+            cantidadProducto: parseInt(document.getElementById("cantidad").value, 10) || 1,
             motivo: document.getElementById("motivo").value || "-",
             fecha: document.getElementById("fecha").value || "",
             hora: document.getElementById("hora").value || "",
