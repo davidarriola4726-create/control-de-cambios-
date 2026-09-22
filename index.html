@@ -1063,6 +1063,7 @@
                 📊 Historial de Reclamos
             </h2>
             <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <button class="btn btn-sm" style="background:#4f46e5; color:white;" onclick="abrirModalAppsScript()" title="Ver y Copiar Código de Google Apps Script">📜 Código Apps Script</button>
                 <button class="btn btn-sm btn-primario" onclick="cargarReclamos()" title="Refrescar datos">🔄 Refrescar</button>
                 <button class="btn btn-sm btn-exito" onclick="window.print()" title="Imprimir reporte de historial">🖨️ Imprimir Reporte</button>
                 <button id="btnLimpiarTodoAdmin" class="btn btn-sm btn-peligro oculto" onclick="pedirConfirmacionLimpiarTodo()" title="Borrar todo el historial (Solo Admin)">🗑️ Limpiar Todo</button>
@@ -1236,6 +1237,26 @@
         <div class="modal-botones">
             <button class="btn btn-sm" style="background:#cbd5e1; color:#334155;" onclick="cerrarModalEliminar()">Cancelar</button>
             <button class="btn btn-sm btn-peligro" id="btnConfirmarEliminar" onclick="ejecutarEliminacion()">🗑️ Eliminar</button>
+        </div>
+    </div>
+</div>
+
+<!-- 📜 MODAL CON CÓDIGO GOOGLE APPS SCRIPT OFICIAL -->
+<div class="modal-fondo" id="modalAppsScript">
+    <div class="modal-caja" style="max-width:760px; max-height:90vh; overflow-y:auto;">
+        <div class="modal-titulo" style="color:var(--primario); display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span>📜</span> Google Apps Script Oficial (Tiempo Real)
+            </div>
+            <button class="btn btn-sm btn-primario" onclick="copiarCodigoAppsScript()" id="btnCopiarAppsScript">📋 Copiar Código</button>
+        </div>
+        <p class="modal-texto" style="margin-bottom:12px; font-size:13px; line-height:1.5;">
+            Script oficial para Google Sheets (Extensiones &gt; Apps Script). Incluye <code>SpreadsheetApp.flush()</code> para guardado inmediato en tiempo real, recarga automática cada 2s, lectura de todas las filas sin excepción, actualización por número de reclamo sin duplicar filas, y mapeo de Dirección (Col S) y Cantidad (Col T).
+        </p>
+        <pre id="bloqueCodigoAppsScript" style="background:#0f172a; color:#f8fafc; padding:14px; border-radius:8px; font-size:11.5px; line-height:1.45; overflow-x:auto; max-height:380px; font-family:monospace; border:1px solid #334155; text-align:left; white-space:pre;"></pre>
+        <div class="modal-botones" style="margin-top:14px;">
+            <button class="btn btn-sm btn-primario" onclick="copiarCodigoAppsScript()">📋 Copiar Todo el Código</button>
+            <button class="btn btn-sm" style="background:#cbd5e1; color:#334155;" onclick="cerrarModalAppsScript()">Cerrar</button>
         </div>
     </div>
 </div>
@@ -1496,7 +1517,7 @@ function iniciarSesion() {
     establecerFechaHoraActual();
     cargarReclamos(true);
 
-    // Sincronización continua cada 2 segundos
+    // Sincronización continua cada 2 segundos (tiempo real obligatorio)
     if (temporizadorRefresco) clearInterval(temporizadorRefresco);
     temporizadorRefresco = setInterval(sincronizarEnSegundoPlano, 2000);
 }
@@ -1648,6 +1669,17 @@ function extraerNumeroCorrelativo(str) {
     return 0;
 }
 
+function sonElMismoReclamo(idA, idB) {
+    if (!idA || !idB) return false;
+    const sa = String(idA).trim().toLowerCase();
+    const sb = String(idB).trim().toLowerCase();
+    if (sa === sb) return true;
+    const na = extraerNumeroCorrelativo(idA);
+    const nb = extraerNumeroCorrelativo(idB);
+    if (na > 0 && nb > 0 && na === nb) return true;
+    return false;
+}
+
 function actualizarSiguienteId() {
     if (reclamoEnEdicionId) {
         // En modo edición, nunca sobreescribir el ID del reclamo que se está editando
@@ -1728,7 +1760,16 @@ function normalizarReclamo(item, idx = 0) {
         direccion: direccion,
         direccionCliente: direccion,
         clientAddress: direccion,
-        telefono: item.telefono || item.Telefono || item.clientPhone || item.phone || '',
+        telefono: (() => {
+            let t = String(item.telefono != null ? item.telefono : (item.Telefono != null ? item.Telefono : (item.clientPhone != null ? item.clientPhone : (item.phone != null ? item.phone : '')))).trim();
+            if (t.startsWith("'")) t = t.substring(1).trim();
+            return t;
+        })(),
+        clientPhone: (() => {
+            let t = String(item.telefono != null ? item.telefono : (item.Telefono != null ? item.Telefono : (item.clientPhone != null ? item.clientPhone : (item.phone != null ? item.phone : '')))).trim();
+            if (t.startsWith("'")) t = t.substring(1).trim();
+            return t;
+        })(),
         factura: item.factura || item.Factura || '',
         piloto: item.piloto || item.Piloto || item.vendedor || item.Vendedor || '',
         photo: item.photo || item.foto || item.Photo || item.Foto || '',
@@ -1789,21 +1830,21 @@ async function obtenerDatosFrescos() {
             if (Array.isArray(items) && items.length > 0) {
                 const sheetsData = items.map((item, idx) => normalizarReclamo(item, idx)).filter(Boolean);
                 
-                const mapa = new Map();
-                // Primero datos de Google Sheets
-                sheetsData.forEach(r => { if (r && r.id) mapa.set(r.id, r); });
-                // Combinar con datos locales (estados recién cambiados o firmas)
-                datos.forEach(r => {
-                    if (r && r.id) {
-                        if (mapa.has(r.id)) {
-                            const prev = mapa.get(r.id);
-                            mapa.set(r.id, { ...prev, ...r });
-                        } else {
-                            mapa.set(r.id, r);
-                        }
+                const listaCombinada = [];
+                function mezclarRegistro(r) {
+                    if (!r || !r.id) return;
+                    const idx = listaCombinada.findIndex(x => sonElMismoReclamo(x.id, r.id) || sonElMismoReclamo(x.voucherNumber, r.id));
+                    if (idx !== -1) {
+                        listaCombinada[idx] = { ...listaCombinada[idx], ...r };
+                    } else {
+                        listaCombinada.push(r);
                     }
-                });
-                datos = Array.from(mapa.values());
+                }
+                // Primero datos leídos de Google Sheets (todas las filas)
+                sheetsData.forEach(mezclarRegistro);
+                // Combinar con datos del backend local
+                datos.forEach(mezclarRegistro);
+                datos = listaCombinada;
                 obtuveDatos = true;
             }
         }
@@ -1842,7 +1883,7 @@ async function cargarReclamos(esPrimerCarga = false) {
         const datos = await obtenerDatosFrescos();
         procesarDatosRecibidos(datos, esPrimerCarga);
 
-        if (textoSincro) textoSincro.textContent = "Sincronizado (2s)";
+        if (textoSincro) textoSincro.textContent = "Sincronizado (3s)";
         if (indicador && indicador.querySelector(".punto-verde")) {
             indicador.querySelector(".punto-verde").style.background = "#00c853";
         }
@@ -1884,20 +1925,20 @@ function procesarDatosRecibidos(nuevosDatos, esPrimerCarga) {
     let hayNuevoParaAdmin = false;
     let nuevoReclamoDetectado = null;
 
-    // Deduplicar estrictamente por ID para evitar duplicados en memoria
-    const mapaUnico = new Map();
+    // Deduplicar estrictamente por número e ID para evitar duplicados en memoria
+    const listaDeduplicada = [];
     (nuevosDatos || []).forEach(r => {
         if (!r || !r.id) return;
         const key = String(r.id || r.voucherNumber).trim().toLowerCase();
         if (idsEliminados && idsEliminados.has(key)) return;
-        if (mapaUnico.has(key)) {
-            const anterior = mapaUnico.get(key);
-            mapaUnico.set(key, { ...anterior, ...r });
+        const idx = listaDeduplicada.findIndex(x => sonElMismoReclamo(x.id, r.id) || sonElMismoReclamo(x.voucherNumber, r.id));
+        if (idx !== -1) {
+            listaDeduplicada[idx] = { ...listaDeduplicada[idx], ...r };
         } else {
-            mapaUnico.set(key, r);
+            listaDeduplicada.push(r);
         }
     });
-    nuevosDatos = Array.from(mapaUnico.values());
+    nuevosDatos = listaDeduplicada;
 
     if (esPrimerCarga) {
         nuevosDatos.forEach(r => idsConocidos.add(r.id));
@@ -2273,7 +2314,7 @@ function procesarFoto(event) {
 // ⚙️ GESTIÓN DE ESTADOS EN MODAL
 // -------------------------------------------------------------
 function abrirModalGestionEstados(id) {
-    const r = reclamosCache.find(x => x.id === id);
+    const r = reclamosCache.find(x => sonElMismoReclamo(x.id, id) || sonElMismoReclamo(x.voucherNumber, id));
     if (!r) return;
 
     reclamoEnEdicionEstado = r;
@@ -2381,7 +2422,7 @@ async function guardarEstadosDesdeModal() {
     };
 
     // Actualizar objeto en caché en su posición exacta (sin duplicar)
-    const index = reclamosCache.findIndex(x => x.id === id || x.voucherNumber === id);
+    const index = reclamosCache.findIndex(x => sonElMismoReclamo(x.id, id) || sonElMismoReclamo(x.voucherNumber, id));
     if (index !== -1) {
         reclamosCache[index] = { ...reclamosCache[index], ...camposActualizados };
     }
@@ -2417,12 +2458,7 @@ async function guardarEstadosDesdeModal() {
 let reclamoEnEdicionId = null;
 
 function cargarReclamoParaEditar(id) {
-    const idNorm = String(id || '').trim().toLowerCase();
-    const r = reclamosCache.find(x => {
-        const cid = String(x.id || '').trim().toLowerCase();
-        const cv = String(x.voucherNumber || '').trim().toLowerCase();
-        return cid === idNorm || cv === idNorm;
-    });
+    const r = reclamosCache.find(x => sonElMismoReclamo(x.id, id) || sonElMismoReclamo(x.voucherNumber, id));
 
     if (!r) {
         mostrarMensaje("mensajeAccion", `❌ No se encontró el reclamo ${id}`, "error");
@@ -2639,12 +2675,7 @@ async function guardarReclamo() {
     const base64FirmaCliente = (firmaClienteTrazada && canvasCliente) ? canvasCliente.toDataURL("image/png") : "";
 
     // 🔍 Detectar si es una modificación de un reclamo existente para NUNCA duplicar
-    const idNorm = id.toLowerCase();
-    const indexExistente = reclamosCache.findIndex(x => {
-        const cid = String(x.id || '').trim().toLowerCase();
-        const cv = String(x.voucherNumber || '').trim().toLowerCase();
-        return cid === idNorm || cv === idNorm;
-    });
+    const indexExistente = reclamosCache.findIndex(x => sonElMismoReclamo(x.id, id) || sonElMismoReclamo(x.voucherNumber, id));
 
     const esModificacion = (reclamoEnEdicionId !== null) || (indexExistente !== -1);
 
@@ -2692,7 +2723,7 @@ async function guardarReclamo() {
 
     if (esModificacion) {
         // 🔄 ACTUALIZACIÓN: Modificar el registro existente en su posición, NUNCA crear fila nueva
-        const idxActualizar = indexExistente !== -1 ? indexExistente : reclamosCache.findIndex(x => x.id === reclamoEnEdicionId);
+        const idxActualizar = indexExistente !== -1 ? indexExistente : reclamosCache.findIndex(x => sonElMismoReclamo(x.id, reclamoEnEdicionId) || sonElMismoReclamo(x.voucherNumber, reclamoEnEdicionId));
         if (idxActualizar !== -1) {
             reclamosCache[idxActualizar] = { ...reclamosCache[idxActualizar], ...datosReclamo };
         } else {
@@ -2762,6 +2793,7 @@ async function enviarActualizacionGoogleSheets(r, esActualizacion = false, maxRe
         action: esActualizacion ? "actualizar" : "guardar",
         metodo: esActualizacion ? "actualizar" : "guardar",
         tipo: esActualizacion ? "actualizar" : "guardar",
+        esActualizacion: !!esActualizacion,
         hoja: "RECLAMOS",
         id: r.id,
         ID_Reclamo: r.id,
@@ -2886,7 +2918,7 @@ function pedirConfirmacionEliminar(id) {
         return;
     }
     reclamoAEliminarId = id;
-    const item = reclamosCache.find(r => r.id === id);
+    const item = reclamosCache.find(r => sonElMismoReclamo(r.id, id) || sonElMismoReclamo(r.voucherNumber, id));
     const detalle = item 
         ? `${item.id} — Cliente: ${item.cliente} | Producto: ${item.producto} (Tel: ${item.telefono || item.clientPhone || '-'})` 
         : id;
@@ -2956,11 +2988,7 @@ async function ejecutarEliminacion() {
     }
 
     // 4. Actualizar memoria y almacenamiento local
-    reclamosCache = reclamosCache.filter(r => {
-        const rid = String(r.id || '').trim().toLowerCase();
-        const rvn = String(r.voucherNumber || '').trim().toLowerCase();
-        return rid !== idNorm && rvn !== idNorm;
-    });
+    reclamosCache = reclamosCache.filter(r => !sonElMismoReclamo(r.id, id) && !sonElMismoReclamo(r.voucherNumber, id));
     idsConocidos.delete(id);
     idsConocidos.delete(idNorm);
     localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache));
@@ -3043,7 +3071,7 @@ function verDetalle(idOReclamo) {
     if (typeof idOReclamo === "object" && idOReclamo !== null) {
         r = idOReclamo;
     } else {
-        r = reclamosCache.find(x => x.id === idOReclamo);
+        r = reclamosCache.find(x => sonElMismoReclamo(x.id, idOReclamo) || sonElMismoReclamo(x.voucherNumber, idOReclamo));
     }
     if (!r) return;
 
@@ -3497,6 +3525,61 @@ function actualizarGraficas() {
                 scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
             }
         });
+    }
+}
+
+// -------------------------------------------------------------
+// 📜 MODAL CÓDIGO GOOGLE APPS SCRIPT OFICIAL
+// -------------------------------------------------------------
+async function abrirModalAppsScript() {
+    const modal = document.getElementById("modalAppsScript");
+    const bloque = document.getElementById("bloqueCodigoAppsScript");
+    if (!bloque.textContent || bloque.textContent.trim().length === 0) {
+        try {
+            const res = await fetch("/google_apps_script.gs");
+            if (res.ok) {
+                bloque.textContent = await res.text();
+            } else {
+                bloque.textContent = "// Error cargando archivo /google_apps_script.gs";
+            }
+        } catch (e) {
+            bloque.textContent = "// Error: " + e;
+        }
+    }
+    modal.classList.add("activo");
+}
+
+function cerrarModalAppsScript() {
+    const modal = document.getElementById("modalAppsScript");
+    modal.classList.remove("activo");
+}
+
+async function copiarCodigoAppsScript() {
+    const bloque = document.getElementById("bloqueCodigoAppsScript");
+    const btn = document.getElementById("btnCopiarAppsScript");
+    if (!bloque || !bloque.textContent) return;
+
+    try {
+        await navigator.clipboard.writeText(bloque.textContent);
+        if (btn) {
+            const original = btn.textContent;
+            btn.textContent = "✅ ¡Copiado!";
+            setTimeout(() => { btn.textContent = original; }, 2500);
+        }
+        mostrarMensaje("mensajeAccion", "✅ ¡Código de Google Apps Script copiado al portapapeles!", "exito");
+    } catch (err) {
+        const textarea = document.createElement("textarea");
+        textarea.value = bloque.textContent;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+        if (btn) {
+            const original = btn.textContent;
+            btn.textContent = "✅ ¡Copiado!";
+            setTimeout(() => { btn.textContent = original; }, 2500);
+        }
+        mostrarMensaje("mensajeAccion", "✅ ¡Código de Google Apps Script copiado al portapapeles!", "exito");
     }
 }
 </script>

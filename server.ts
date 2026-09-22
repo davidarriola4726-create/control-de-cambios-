@@ -50,21 +50,47 @@ function saveDeletedIds(ids: Set<string>) {
   }
 }
 
+function extraerNumeroReclamo(val: any): number {
+  if (!val) return 0;
+  const s = String(val).trim();
+  const m = s.match(/(?:N[°º\.]?|#|\b)\s*(\d+)/i);
+  if (m) {
+    const num = parseInt(m[1], 10);
+    return isNaN(num) ? 0 : num;
+  }
+  return 0;
+}
+
+function sonElMismoReclamo(idA: any, idB: any): boolean {
+  if (!idA || !idB) return false;
+  const sa = String(idA).trim().toLowerCase();
+  const sb = String(idB).trim().toLowerCase();
+  if (sa === sb) return true;
+  const na = extraerNumeroReclamo(idA);
+  const nb = extraerNumeroReclamo(idB);
+  if (na > 0 && nb > 0 && na === nb) return true;
+  return false;
+}
+
 function getClaims(): any[] {
   try {
     const raw = fs.readFileSync(claimsFile, 'utf8');
     const list = JSON.parse(raw);
     if (!Array.isArray(list)) return [];
     const deleted = getDeletedIds();
-    const seen = new Set<string>();
+    const seenIds = new Set<string>();
+    const seenNums = new Set<number>();
     const deduplicated: any[] = [];
     for (const c of list) {
       const cid = String(c.id || '').trim().toLowerCase();
       const cv = String(c.voucherNumber || '').trim().toLowerCase();
+      const num = extraerNumeroReclamo(c.id || c.voucherNumber);
       if ((cid && deleted.has(cid)) || (cv && deleted.has(cv))) continue;
       const key = cid || cv;
-      if (key && seen.has(key)) continue;
-      if (key) seen.add(key);
+      if (key && seenIds.has(key)) continue;
+      if (num > 0 && seenNums.has(num)) continue;
+      if (key) seenIds.add(key);
+      if (num > 0) seenNums.add(num);
       deduplicated.push(c);
     }
     return deduplicated;
@@ -75,18 +101,29 @@ function getClaims(): any[] {
 
 function saveClaims(claims: any[]) {
   try {
-    const seen = new Set<string>();
+    const seenIds = new Set<string>();
+    const seenNums = new Set<number>();
     const deduplicated: any[] = [];
     for (const c of claims) {
       const key = String(c.id || c.voucherNumber || '').trim().toLowerCase();
-      if (key && seen.has(key)) continue;
-      if (key) seen.add(key);
+      const num = extraerNumeroReclamo(c.id || c.voucherNumber);
+      if (key && seenIds.has(key)) continue;
+      if (num > 0 && seenNums.has(num)) continue;
+      if (key) seenIds.add(key);
+      if (num > 0) seenNums.add(num);
       deduplicated.push(c);
     }
     fs.writeFileSync(claimsFile, JSON.stringify(deduplicated, null, 2), 'utf8');
   } catch (err) {
     console.error('Error saving claims:', err);
   }
+}
+
+function limpiarTelefonoTexto(val: any): string {
+  if (val === null || val === undefined) return '';
+  let s = String(val).trim();
+  if (s.startsWith("'")) s = s.substring(1).trim();
+  return s;
 }
 
 const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbwBNgwKl7EOyAZBpyBpAe_B4eIpZLwkpRtWyGLzyPEE8eJf1ofHxbKu9P2zaKMH2lh1_Q/exec";
@@ -154,9 +191,7 @@ async function sincronizarDesdeGoogleSheets() {
         }
 
         const index = claims.findIndex((c: any) => {
-          const cid = String(c.id || '').trim().toLowerCase();
-          const cv = String(c.voucherNumber || '').trim().toLowerCase();
-          return (cid && cid === idNorm) || (cv && cv === idNorm);
+          return sonElMismoReclamo(c.id, id) || sonElMismoReclamo(c.voucherNumber, id);
         });
         
         const aceptado = item.procesoAceptado === 'SI' || item['Proceso Aceptado'] === 'SI' || item.Aceptado === 'SI';
@@ -171,6 +206,7 @@ async function sincronizarDesdeGoogleSheets() {
         const direccion = String(item.direccion || item.Direccion || item['Dirección'] || item.direccionCliente || item['Dirección del Cliente'] || item['Direccion del Cliente'] || item.clientAddress || '').trim();
         const rawCant = item.cantidad ?? item.Cantidad ?? item.cantidadProducto ?? item['Cantidad de Producto'] ?? item.quantity ?? 1;
         const cantidad = (isNaN(Number(rawCant)) || Number(rawCant) <= 0) ? 1 : Number(rawCant);
+        const tel = limpiarTelefonoTexto(item.telefono || item.Telefono || item.clientPhone || '');
 
         if (index === -1) {
           // Registro nuevo en Google Sheets no existente localmente
@@ -183,7 +219,8 @@ async function sincronizarDesdeGoogleSheets() {
             cliente: item.cliente || item.Cliente || '',
             direccion: direccion,
             clientAddress: direccion,
-            telefono: item.telefono || item.Telefono || '',
+            telefono: tel,
+            clientPhone: tel,
             factura: item.factura || item.Factura || '',
             producto: item.producto || item.Producto || '',
             cantidad: cantidad,
@@ -211,7 +248,8 @@ async function sincronizarDesdeGoogleSheets() {
               actual.productoRecibido !== recibido ||
               (!actual.firmaCliente && firmaC) ||
               (!actual.direccion && direccion) ||
-              (!actual.cantidad && cantidad)) {
+              (!actual.cantidad && cantidad) ||
+              (tel && actual.telefono !== tel)) {
             actual.procesoAceptado = aceptado;
             actual.procesoRechazado = rechazado;
             actual.enProcesoEntrega = enEntrega;
@@ -227,26 +265,30 @@ async function sincronizarDesdeGoogleSheets() {
               actual.cantidad = cantidad;
               actual.quantity = cantidad;
             }
+            if (tel) {
+              actual.telefono = tel;
+              actual.clientPhone = tel;
+            }
             huboCambios = true;
           }
         }
       }
 
-      // Asegurar deduplicación estricta por ID
-      const claimsMap = new Map<string, any>();
+      // Asegurar deduplicación estricta por ID y número
+      const claimsDeduplicados: any[] = [];
       claims.forEach((c: any) => {
         const idKey = String(c.id || c.voucherNumber || '').trim().toLowerCase();
         if (idKey && !deletedIds.has(idKey)) {
-          if (claimsMap.has(idKey)) {
-            const anterior = claimsMap.get(idKey);
-            claimsMap.set(idKey, { ...anterior, ...c });
+          const idx = claimsDeduplicados.findIndex((x: any) => sonElMismoReclamo(x.id, c.id) || sonElMismoReclamo(x.voucherNumber, c.voucherNumber));
+          if (idx !== -1) {
+            claimsDeduplicados[idx] = { ...claimsDeduplicados[idx], ...c };
             huboCambios = true;
           } else {
-            claimsMap.set(idKey, c);
+            claimsDeduplicados.push(c);
           }
         }
       });
-      claims = Array.from(claimsMap.values());
+      claims = claimsDeduplicados;
 
       if (huboCambios) {
         saveClaims(claims);
@@ -258,9 +300,9 @@ async function sincronizarDesdeGoogleSheets() {
   }
 }
 
-// Ejecutar sincronización al inicio y periódicamente cada 2.5 segundos
+// Ejecutar sincronización al inicio y periódicamente cada 2 segundos (tiempo real)
 setTimeout(sincronizarDesdeGoogleSheets, 1000);
-setInterval(sincronizarDesdeGoogleSheets, 2500);
+setInterval(sincronizarDesdeGoogleSheets, 2000);
 
 // API Routes
 app.get('/api/records', (req, res) => {
@@ -274,18 +316,16 @@ app.post('/api/records', (req, res) => {
   if (!record.id) {
     record.id = 'N° ' + String(claims.length + 1).padStart(5, '0');
   }
-  const idNorm = String(record.id).trim().toLowerCase();
 
-  // Buscar si ya existe por ID o voucherNumber para ACTUALIZAR en vez de duplicar
+  // Buscar si ya existe por ID o número para ACTUALIZAR en vez de duplicar
   const existingIdx = claims.findIndex((c: any) => {
-    const cid = String(c.id || '').trim().toLowerCase();
-    const cv = String(c.voucherNumber || '').trim().toLowerCase();
-    return cid === idNorm || cv === idNorm;
+    return sonElMismoReclamo(c.id, record.id) || sonElMismoReclamo(c.voucherNumber, record.id);
   });
 
   const direccion = String(record.direccion || record.direccionCliente || record.clientAddress || "").trim();
   const rawCant = record.cantidad ?? record.cantidadProducto ?? record.quantity ?? 1;
   const cantidad = (isNaN(Number(rawCant)) || Number(rawCant) <= 0) ? 1 : Number(rawCant);
+  const tel = limpiarTelefonoTexto(record.telefono || record.clientPhone || "");
 
   if (existingIdx !== -1) {
     // ACTUALIZAR registro existente para no crear duplicados
@@ -295,6 +335,8 @@ app.post('/api/records', (req, res) => {
       id: claims[existingIdx].id || record.id,
       direccion: direccion || claims[existingIdx].direccion || "",
       clientAddress: direccion || claims[existingIdx].clientAddress || "",
+      telefono: tel || claims[existingIdx].telefono || "",
+      clientPhone: tel || claims[existingIdx].clientPhone || "",
       cantidad: cantidad || claims[existingIdx].cantidad || 1,
       quantity: cantidad || claims[existingIdx].quantity || 1
     };
@@ -303,10 +345,13 @@ app.post('/api/records', (req, res) => {
     enviarAGoogleSheetsConReintentos({
       action: "actualizar",
       metodo: "actualizar",
+      esActualizacion: true,
       hoja: "RECLAMOS",
       id: claims[existingIdx].id,
       ID_Reclamo: claims[existingIdx].id,
       ...claims[existingIdx],
+      telefono: tel || claims[existingIdx].telefono || "",
+      Telefono: tel || claims[existingIdx].telefono || "",
       // Columna S: Dirección del Cliente
       direccion: claims[existingIdx].direccion,
       Direccion: claims[existingIdx].direccion,
@@ -327,6 +372,8 @@ app.post('/api/records', (req, res) => {
 
   const nuevo = {
     ...record,
+    telefono: tel,
+    clientPhone: tel,
     direccion,
     clientAddress: direccion,
     cantidad,
@@ -347,8 +394,8 @@ app.post('/api/records', (req, res) => {
     Vendedor: nuevo.vendedor,
     cliente: nuevo.cliente,
     Cliente: nuevo.cliente,
-    telefono: nuevo.telefono || nuevo.clientPhone || "",
-    Telefono: nuevo.telefono || nuevo.clientPhone || "",
+    telefono: tel,
+    Telefono: tel,
     factura: nuevo.factura,
     Factura: nuevo.factura,
     piloto: nuevo.piloto || nuevo.vendedor,
@@ -398,18 +445,21 @@ app.post('/api/records', (req, res) => {
 
 app.put('/api/records/:id', (req, res) => {
   const rawId = decodeURIComponent(req.params.id).trim();
-  const idNorm = rawId.toLowerCase();
   const updatedData = req.body;
   let claims = getClaims();
-  const index = claims.findIndex((c: any) => {
-    const cid = String(c.id || '').trim().toLowerCase();
-    const cv = String(c.voucherNumber || '').trim().toLowerCase();
-    return cid === idNorm || cv === idNorm;
+  let index = claims.findIndex((c: any) => {
+    return sonElMismoReclamo(c.id, rawId) || sonElMismoReclamo(c.voucherNumber, rawId);
   });
+
+  if (index === -1 && updatedData.factura) {
+    const factNorm = String(updatedData.factura).trim().toLowerCase();
+    index = claims.findIndex((c: any) => c.factura && String(c.factura).trim().toLowerCase() === factNorm);
+  }
 
   const direccion = String(updatedData.direccion || updatedData.direccionCliente || updatedData.clientAddress || "").trim();
   const rawCant = updatedData.cantidad ?? updatedData.cantidadProducto ?? updatedData.quantity;
   const cantidad = (rawCant !== undefined && !isNaN(Number(rawCant)) && Number(rawCant) > 0) ? Number(rawCant) : undefined;
+  const tel = limpiarTelefonoTexto(updatedData.telefono || updatedData.clientPhone);
 
   if (index !== -1) {
     claims[index] = {
@@ -418,19 +468,24 @@ app.put('/api/records/:id', (req, res) => {
       id: claims[index].id || rawId,
       direccion: direccion || claims[index].direccion || "",
       clientAddress: direccion || claims[index].clientAddress || "",
+      telefono: tel || claims[index].telefono || "",
+      clientPhone: tel || claims[index].clientPhone || "",
       cantidad: cantidad !== undefined ? cantidad : (claims[index].cantidad || 1),
       quantity: cantidad !== undefined ? cantidad : (claims[index].quantity || 1)
     };
     saveClaims(claims);
 
-    // Sincronizar actualización con Google Sheets
+    // Sincronizar actualización con Google Sheets (NUNCA crear fila nueva)
     enviarAGoogleSheetsConReintentos({
       action: "actualizar",
       metodo: "actualizar",
+      esActualizacion: true,
       hoja: "RECLAMOS",
       id: claims[index].id,
       ID_Reclamo: claims[index].id,
       ...claims[index],
+      telefono: claims[index].telefono,
+      Telefono: claims[index].telefono,
       // Columna S: Dirección del Cliente
       direccion: claims[index].direccion,
       Direccion: claims[index].direccion,
@@ -448,22 +503,9 @@ app.put('/api/records/:id', (req, res) => {
 
     res.json(claims[index]);
   } else {
-    const nuevo = {
-      ...updatedData,
-      id: rawId,
-      direccion: direccion || "",
-      cantidad: cantidad || 1
-    };
-    claims.unshift(nuevo);
-    saveClaims(claims);
-    enviarAGoogleSheetsConReintentos({
-      action: "guardar",
-      hoja: "RECLAMOS",
-      id: rawId,
-      ID_Reclamo: rawId,
-      ...nuevo
-    });
-    res.status(201).json(nuevo);
+    // Si no se encontró por ID para actualizar, NUNCA crear fila nueva ni duplicar
+    console.warn(`[PUT /api/records/:id] Reclamo ${rawId} no encontrado para actualizar. Fila protegida contra duplicados.`);
+    res.status(404).json({ error: 'Record not found for update. Duplicate creation prevented.' });
   }
 });
 
@@ -471,7 +513,7 @@ app.patch('/api/records/:id', (req, res) => {
   const { id } = req.params;
   const patchData = req.body;
   let claims = getClaims();
-  const index = claims.findIndex((c: any) => c.id === id || c.voucherNumber === id);
+  const index = claims.findIndex((c: any) => sonElMismoReclamo(c.id, id) || sonElMismoReclamo(c.voucherNumber, id));
   if (index !== -1) {
     claims[index] = { ...claims[index], ...patchData };
     saveClaims(claims);
@@ -513,9 +555,7 @@ app.delete('/api/records/:id', (req, res) => {
 
   let claims = getClaims();
   claims = claims.filter((c: any) => {
-    const cId = String(c.id || '').trim().toLowerCase();
-    const cVoucher = String(c.voucherNumber || '').trim().toLowerCase();
-    return cId !== idNorm && cVoucher !== idNorm;
+    return !sonElMismoReclamo(c.id, rawId) && !sonElMismoReclamo(c.voucherNumber, rawId);
   });
   saveClaims(claims);
 
