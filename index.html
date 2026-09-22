@@ -927,7 +927,7 @@
             <!-- 📞 TELÉFONO DEL CLIENTE (OBLIGATORIO: NÚMEROS Y GUIONES) -->
             <div class="input-grupo">
                 <label>📞 Teléfono del Cliente <span style="color:var(--peligro); font-weight:900;">*</span></label>
-                <input type="tel" id="telefono" placeholder="Ej: 5555-1234 o 55551234" pattern="[0-9\s\-+]+" required>
+                <input type="text" inputmode="tel" id="telefono" placeholder="Ej: 5555-1234 o 55551234" oninput="this.value = String(this.value);" required>
             </div>
 
             <div class="input-grupo">
@@ -1251,7 +1251,7 @@
             <button class="btn btn-sm btn-primario" onclick="copiarCodigoAppsScript()" id="btnCopiarAppsScript">📋 Copiar Código</button>
         </div>
         <p class="modal-texto" style="margin-bottom:12px; font-size:13px; line-height:1.5;">
-            Script oficial para Google Sheets (Extensiones &gt; Apps Script). Incluye <code>SpreadsheetApp.flush()</code> para guardado inmediato en tiempo real, recarga automática cada 2s, lectura de todas las filas sin excepción, actualización por número de reclamo sin duplicar filas, y mapeo de Dirección (Col S) y Cantidad (Col T).
+            Script oficial para Google Sheets (Extensiones &gt; Apps Script). Incluye <code>SpreadsheetApp.flush()</code> para guardado inmediato en tiempo real, recarga automática cada 3s, lectura de todas las filas sin excepción, actualización por número de reclamo sin duplicar filas, y mapeo de Dirección (Col S) y Cantidad (Col T).
         </p>
         <pre id="bloqueCodigoAppsScript" style="background:#0f172a; color:#f8fafc; padding:14px; border-radius:8px; font-size:11.5px; line-height:1.45; overflow-x:auto; max-height:380px; font-family:monospace; border:1px solid #334155; text-align:left; white-space:pre;"></pre>
         <div class="modal-botones" style="margin-top:14px;">
@@ -1517,9 +1517,9 @@ function iniciarSesion() {
     establecerFechaHoraActual();
     cargarReclamos(true);
 
-    // Sincronización continua cada 2 segundos (tiempo real obligatorio)
+    // Sincronización continua cada 3 segundos (tiempo real obligatorio)
     if (temporizadorRefresco) clearInterval(temporizadorRefresco);
-    temporizadorRefresco = setInterval(sincronizarEnSegundoPlano, 2000);
+    temporizadorRefresco = setInterval(() => cargarDatos(), 3000);
 }
 
 function aplicarPermisosCheckboxesForm() {
@@ -1896,6 +1896,12 @@ async function cargarReclamos(esPrimerCarga = false) {
     }
 }
 
+// Función oficial solicitada: cargarDatos() para recargar datos en tiempo real
+async function cargarDatos() {
+    return await sincronizarEnSegundoPlano();
+}
+window.cargarDatos = cargarDatos;
+
 async function sincronizarEnSegundoPlano() {
     if (!usuarioActual || sincronizandoEnCurso) return;
     sincronizandoEnCurso = true;
@@ -1906,7 +1912,7 @@ async function sincronizarEnSegundoPlano() {
         const datos = await obtenerDatosFrescos();
         if (datos && Array.isArray(datos)) {
             procesarDatosRecibidos(datos, false);
-            if (textoSincro) textoSincro.textContent = "Sincronizado (2s)";
+            if (textoSincro) textoSincro.textContent = "Sincronizado (3s)";
             if (indicador && indicador.querySelector(".punto-verde")) {
                 indicador.querySelector(".punto-verde").style.background = "#00e676";
             }
@@ -2590,10 +2596,11 @@ function cancelarEdicion() {
 // 💾 GUARDAR RECLAMO (CREACIÓN O ACTUALIZACIÓN SIN DUPLICADOS)
 // -------------------------------------------------------------
 async function guardarReclamo() {
-    const cliente = document.getElementById("cliente").value.trim();
-    const direccion = document.getElementById("direccion").value.trim();
-    const telefono = document.getElementById("telefono").value.trim();
-    const factura = document.getElementById("factura").value.trim();
+    const cliente = String(document.getElementById("cliente").value || "").trim();
+    const direccion = String(document.getElementById("direccion").value || "").trim();
+    const rawTelefono = document.getElementById("telefono").value;
+    const telefono = String(rawTelefono != null ? rawTelefono : "").trim();
+    const factura = String(document.getElementById("factura").value || "").trim();
     const producto = document.getElementById("producto").value.trim();
     const rawCantidad = document.getElementById("cantidad").value.trim();
     const motivo = document.getElementById("motivo").value.trim();
@@ -2693,8 +2700,8 @@ async function guardarReclamo() {
         direccion,
         direccionCliente: direccion,
         clientAddress: direccion,
-        clientPhone: telefono,
-        telefono,
+        clientPhone: String(telefono),
+        telefono: String(telefono),
         invoiceNumber: factura,
         factura,
         photo: fotoBase64Actual,
@@ -2806,8 +2813,9 @@ async function enviarActualizacionGoogleSheets(r, esActualizacion = false, maxRe
         Vendedor: r.vendedor,
         cliente: r.cliente,
         Cliente: r.cliente,
-        telefono: r.telefono,
-        Telefono: r.telefono,
+        telefono: String(r.telefono != null ? r.telefono : (r.clientPhone != null ? r.clientPhone : '')).trim(),
+        Telefono: String(r.telefono != null ? r.telefono : (r.clientPhone != null ? r.clientPhone : '')).trim(),
+        clientPhone: String(r.telefono != null ? r.telefono : (r.clientPhone != null ? r.clientPhone : '')).trim(),
         factura: r.factura,
         Factura: r.factura,
         piloto: r.piloto || r.vendedor,
@@ -3582,6 +3590,13 @@ async function copiarCodigoAppsScript() {
         mostrarMensaje("mensajeAccion", "✅ ¡Código de Google Apps Script copiado al portapapeles!", "exito");
     }
 }
+
+// ⚡ TIEMPO REAL: Recargar datos automáticamente cada 3 segundos
+setInterval(() => {
+    if (typeof cargarDatos === "function") {
+        cargarDatos();
+    }
+}, 3000);
 </script>
 
 </body>

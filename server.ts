@@ -300,9 +300,9 @@ async function sincronizarDesdeGoogleSheets() {
   }
 }
 
-// Ejecutar sincronización al inicio y periódicamente cada 2 segundos (tiempo real)
+// Ejecutar sincronización al inicio y periódicamente cada 3 segundos (tiempo real)
 setTimeout(sincronizarDesdeGoogleSheets, 1000);
-setInterval(sincronizarDesdeGoogleSheets, 2000);
+setInterval(sincronizarDesdeGoogleSheets, 3000);
 
 // API Routes
 app.get('/api/records', (req, res) => {
