@@ -14,27 +14,30 @@
  * 8. Quién tiene acceso: "Cualquier usuario" (Anyone).
  * 9. Haga clic en "Implementar" y autorice los permisos.
  * 
- * ESTRUCTURA DE COLUMNAS EN LA HOJA "RECLAMOS" (A hasta T):
+ * ESTRUCTURA OFICIAL DE COLUMNAS EN LA HOJA "RECLAMOS" (A hasta S):
  * A: ID_Reclamo (ej: N° 00001)
  * B: Ruta (ej: Ruta 1)
- * C: Vendedor (ej: Brayan Gómez)
+ * C: Vendedor (ej: BRYAN GOMEZ)
  * D: Cliente
  * E: Teléfono (TEXTO PURO, NO NÚMERO)
  * F: Factura
- * G: Piloto
- * H: Photo / Foto
- * I: Producto
- * J: Motivo
- * K: Fecha
- * L: Hora
- * M: Firma Vendedor
- * N: Firma Cliente
- * O: Proceso Aceptado (SI/NO)
- * P: Proceso Rechazado (SI/NO)
- * Q: En Proceso de Entrega (SI/NO)
- * R: Cambio Entregado (SI/NO)
- * S: Dirección del Cliente (📍 Columna S)
- * T: Cantidad de Producto (📦 Columna T)
+ * G: Photo / Foto
+ * H: Producto
+ * I: Motivo
+ * J: Fecha
+ * K: Hora
+ * L: Firma Vendedor
+ * M: Firma Cliente
+ * N: Proceso Aceptado (SI/NO)
+ * O: Proceso Rechazado (SI/NO)
+ * P: En Proceso de Entrega (SI/NO)
+ * Q: Cambio Entregado (SI/NO)
+ * R: Dirección del Cliente
+ * S: Cantidad de Producto
+ *
+ * NOTA: El campo "Piloto / Conductor" ha sido eliminado completamente.
+ * Si su hoja anterior aún tiene una columna "Piloto", este script es compatible
+ * automáticamente y dejará dicha celda en blanco sin romper ningún dato.
  */
 
 function obtenerHojaReclamos() {
@@ -43,12 +46,12 @@ function obtenerHojaReclamos() {
   if (!sheet) {
     sheet = ss.insertSheet("RECLAMOS");
     sheet.appendRow([
-      "ID_Reclamo", "Ruta", "Vendedor", "Cliente", "Telefono", "Factura", "Piloto",
+      "ID_Reclamo", "Ruta", "Vendedor", "Cliente", "Telefono", "Factura",
       "Photo", "Producto", "Motivo", "Fecha", "Hora", "FirmaVendedor", "FirmaCliente",
       "Proceso Aceptado", "Proceso Rechazado", "En Proceso de Entrega", "Cambio Entregado",
       "Dirección del Cliente", "Cantidad de Producto"
     ]);
-    sheet.getRange(1, 1, 1, 20).setFontWeight("bold").setBackground("#0F52BA").setFontColor("#FFFFFF");
+    sheet.getRange(1, 1, 1, 19).setFontWeight("bold").setBackground("#0F52BA").setFontColor("#FFFFFF");
     sheet.getRange("E:E").setNumberFormat("@"); // Columna E: Teléfono estrictamente como TEXTO
     SpreadsheetApp.flush();
   } else {
@@ -116,18 +119,60 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
     
-    // Leer TODAS las filas y las 20 columnas (A a T) tanto valores brutos como displayValues
-    var numCols = 20;
+    var numCols = Math.max(sheet.getLastColumn(), 19);
     var numRows = lastRow - 1;
     var dataValues = sheet.getRange(2, 1, numRows, numCols).getValues();
     var dataDisplay = sheet.getRange(2, 1, numRows, numCols).getDisplayValues();
+    
+    // Detectar si la fila 1 contiene la columna antigua "Piloto"
+    var headers = sheet.getRange(1, 1, 1, numCols).getValues()[0];
+    var tieneColumnaPiloto = false;
+    var idxPhoto = 6;
+    var idxProducto = 7;
+    var idxMotivo = 8;
+    var idxFecha = 9;
+    var idxHora = 10;
+    var idxFirmaV = 11;
+    var idxFirmaC = 12;
+    var idxProcAcept = 13;
+    var idxProcRech = 14;
+    var idxProcEntr = 15;
+    var idxCambEntr = 16;
+    var idxDireccion = 17;
+    var idxCantidad = 18;
+
+    for (var c = 0; c < headers.length; c++) {
+      var hName = String(headers[c] || '').trim().toLowerCase();
+      if (hName === "piloto" || hName === "conductor" || hName === "chofer") {
+        tieneColumnaPiloto = true;
+        break;
+      }
+    }
+
+    if (tieneColumnaPiloto) {
+      // Formato antiguo de 20 columnas donde col 6 (G) era Piloto
+      idxPhoto = 7;
+      idxProducto = 8;
+      idxMotivo = 9;
+      idxFecha = 10;
+      idxHora = 11;
+      idxFirmaV = 12;
+      idxFirmaC = 13;
+      idxProcAcept = 14;
+      idxProcRech = 15;
+      idxProcEntr = 16;
+      idxCambEntr = 17;
+      idxDireccion = 18;
+      idxCantidad = 19;
+    }
+
     var lista = [];
     
     for (var i = 0; i < numRows; i++) {
       var row = dataValues[i];
       var rowDisp = dataDisplay[i];
       var id = String(rowDisp[0] || row[0] || '').trim();
-      if (!id && !row[3] && !row[8]) continue; // Fila vacía
+      if (!id && !row[3] && !row[idxProducto]) continue; // Fila vacía
       
       // 📞 Teléfono: Leer exactamente como texto (sin modificarlo ni reordenarlo)
       var tel = String(rowDisp[4] || row[4] || '').trim();
@@ -144,27 +189,24 @@ function doGet(e) {
         cliente: String(rowDisp[3] || row[3] || ''),
         telefono: tel,
         factura: String(rowDisp[5] || row[5] || ''),
-        piloto: String(rowDisp[6] || row[6] || ''),
-        photo: String(row[7] || ''),
-        foto: String(row[7] || ''),
-        producto: String(rowDisp[8] || row[8] || ''),
-        motivo: String(rowDisp[9] || row[9] || ''),
-        fecha: formatearFecha(row[10]),
-        hora: formatearHora(row[11]),
-        firmaVendedor: String(row[12] || ''),
-        firmaCliente: String(row[13] || ''),
-        procesoAceptado: String(rowDisp[14] || row[14] || ''),
-        procesoRechazado: String(rowDisp[15] || row[15] || ''),
-        enProcesoEntrega: String(rowDisp[16] || row[16] || ''),
-        cambioEntregado: String(rowDisp[17] || row[17] || ''),
-        // Columna S: Dirección del Cliente
-        direccion: String(rowDisp[18] || row[18] || ''),
-        direccionCliente: String(rowDisp[18] || row[18] || ''),
-        clientAddress: String(rowDisp[18] || row[18] || ''),
-        // Columna T: Cantidad de Producto
-        cantidad: Number(row[19]) || 1,
-        cantidadProducto: Number(row[19]) || 1,
-        quantity: Number(row[19]) || 1
+        photo: String(row[idxPhoto] || ''),
+        foto: String(row[idxPhoto] || ''),
+        producto: String(rowDisp[idxProducto] || row[idxProducto] || ''),
+        motivo: String(rowDisp[idxMotivo] || row[idxMotivo] || ''),
+        fecha: formatearFecha(row[idxFecha]),
+        hora: formatearHora(row[idxHora]),
+        firmaVendedor: String(row[idxFirmaV] || ''),
+        firmaCliente: String(row[idxFirmaC] || ''),
+        procesoAceptado: String(rowDisp[idxProcAcept] || row[idxProcAcept] || ''),
+        procesoRechazado: String(rowDisp[idxProcRech] || row[idxProcRech] || ''),
+        enProcesoEntrega: String(rowDisp[idxProcEntr] || row[idxProcEntr] || ''),
+        cambioEntregado: String(rowDisp[idxCambEntr] || row[idxCambEntr] || ''),
+        direccion: String(rowDisp[idxDireccion] || row[idxDireccion] || ''),
+        direccionCliente: String(rowDisp[idxDireccion] || row[idxDireccion] || ''),
+        clientAddress: String(rowDisp[idxDireccion] || row[idxDireccion] || ''),
+        cantidad: Number(row[idxCantidad]) || 1,
+        cantidadProducto: Number(row[idxCantidad]) || 1,
+        quantity: Number(row[idxCantidad]) || 1
       });
     }
     
@@ -228,40 +270,78 @@ function doPost(e) {
     }
     var telParaHoja = telTexto ? ("'" + telTexto) : "";
 
-    // Valores preparados para las 20 columnas (A - T)
     var direccion = String(d.direccion || d.Direccion || d["Dirección"] || d.direccionCliente || d["Dirección del Cliente"] || d.clientAddress || '').trim();
     var rawCant = d.cantidad ?? d.Cantidad ?? d.cantidadProducto ?? d["Cantidad de Producto"] ?? d.quantity ?? 1;
     var cantidad = (isNaN(Number(rawCant)) || Number(rawCant) <= 0) ? 1 : Number(rawCant);
-    
-    var filaValores = [
-      idReclamo,
-      d.ruta || d.Ruta || "",
-      d.vendedor || d.Vendedor || "",
-      d.cliente || d.Cliente || "",
-      telParaHoja, // 📞 Columna E: Guardado estrictamente como TEXTO
-      d.factura || d.Factura || "",
-      d.piloto || d.Piloto || d.vendedor || "",
-      d.photo || d.foto || d.Photo || "",
-      d.producto || d.Producto || "",
-      d.motivo || d.Motivo || "",
-      d.fecha || d.Fecha || "",
-      d.hora || d.Hora || "",
-      d.firmaVendedor || d.FirmaVendedor || "",
-      d.firmaCliente || d.FirmaCliente || "",
-      d.procesoAceptado || d["Proceso Aceptado"] || "NO",
-      d.procesoRechazado || d["Proceso Rechazado"] || "NO",
-      d.enProcesoEntrega || d["En Proceso de Entrega"] || "NO",
-      d.cambioEntregado || d["Cambio Entregado"] || "NO",
-      direccion, // 📍 Columna S: Dirección del Cliente
-      cantidad   // 📦 Columna T: Cantidad de Producto
-    ];
+
+    // Detectar si la hoja existente tiene la columna antigua "Piloto"
+    var numCols = Math.max(sheet.getLastColumn(), 19);
+    var headers = sheet.getRange(1, 1, 1, numCols).getValues()[0];
+    var tieneColumnaPiloto = false;
+    for (var c = 0; c < headers.length; c++) {
+      var hName = String(headers[c] || '').trim().toLowerCase();
+      if (hName === "piloto" || hName === "conductor" || hName === "chofer") {
+        tieneColumnaPiloto = true;
+        break;
+      }
+    }
+
+    var filaValores;
+    if (tieneColumnaPiloto) {
+      // Si la hoja aún tiene columna Piloto, se guarda vacía "" para no alterar el orden existente
+      filaValores = [
+        idReclamo,
+        d.ruta || d.Ruta || "",
+        d.vendedor || d.Vendedor || "",
+        d.cliente || d.Cliente || "",
+        telParaHoja, // Columna E: Teléfono estrictamente como TEXTO
+        d.factura || d.Factura || "",
+        "", // Columna Piloto / Conductor ELIMINADA (queda en blanco)
+        d.photo || d.foto || d.Photo || "",
+        d.producto || d.Producto || "",
+        d.motivo || d.Motivo || "",
+        d.fecha || d.Fecha || "",
+        d.hora || d.Hora || "",
+        d.firmaVendedor || d.FirmaVendedor || "",
+        d.firmaCliente || d.FirmaCliente || "",
+        d.procesoAceptado || d["Proceso Aceptado"] || "NO",
+        d.procesoRechazado || d["Proceso Rechazado"] || "NO",
+        d.enProcesoEntrega || d["En Proceso de Entrega"] || "NO",
+        d.cambioEntregado || d["Cambio Entregado"] || "NO",
+        direccion,
+        cantidad
+      ];
+    } else {
+      // Estructura oficial limpia de 19 columnas (SIN campo Piloto)
+      filaValores = [
+        idReclamo,
+        d.ruta || d.Ruta || "",
+        d.vendedor || d.Vendedor || "",
+        d.cliente || d.Cliente || "",
+        telParaHoja, // Columna E: Teléfono estrictamente como TEXTO
+        d.factura || d.Factura || "",
+        d.photo || d.foto || d.Photo || "",
+        d.producto || d.Producto || "",
+        d.motivo || d.Motivo || "",
+        d.fecha || d.Fecha || "",
+        d.hora || d.Hora || "",
+        d.firmaVendedor || d.FirmaVendedor || "",
+        d.firmaCliente || d.FirmaCliente || "",
+        d.procesoAceptado || d["Proceso Aceptado"] || "NO",
+        d.procesoRechazado || d["Proceso Rechazado"] || "NO",
+        d.enProcesoEntrega || d["En Proceso de Entrega"] || "NO",
+        d.cambioEntregado || d["Cambio Entregado"] || "NO",
+        direccion,
+        cantidad
+      ];
+    }
     
     // 🔍 BUSCAR SI EXISTE POR NÚMERO O POR ID
     var filaExistente = buscarFilaPorIdONumero(sheet, idReclamo, d.factura);
     
     if (filaExistente !== -1) {
       // ✏️ ACTUALIZAR FILA QUE YA EXISTE EN SU POSICIÓN EXACTA (NUNCA CREAR DUPLICADO)
-      sheet.getRange(filaExistente, 1, 1, 20).setValues([filaValores]);
+      sheet.getRange(filaExistente, 1, 1, filaValores.length).setValues([filaValores]);
       sheet.getRange(filaExistente, 5).setNumberFormat("@"); // Asegurar formato texto en teléfono
       SpreadsheetApp.flush(); // ⚡ Guardar al instante en Google Sheets
       try { lock.releaseLock(); } catch(e) {}
@@ -289,10 +369,12 @@ function doPost(e) {
       try { lock.releaseLock(); } catch(e) {}
       return ContentService.createTextOutput(JSON.stringify({
         success: true,
-        action: "guardado",
+        action: "creado",
+        fila: lastRow,
         id: idReclamo
       })).setMimeType(ContentService.MimeType.JSON);
     }
+    
   } catch (err) {
     try { lock.releaseLock(); } catch(e) {}
     return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() }))
@@ -300,13 +382,13 @@ function doPost(e) {
   }
 }
 
+// -------------------------------------------------------------
+// 🛠️ FUNCIONES DE APOYO PARA FORMATEO DE FECHA Y HORA
+// -------------------------------------------------------------
 function formatearFecha(val) {
   if (!val) return "";
   if (val instanceof Date) {
-    var dia = ("0" + val.getDate()).slice(-2);
-    var mes = ("0" + (val.getMonth() + 1)).slice(-2);
-    var anio = val.getFullYear();
-    return dia + "/" + mes + "/" + anio;
+    return Utilities.formatDate(val, Session.getScriptTimeZone(), "yyyy-MM-dd");
   }
   return String(val);
 }
@@ -314,9 +396,7 @@ function formatearFecha(val) {
 function formatearHora(val) {
   if (!val) return "";
   if (val instanceof Date) {
-    var h = ("0" + val.getHours()).slice(-2);
-    var m = ("0" + val.getMinutes()).slice(-2);
-    return h + ":" + m;
+    return Utilities.formatDate(val, Session.getScriptTimeZone(), "HH:mm");
   }
   return String(val);
 }

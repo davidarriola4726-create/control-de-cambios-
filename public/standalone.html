@@ -836,15 +836,6 @@
                 <label>N° de Factura <span style="color:var(--peligro); font-weight:900;">*</span></label>
                 <input type="text" id="factura" placeholder="Número de factura..." required>
             </div>
-            
-            <!-- 🚚 NOMBRE DEL PILOTO = VENDEDOR AUTOMÁTICO (SOLO LECTURA) -->
-            <div class="input-grupo">
-                <label>
-                    <span>Nombre del Piloto / Vendedor <span style="color:var(--peligro); font-weight:900;">*</span></span>
-                    <span style="font-size:11px; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:8px; font-weight:700; border:1px solid #bae6fd;">Automático</span>
-                </label>
-                <input type="text" id="piloto" readonly style="background:#f1f5f9; font-weight:700; color:#1e293b; cursor:not-allowed;" placeholder="Automático (igual al vendedor)..." required>
-            </div>
 
             <div class="input-grupo">
                 <label>Producto con Falla <span style="color:var(--peligro); font-weight:900;">*</span></label>
@@ -964,7 +955,7 @@
         </div>
 
         <!-- 📊 TABLA CON TODAS LAS COLUMNAS Y EL ESTADO -->
-        <!-- ID Reclamo | Ruta | Vendedor | Cliente | 📞 Teléfono | Factura | Piloto | Photo | Producto | Estado | Fecha | Hora | FirmaVendedor | FirmaCliente | Acciones -->
+        <!-- ID Reclamo | Ruta | Vendedor | Cliente | 📞 Teléfono | Factura | Photo | Producto | Estado | Fecha | Hora | FirmaVendedor | FirmaCliente | Acciones -->
         <div class="tabla-contenedor">
             <table>
                 <thead>
@@ -975,7 +966,6 @@
                         <th>Cliente</th>
                         <th>📞 Teléfono</th>
                         <th>Factura</th>
-                        <th>Piloto</th>
                         <th>Photo</th>
                         <th>Producto</th>
                         <th>Estado</th>
@@ -988,7 +978,7 @@
                 </thead>
                 <tbody id="cuerpoTabla">
                     <tr>
-                        <td colspan="15" style="text-align:center; padding:30px; color:var(--textoClaro);">
+                        <td colspan="14" style="text-align:center; padding:30px; color:var(--textoClaro);">
                             Cargando reclamos...
                         </td>
                     </tr>
@@ -1125,73 +1115,81 @@ const LOGO_URL = "/logo.png";
 // -------------------------------------------------------------
 const USUARIOS = {
     // 🔐 Administrador → Usuario: Admin | Contraseña: Mg2026
-    "admin": { usuario: "Admin", pass: "Mg2026", passAlt: "MYG2026", rol: "admin", ruta: "TODAS", vendedor: "Administrador General", piloto: "Administrador General" },
+    "admin": { usuario: "Admin", pass: "Mg2026", passAlt: "MYG2026", rol: "admin", ruta: "TODAS", vendedor: "Administrador General" },
     
-    // 🚚 Ruta 1 → Brayan Gómez ✅ (escrito con Y) | Contraseña: ruta1mg
-    "ruta 1": { usuario: "Ruta 1", pass: "ruta1mg", passAlt: "ruta1myg", rol: "ruta", ruta: "Ruta 1", vendedor: "Brayan Gómez", piloto: "Brayan Gómez" },
-    "brayan gómez": { usuario: "Ruta 1", pass: "ruta1mg", passAlt: "ruta1myg", rol: "ruta", ruta: "Ruta 1", vendedor: "Brayan Gómez", piloto: "Brayan Gómez" },
-    "brayan gomez": { usuario: "Ruta 1", pass: "ruta1mg", passAlt: "ruta1myg", rol: "ruta", ruta: "Ruta 1", vendedor: "Brayan Gómez", piloto: "Brayan Gómez" },
+    // 🚚 Ruta 1 → BRYAN GOMEZ | Contraseña: ruta1mg
+    "ruta 1": { usuario: "Ruta 1", pass: "ruta1mg", passAlt: "ruta1myg", rol: "ruta", ruta: "Ruta 1", vendedor: "BRYAN GOMEZ" },
+    "bryan gomez": { usuario: "Ruta 1", pass: "ruta1mg", passAlt: "ruta1myg", rol: "ruta", ruta: "Ruta 1", vendedor: "BRYAN GOMEZ" },
+    "bryan gómez": { usuario: "Ruta 1", pass: "ruta1mg", passAlt: "ruta1myg", rol: "ruta", ruta: "Ruta 1", vendedor: "BRYAN GOMEZ" },
+    "brayan gómez": { usuario: "Ruta 1", pass: "ruta1mg", passAlt: "ruta1myg", rol: "ruta", ruta: "Ruta 1", vendedor: "BRYAN GOMEZ" },
+    "brayan gomez": { usuario: "Ruta 1", pass: "ruta1mg", passAlt: "ruta1myg", rol: "ruta", ruta: "Ruta 1", vendedor: "BRYAN GOMEZ" },
     
-    // 🚚 Ruta 2 → Melvin Sequeen | Contraseña: ruta2mg
-    "ruta 2": { usuario: "Ruta 2", pass: "ruta2mg", passAlt: "ruta2myg", rol: "ruta", ruta: "Ruta 2", vendedor: "Melvin Sequeen", piloto: "Melvin Sequeen" },
-    "melvin sequeen": { usuario: "Ruta 2", pass: "ruta2mg", passAlt: "ruta2myg", rol: "ruta", ruta: "Ruta 2", vendedor: "Melvin Sequeen", piloto: "Melvin Sequeen" },
+    // 🚚 Ruta 2 → MELVIN SEQUEN | Contraseña: ruta2mg
+    "ruta 2": { usuario: "Ruta 2", pass: "ruta2mg", passAlt: "ruta2myg", rol: "ruta", ruta: "Ruta 2", vendedor: "MELVIN SEQUEN" },
+    "melvin sequen": { usuario: "Ruta 2", pass: "ruta2mg", passAlt: "ruta2myg", rol: "ruta", ruta: "Ruta 2", vendedor: "MELVIN SEQUEN" },
+    "melvin sequeen": { usuario: "Ruta 2", pass: "ruta2mg", passAlt: "ruta2myg", rol: "ruta", ruta: "Ruta 2", vendedor: "MELVIN SEQUEN" },
     
-    // 🚚 Ruta 3 → Melvin Gómez | Contraseña: ruta3mg
-    "ruta 3": { usuario: "Ruta 3", pass: "ruta3mg", passAlt: "ruta3myg", rol: "ruta", ruta: "Ruta 3", vendedor: "Melvin Gómez", piloto: "Melvin Gómez" },
-    "melvin gómez": { usuario: "Ruta 3", pass: "ruta3mg", passAlt: "ruta3myg", rol: "ruta", ruta: "Ruta 3", vendedor: "Melvin Gómez", piloto: "Melvin Gómez" },
-    "melvin gomez": { usuario: "Ruta 3", pass: "ruta3mg", passAlt: "ruta3myg", rol: "ruta", ruta: "Ruta 3", vendedor: "Melvin Gómez", piloto: "Melvin Gómez" },
+    // 🚚 Ruta 3 → MARVIN GOMEZ | Contraseña: ruta3mg
+    "ruta 3": { usuario: "Ruta 3", pass: "ruta3mg", passAlt: "ruta3myg", rol: "ruta", ruta: "Ruta 3", vendedor: "MARVIN GOMEZ" },
+    "marvin gomez": { usuario: "Ruta 3", pass: "ruta3mg", passAlt: "ruta3myg", rol: "ruta", ruta: "Ruta 3", vendedor: "MARVIN GOMEZ" },
+    "marvin gómez": { usuario: "Ruta 3", pass: "ruta3mg", passAlt: "ruta3myg", rol: "ruta", ruta: "Ruta 3", vendedor: "MARVIN GOMEZ" },
+    "mel marvin gómez": { usuario: "Ruta 3", pass: "ruta3mg", passAlt: "ruta3myg", rol: "ruta", ruta: "Ruta 3", vendedor: "MARVIN GOMEZ" },
+    "mel marvin gomez": { usuario: "Ruta 3", pass: "ruta3mg", passAlt: "ruta3myg", rol: "ruta", ruta: "Ruta 3", vendedor: "MARVIN GOMEZ" },
     
-    // 🚚 Ruta 4 → Marcos Juárez | Contraseña: ruta4mg
-    "ruta 4": { usuario: "Ruta 4", pass: "ruta4mg", passAlt: "ruta4myg", rol: "ruta", ruta: "Ruta 4", vendedor: "Marcos Juárez", piloto: "Marcos Juárez" },
-    "marcos juárez": { usuario: "Ruta 4", pass: "ruta4mg", passAlt: "ruta4myg", rol: "ruta", ruta: "Ruta 4", vendedor: "Marcos Juárez", piloto: "Marcos Juárez" },
-    "marcos juarez": { usuario: "Ruta 4", pass: "ruta4mg", passAlt: "ruta4myg", rol: "ruta", ruta: "Ruta 4", vendedor: "Marcos Juárez", piloto: "Marcos Juárez" },
+    // 🚚 Ruta 4 → MARCOS JUAREZ | Contraseña: ruta4mg
+    "ruta 4": { usuario: "Ruta 4", pass: "ruta4mg", passAlt: "ruta4myg", rol: "ruta", ruta: "Ruta 4", vendedor: "MARCOS JUAREZ" },
+    "marcos juárez": { usuario: "Ruta 4", pass: "ruta4mg", passAlt: "ruta4myg", rol: "ruta", ruta: "Ruta 4", vendedor: "MARCOS JUAREZ" },
+    "marcos juarez": { usuario: "Ruta 4", pass: "ruta4mg", passAlt: "ruta4myg", rol: "ruta", ruta: "Ruta 4", vendedor: "MARCOS JUAREZ" },
     
-    // 🚚 Ruta 5 → Ruta 5 | Contraseña: ruta5mg
-    "ruta 5": { usuario: "Ruta 5", pass: "ruta5mg", passAlt: "ruta5myg", rol: "ruta", ruta: "Ruta 5", vendedor: "Ruta 5", piloto: "Ruta 5" },
+    // 🚚 Ruta 5 → KENEDY BATZ | Contraseña: ruta5mg
+    "ruta 5": { usuario: "Ruta 5", pass: "ruta5mg", passAlt: "ruta5myg", rol: "ruta", ruta: "Ruta 5", vendedor: "KENEDY BATZ" },
+    "kenedy batz": { usuario: "Ruta 5", pass: "ruta5mg", passAlt: "ruta5myg", rol: "ruta", ruta: "Ruta 5", vendedor: "KENEDY BATZ" },
+    "kennedy batz": { usuario: "Ruta 5", pass: "ruta5mg", passAlt: "ruta5myg", rol: "ruta", ruta: "Ruta 5", vendedor: "KENEDY BATZ" },
     
-    // 🚚 Ruta 6 → Gustavo Gómez | Contraseña: ruta6mg
-    "ruta 6": { usuario: "Ruta 6", pass: "ruta6mg", passAlt: "ruta6myg", rol: "ruta", ruta: "Ruta 6", vendedor: "Gustavo Gómez", piloto: "Gustavo Gómez" },
-    "gustavo gómez": { usuario: "Ruta 6", pass: "ruta6mg", passAlt: "ruta6myg", rol: "ruta", ruta: "Ruta 6", vendedor: "Gustavo Gómez", piloto: "Gustavo Gómez" },
-    "gustavo gomez": { usuario: "Ruta 6", pass: "ruta6mg", passAlt: "ruta6myg", rol: "ruta", ruta: "Ruta 6", vendedor: "Gustavo Gómez", piloto: "Gustavo Gómez" },
+    // 🚚 Ruta 6 → GUSTAVO GOMEZ | Contraseña: ruta6mg
+    "ruta 6": { usuario: "Ruta 6", pass: "ruta6mg", passAlt: "ruta6myg", rol: "ruta", ruta: "Ruta 6", vendedor: "GUSTAVO GOMEZ" },
+    "gustavo gómez": { usuario: "Ruta 6", pass: "ruta6mg", passAlt: "ruta6myg", rol: "ruta", ruta: "Ruta 6", vendedor: "GUSTAVO GOMEZ" },
+    "gustavo gomez": { usuario: "Ruta 6", pass: "ruta6mg", passAlt: "ruta6myg", rol: "ruta", ruta: "Ruta 6", vendedor: "GUSTAVO GOMEZ" },
     
-    // 🚚 Ruta 7 → Ruta 7 | Contraseña: ruta7mg
-    "ruta 7": { usuario: "Ruta 7", pass: "ruta7mg", passAlt: "ruta7myg", rol: "ruta", ruta: "Ruta 7", vendedor: "Ruta 7", piloto: "Ruta 7" },
+    // 🚚 Ruta 7 → GUILLERMO ESPAÑA | Contraseña: ruta7mg
+    "ruta 7": { usuario: "Ruta 7", pass: "ruta7mg", passAlt: "ruta7myg", rol: "ruta", ruta: "Ruta 7", vendedor: "GUILLERMO ESPAÑA" },
+    "guillermo españa": { usuario: "Ruta 7", pass: "ruta7mg", passAlt: "ruta7myg", rol: "ruta", ruta: "Ruta 7", vendedor: "GUILLERMO ESPAÑA" },
+    "guillermo espana": { usuario: "Ruta 7", pass: "ruta7mg", passAlt: "ruta7myg", rol: "ruta", ruta: "Ruta 7", vendedor: "GUILLERMO ESPAÑA" },
     
-    // 🚚 Ruta 8 → Marvin Otoniel | Contraseña: ruta8mg
-    "ruta 8": { usuario: "Ruta 8", pass: "ruta8mg", passAlt: "ruta8myg", rol: "ruta", ruta: "Ruta 8", vendedor: "Marvin Otoniel", piloto: "Marvin Otoniel" },
-    "marvin otoniel": { usuario: "Ruta 8", pass: "ruta8mg", passAlt: "ruta8myg", rol: "ruta", ruta: "Ruta 8", vendedor: "Marvin Otoniel", piloto: "Marvin Otoniel" },
+    // 🚚 Ruta 8 → MARVIN OTONIEL | Contraseña: ruta8mg
+    "ruta 8": { usuario: "Ruta 8", pass: "ruta8mg", passAlt: "ruta8myg", rol: "ruta", ruta: "Ruta 8", vendedor: "MARVIN OTONIEL" },
+    "marvin otoniel": { usuario: "Ruta 8", pass: "ruta8mg", passAlt: "ruta8myg", rol: "ruta", ruta: "Ruta 8", vendedor: "MARVIN OTONIEL" },
     
-    // 🚚 Ruta 9 → Sergio Catú | Contraseña: ruta9mg
-    "ruta 9": { usuario: "Ruta 9", pass: "ruta9mg", passAlt: "ruta9myg", rol: "ruta", ruta: "Ruta 9", vendedor: "Sergio Catú", piloto: "Sergio Catú" },
-    "sergio catú": { usuario: "Ruta 9", pass: "ruta9mg", passAlt: "ruta9myg", rol: "ruta", ruta: "Ruta 9", vendedor: "Sergio Catú", piloto: "Sergio Catú" },
-    "sergio catu": { usuario: "Ruta 9", pass: "ruta9mg", passAlt: "ruta9myg", rol: "ruta", ruta: "Ruta 9", vendedor: "Sergio Catú", piloto: "Sergio Catú" },
+    // 🚚 Ruta 9 → SERGIO CATU | Contraseña: ruta9mg
+    "ruta 9": { usuario: "Ruta 9", pass: "ruta9mg", passAlt: "ruta9myg", rol: "ruta", ruta: "Ruta 9", vendedor: "SERGIO CATU" },
+    "sergio catú": { usuario: "Ruta 9", pass: "ruta9mg", passAlt: "ruta9myg", rol: "ruta", ruta: "Ruta 9", vendedor: "SERGIO CATU" },
+    "sergio catu": { usuario: "Ruta 9", pass: "ruta9mg", passAlt: "ruta9myg", rol: "ruta", ruta: "Ruta 9", vendedor: "SERGIO CATU" },
     
-    // 🚚 Ruta 10 → Edgar Guzmán | Contraseña: ruta10mg
-    "ruta 10": { usuario: "Ruta 10", pass: "ruta10mg", passAlt: "ruta10myg", rol: "ruta", ruta: "Ruta 10", vendedor: "Edgar Guzmán", piloto: "Edgar Guzmán" },
-    "edgar guzmán": { usuario: "Ruta 10", pass: "ruta10mg", passAlt: "ruta10myg", rol: "ruta", ruta: "Ruta 10", vendedor: "Edgar Guzmán", piloto: "Edgar Guzmán" },
-    "edgar guzman": { usuario: "Ruta 10", pass: "ruta10mg", passAlt: "ruta10myg", rol: "ruta", ruta: "Ruta 10", vendedor: "Edgar Guzmán", piloto: "Edgar Guzmán" },
+    // 🚚 Ruta 10 → EDGAR GUZMAN | Contraseña: ruta10mg
+    "ruta 10": { usuario: "Ruta 10", pass: "ruta10mg", passAlt: "ruta10myg", rol: "ruta", ruta: "Ruta 10", vendedor: "EDGAR GUZMAN" },
+    "edgar guzmán": { usuario: "Ruta 10", pass: "ruta10mg", passAlt: "ruta10myg", rol: "ruta", ruta: "Ruta 10", vendedor: "EDGAR GUZMAN" },
+    "edgar guzman": { usuario: "Ruta 10", pass: "ruta10mg", passAlt: "ruta10myg", rol: "ruta", ruta: "Ruta 10", vendedor: "EDGAR GUZMAN" },
     
-    // 🚚 Ruta 11 → Esa… | Contraseña: ruta11mg
-    "ruta 11": { usuario: "Ruta 11", pass: "ruta11mg", passAlt: "ruta11myg", rol: "ruta", ruta: "Ruta 11", vendedor: "Esaú", piloto: "Esaú" },
-    "esaú": { usuario: "Ruta 11", pass: "ruta11mg", passAlt: "ruta11myg", rol: "ruta", ruta: "Ruta 11", vendedor: "Esaú", piloto: "Esaú" },
-    "esau": { usuario: "Ruta 11", pass: "ruta11mg", passAlt: "ruta11myg", rol: "ruta", ruta: "Ruta 11", vendedor: "Esaú", piloto: "Esaú" },
-    "esa…": { usuario: "Ruta 11", pass: "ruta11mg", passAlt: "ruta11myg", rol: "ruta", ruta: "Ruta 11", vendedor: "Esaú", piloto: "Esaú" },
-    "esa...": { usuario: "Ruta 11", pass: "ruta11mg", passAlt: "ruta11myg", rol: "ruta", ruta: "Ruta 11", vendedor: "Esaú", piloto: "Esaú" },
-    "esa": { usuario: "Ruta 11", pass: "ruta11mg", passAlt: "ruta11myg", rol: "ruta", ruta: "Ruta 11", vendedor: "Esaú", piloto: "Esaú" }
+    // 🚚 Ruta 11 → ESAU OSORIO | Contraseña: ruta11mg
+    "ruta 11": { usuario: "Ruta 11", pass: "ruta11mg", passAlt: "ruta11myg", rol: "ruta", ruta: "Ruta 11", vendedor: "ESAU OSORIO" },
+    "esau osorio": { usuario: "Ruta 11", pass: "ruta11mg", passAlt: "ruta11myg", rol: "ruta", ruta: "Ruta 11", vendedor: "ESAU OSORIO" },
+    "esaú osorio": { usuario: "Ruta 11", pass: "ruta11mg", passAlt: "ruta11myg", rol: "ruta", ruta: "Ruta 11", vendedor: "ESAU OSORIO" },
+    "esaú": { usuario: "Ruta 11", pass: "ruta11mg", passAlt: "ruta11myg", rol: "ruta", ruta: "Ruta 11", vendedor: "ESAU OSORIO" },
+    "esau": { usuario: "Ruta 11", pass: "ruta11mg", passAlt: "ruta11myg", rol: "ruta", ruta: "Ruta 11", vendedor: "ESAU OSORIO" }
 };
 
 const LISTA_RUTAS = [
-    { id: "Ruta 1", nombre: "Ruta 1 - Brayan Gómez" },
-    { id: "Ruta 2", nombre: "Ruta 2 - Melvin Sequeen" },
-    { id: "Ruta 3", nombre: "Ruta 3 - Melvin Gómez" },
-    { id: "Ruta 4", nombre: "Ruta 4 - Marcos Juárez" },
-    { id: "Ruta 5", nombre: "Ruta 5" },
-    { id: "Ruta 6", nombre: "Ruta 6 - Gustavo Gómez" },
-    { id: "Ruta 7", nombre: "Ruta 7" },
-    { id: "Ruta 8", nombre: "Ruta 8 - Marvin Otoniel" },
-    { id: "Ruta 9", nombre: "Ruta 9 - Sergio Catú" },
-    { id: "Ruta 10", nombre: "Ruta 10 - Edgar Guzmán" },
-    { id: "Ruta 11", nombre: "Ruta 11 - Esaú" }
+    { id: "Ruta 1", nombre: "Ruta 1 - BRYAN GOMEZ" },
+    { id: "Ruta 2", nombre: "Ruta 2 - MELVIN SEQUEN" },
+    { id: "Ruta 3", nombre: "Ruta 3 - MARVIN GOMEZ" },
+    { id: "Ruta 4", nombre: "Ruta 4 - MARCOS JUAREZ" },
+    { id: "Ruta 5", nombre: "Ruta 5 - KENEDY BATZ" },
+    { id: "Ruta 6", nombre: "Ruta 6 - GUSTAVO GOMEZ" },
+    { id: "Ruta 7", nombre: "Ruta 7 - GUILLERMO ESPAÑA" },
+    { id: "Ruta 8", nombre: "Ruta 8 - MARVIN OTONIEL" },
+    { id: "Ruta 9", nombre: "Ruta 9 - SERGIO CATU" },
+    { id: "Ruta 10", nombre: "Ruta 10 - EDGAR GUZMAN" },
+    { id: "Ruta 11", nombre: "Ruta 11 - ESAU OSORIO" }
 ];
 
 let usuarioActual = null;
@@ -1337,18 +1335,16 @@ function iniciarSesion() {
     badge.textContent = `👤 ${usuarioActual.usuario} (${usuarioActual.rol === 'admin' ? 'Administrador' : usuarioActual.ruta})`;
     badge.classList.remove("oculto");
 
-    // Formulario: autoselección de Ruta, Vendedor y Piloto
+    // Formulario: autoselección de Ruta y Vendedor
     if (usuarioActual.rol === "admin") {
         document.getElementById("ruta").value = "Ruta 1";
         document.getElementById("vendedor").value = "Administrador General";
-        document.getElementById("piloto").value = "Administrador General";
         document.getElementById("btnCampanita").classList.remove("oculto");
         document.getElementById("btnLimpiarTodoAdmin").classList.remove("oculto");
         carpetaActiva = "TODAS";
     } else {
         document.getElementById("ruta").value = usuarioActual.ruta;
         document.getElementById("vendedor").value = usuarioActual.vendedor;
-        document.getElementById("piloto").value = usuarioActual.vendedor; // 🚚 Piloto = Vendedor automático
         document.getElementById("btnCampanita").classList.add("oculto");
         document.getElementById("btnLimpiarTodoAdmin").classList.add("oculto");
         carpetaActiva = usuarioActual.ruta;
@@ -1851,7 +1847,6 @@ function renderizarTabla() {
             <td><strong>${r.cliente || '-'}</strong></td>
             <td><span style="color:#0F52BA; font-weight:700;">📞 ${telCliente}</span></td>
             <td>${r.factura || '-'}</td>
-            <td><span style="color:#334155; font-size:12px;">${r.piloto || r.vendedor || '-'}</span></td>
             <td style="text-align:center;">${celdaFoto}</td>
             <td>${r.producto || '-'}</td>
             <td>${badgeEstadoHtml}</td>
@@ -1930,7 +1925,7 @@ function abrirModalGestionEstados(id) {
 
     document.getElementById("detalleReclamoModalEstados").innerHTML = `
         <strong>Cliente:</strong> ${r.cliente} | <strong>📞 Tel:</strong> ${r.telefono || r.clientPhone || '-'} <br>
-        <strong>Ruta:</strong> ${r.ruta} | <strong>Vendedor:</strong> ${r.vendedor} | <strong>Piloto:</strong> ${r.piloto || r.vendedor} <br>
+        <strong>Ruta:</strong> ${r.ruta} | <strong>Vendedor:</strong> ${r.vendedor} <br>
         <strong>Factura:</strong> ${r.factura} | <strong>Producto:</strong> ${r.producto}
     `;
 
@@ -2075,7 +2070,6 @@ async function guardarReclamo() {
     const id = document.getElementById("idReclamo").value;
     const ruta = document.getElementById("ruta").value;
     const vendedor = document.getElementById("vendedor").value;
-    const piloto = document.getElementById("piloto").value; // 🚚 Automático = Vendedor
     const fecha = document.getElementById("fecha").value;
     const hora = document.getElementById("hora").value;
 
@@ -2093,8 +2087,6 @@ async function guardarReclamo() {
         ruta,
         vendorName: vendedor,
         vendedor,
-        pilotName: piloto,
-        piloto,
         clientName: cliente,
         cliente,
         clientPhone: telefono,
@@ -2161,7 +2153,6 @@ function enviarActualizacionGoogleSheets(r) {
             cliente: r.cliente,
             telefono: r.telefono,
             factura: r.factura,
-            piloto: r.piloto || r.vendedor,
             photo: r.photo || r.foto || "",
             producto: r.producto,
             motivo: r.motivo,
@@ -2182,7 +2173,6 @@ function enviarActualizacionGoogleSheets(r) {
             "Cliente": r.cliente,
             "Telefono": r.telefono,
             "Factura": r.factura,
-            "Piloto": r.piloto || r.vendedor,
             "Producto": r.producto,
             "Motivo": r.motivo,
             "Fecha": r.fecha,
@@ -2461,7 +2451,6 @@ function verDetalle(idOReclamo) {
         <div class="voucher-campo"><strong>ID Reclamo:</strong><span>${r.id || '-'}</span></div>
         <div class="voucher-campo"><strong>Ruta:</strong><span>${r.ruta || '-'}</span></div>
         <div class="voucher-campo"><strong>Vendedor:</strong><span>${r.vendedor || '-'}</span></div>
-        <div class="voucher-campo"><strong>Piloto:</strong><span>${r.piloto || r.vendedor || '-'}</span></div>
         <div class="voucher-campo"><strong>Cliente:</strong><span>${r.cliente || '-'}</span></div>
         <div class="voucher-campo" style="background:#E3F2FD; border-color:#0091EA;">
             <strong style="color:#0F52BA;">📞 Teléfono del Cliente:</strong>
@@ -2512,7 +2501,6 @@ function imprimirReporteFormulario() {
             id: id || "REC-REPORTE",
             ruta: document.getElementById("ruta").value || (usuarioActual ? usuarioActual.ruta : "Ruta 1"),
             vendedor: document.getElementById("vendedor").value || (usuarioActual ? usuarioActual.vendedor : ""),
-            piloto: document.getElementById("piloto").value || document.getElementById("vendedor").value || "",
             cliente: cliente || "Cliente no especificado",
             telefono: document.getElementById("telefono").value || "-",
             factura: document.getElementById("factura").value || "-",
