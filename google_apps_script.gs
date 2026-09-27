@@ -14,7 +14,7 @@
  * 8. Quién tiene acceso: "Cualquier usuario" (Anyone).
  * 9. Haga clic en "Implementar" y autorice los permisos.
  * 
- * ESTRUCTURA OFICIAL DE COLUMNAS EN LA HOJA "RECLAMOS" (A hasta S):
+ * ESTRUCTURA OFICIAL DE COLUMNAS EN LA HOJA "RECLAMOS" (A hasta V - 22 Columnas):
  * A: ID_Reclamo (ej: N° 00001)
  * B: Ruta (ej: Ruta 1)
  * C: Vendedor (ej: BRYAN GOMEZ)
@@ -34,29 +34,43 @@
  * Q: Cambio Entregado (SI/NO)
  * R: Dirección del Cliente
  * S: Cantidad de Producto
- *
- * NOTA: El campo "Piloto / Conductor" ha sido eliminado completamente.
- * Si su hoja anterior aún tiene una columna "Piloto", este script es compatible
- * automáticamente y dejará dicha celda en blanco sin romper ningún dato.
+ * T: Cambio (SI/NO)           👉 Casilla de verificación
+ * U: Devolución (SI/NO)       👉 Casilla de verificación
+ * V: Reparación (SI/NO)       👉 Casilla de verificación
  */
 
 function obtenerHojaReclamos() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName("RECLAMOS");
+  var encabezadosOficiales = [
+    "ID_Reclamo", "Ruta", "Vendedor", "Cliente", "Telefono", "Factura",
+    "Photo", "Producto", "Motivo", "Fecha", "Hora", "FirmaVendedor", "FirmaCliente",
+    "Proceso Aceptado", "Proceso Rechazado", "En Proceso de Entrega", "Cambio Entregado",
+    "Dirección del Cliente", "Cantidad de Producto", "Cambio", "Devolución", "Reparación"
+  ];
+
   if (!sheet) {
     sheet = ss.insertSheet("RECLAMOS");
-    sheet.appendRow([
-      "ID_Reclamo", "Ruta", "Vendedor", "Cliente", "Telefono", "Factura",
-      "Photo", "Producto", "Motivo", "Fecha", "Hora", "FirmaVendedor", "FirmaCliente",
-      "Proceso Aceptado", "Proceso Rechazado", "En Proceso de Entrega", "Cambio Entregado",
-      "Dirección del Cliente", "Cantidad de Producto"
-    ]);
-    sheet.getRange(1, 1, 1, 19).setFontWeight("bold").setBackground("#0F52BA").setFontColor("#FFFFFF");
+    sheet.appendRow(encabezadosOficiales);
+    sheet.getRange(1, 1, 1, 22).setFontWeight("bold").setBackground("#0F52BA").setFontColor("#FFFFFF");
     sheet.getRange("E:E").setNumberFormat("@"); // Columna E: Teléfono estrictamente como TEXTO
     SpreadsheetApp.flush();
   } else {
     // Asegurar formato de texto en columna E para que no se convierta a número
     sheet.getRange("E:E").setNumberFormat("@");
+    
+    // Auto-completar encabezados para columnas T (20), U (21), V (22) si faltan
+    var lastCol = sheet.getLastColumn();
+    if (lastCol < 20) {
+      sheet.getRange(1, 20).setValue("Cambio").setFontWeight("bold").setBackground("#0F52BA").setFontColor("#FFFFFF");
+    }
+    if (lastCol < 21) {
+      sheet.getRange(1, 21).setValue("Devolución").setFontWeight("bold").setBackground("#0F52BA").setFontColor("#FFFFFF");
+    }
+    if (lastCol < 22) {
+      sheet.getRange(1, 22).setValue("Reparación").setFontWeight("bold").setBackground("#0F52BA").setFontColor("#FFFFFF");
+    }
+    SpreadsheetApp.flush();
   }
   return sheet;
 }
@@ -119,12 +133,12 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
     
-    var numCols = Math.max(sheet.getLastColumn(), 19);
+    var numCols = Math.max(sheet.getLastColumn(), 22);
     var numRows = lastRow - 1;
     var dataValues = sheet.getRange(2, 1, numRows, numCols).getValues();
     var dataDisplay = sheet.getRange(2, 1, numRows, numCols).getDisplayValues();
     
-    // Detectar si la fila 1 contiene la columna antigua "Piloto"
+    // Mapeo dinámico de columnas por encabezado
     var headers = sheet.getRange(1, 1, 1, numCols).getValues()[0];
     var tieneColumnaPiloto = false;
     var idxPhoto = 6;
@@ -140,17 +154,28 @@ function doGet(e) {
     var idxCambEntr = 16;
     var idxDireccion = 17;
     var idxCantidad = 18;
+    var idxCambio = 19;      // Columna T (índice 19 en 0-based)
+    var idxDevolucion = 20;  // Columna U (índice 20 en 0-based)
+    var idxReparacion = 21;  // Columna V (índice 21 en 0-based)
 
     for (var c = 0; c < headers.length; c++) {
       var hName = String(headers[c] || '').trim().toLowerCase();
       if (hName === "piloto" || hName === "conductor" || hName === "chofer") {
         tieneColumnaPiloto = true;
-        break;
+      }
+      if (hName === "cambio" && hName !== "cambio entregado") {
+        idxCambio = c;
+      }
+      if (hName.indexOf("devoluc") !== -1) {
+        idxDevolucion = c;
+      }
+      if (hName.indexOf("reparac") !== -1) {
+        idxReparacion = c;
       }
     }
 
     if (tieneColumnaPiloto) {
-      // Formato antiguo de 20 columnas donde col 6 (G) era Piloto
+      // Formato anterior si aún tiene columna Piloto en G
       idxPhoto = 7;
       idxProducto = 8;
       idxMotivo = 9;
@@ -174,11 +199,20 @@ function doGet(e) {
       var id = String(rowDisp[0] || row[0] || '').trim();
       if (!id && !row[3] && !row[idxProducto]) continue; // Fila vacía
       
-      // 📞 Teléfono: Leer exactamente como texto (sin modificarlo ni reordenarlo)
+      // 📞 Teléfono: Leer exactamente como texto
       var tel = String(rowDisp[4] || row[4] || '').trim();
       if (tel.indexOf("'") === 0) {
         tel = tel.substring(1).trim();
       }
+
+      // Casillas de verificación: Cambio (Col T), Devolución (Col U), Reparación (Col V)
+      var rawCambio = String(rowDisp[idxCambio] || row[idxCambio] || '').trim().toUpperCase();
+      var rawDevolucion = String(rowDisp[idxDevolucion] || row[idxDevolucion] || '').trim().toUpperCase();
+      var rawReparacion = String(rowDisp[idxReparacion] || row[idxReparacion] || '').trim().toUpperCase();
+
+      var esCambio = (rawCambio === "SI" || rawCambio === "TRUE" || rawCambio === "1");
+      var esDevolucion = (rawDevolucion === "SI" || rawDevolucion === "TRUE" || rawDevolucion === "1");
+      var esReparacion = (rawReparacion === "SI" || rawReparacion === "TRUE" || rawReparacion === "1");
 
       lista.push({
         id: id || ("N° " + ("00000" + (i + 1)).slice(-5)),
@@ -206,7 +240,14 @@ function doGet(e) {
         clientAddress: String(rowDisp[idxDireccion] || row[idxDireccion] || ''),
         cantidad: Number(row[idxCantidad]) || 1,
         cantidadProducto: Number(row[idxCantidad]) || 1,
-        quantity: Number(row[idxCantidad]) || 1
+        quantity: Number(row[idxCantidad]) || 1,
+        // 3 Casillas de verificación
+        cambio: esCambio,
+        Cambio: esCambio ? "SI" : "NO",
+        devolucion: esDevolucion,
+        Devolucion: esDevolucion ? "SI" : "NO",
+        reparacion: esReparacion,
+        Reparacion: esReparacion ? "SI" : "NO"
       });
     }
     
@@ -224,7 +265,6 @@ function doGet(e) {
 function doPost(e) {
   var lock = LockService.getScriptLock();
   try {
-    // Bloqueo de concurrencia para evitar escrituras simultáneas duplicadas
     try { lock.waitLock(15000); } catch(lErr) {}
 
     var rawData = e.postData && e.postData.contents ? e.postData.contents : "{}";
@@ -241,7 +281,7 @@ function doPost(e) {
       if (lr >= 2) {
         sheet.deleteRows(2, lr - 1);
       }
-      SpreadsheetApp.flush(); // Guardado inmediato
+      SpreadsheetApp.flush();
       try { lock.releaseLock(); } catch(e) {}
       return ContentService.createTextOutput(JSON.stringify({ success: true, message: "Historial limpiado" }))
         .setMimeType(ContentService.MimeType.JSON);
@@ -252,7 +292,7 @@ function doPost(e) {
       var filaDel = buscarFilaPorIdONumero(sheet, idReclamo, d.factura);
       if (filaDel !== -1) {
         sheet.deleteRow(filaDel);
-        SpreadsheetApp.flush(); // Guardado inmediato
+        SpreadsheetApp.flush();
         try { lock.releaseLock(); } catch(e) {}
         return ContentService.createTextOutput(JSON.stringify({ success: true, message: "Reclamo eliminado", id: idReclamo }))
           .setMimeType(ContentService.MimeType.JSON);
@@ -262,7 +302,7 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
     
-    // 📞 TELÉFONO: Forzar como TEXTO PURO con apóstrofe inicial para que Sheets NUNCA lo altere ni ordene como número
+    // 📞 TELÉFONO: Forzar como TEXTO PURO con apóstrofe inicial
     var telRaw = d.telefono != null ? d.telefono : (d.Telefono != null ? d.Telefono : (d.clientPhone != null ? d.clientPhone : ''));
     var telTexto = String(telRaw).trim();
     if (telTexto.indexOf("'") === 0) {
@@ -274,8 +314,13 @@ function doPost(e) {
     var rawCant = d.cantidad ?? d.Cantidad ?? d.cantidadProducto ?? d["Cantidad de Producto"] ?? d.quantity ?? 1;
     var cantidad = (isNaN(Number(rawCant)) || Number(rawCant) <= 0) ? 1 : Number(rawCant);
 
+    // Casillas de verificación: Cambio (Col T), Devolución (Col U), Reparación (Col V)
+    var valCambio = (d.cambio === true || String(d.cambio || d.Cambio || '').trim().toUpperCase() === 'SI' || String(d.cambio || d.Cambio || '').trim().toLowerCase() === 'true') ? 'SI' : 'NO';
+    var valDevolucion = (d.devolucion === true || String(d.devolucion || d.Devolucion || d['Devolución'] || '').trim().toUpperCase() === 'SI' || String(d.devolucion || d.Devolucion || d['Devolución'] || '').trim().toLowerCase() === 'true') ? 'SI' : 'NO';
+    var valReparacion = (d.reparacion === true || String(d.reparacion || d.Reparacion || d['Reparación'] || '').trim().toUpperCase() === 'SI' || String(d.reparacion || d.Reparacion || d['Reparación'] || '').trim().toLowerCase() === 'true') ? 'SI' : 'NO';
+
     // Detectar si la hoja existente tiene la columna antigua "Piloto"
-    var numCols = Math.max(sheet.getLastColumn(), 19);
+    var numCols = Math.max(sheet.getLastColumn(), 22);
     var headers = sheet.getRange(1, 1, 1, numCols).getValues()[0];
     var tieneColumnaPiloto = false;
     for (var c = 0; c < headers.length; c++) {
@@ -288,7 +333,7 @@ function doPost(e) {
 
     var filaValores;
     if (tieneColumnaPiloto) {
-      // Si la hoja aún tiene columna Piloto, se guarda vacía "" para no alterar el orden existente
+      // Si la hoja aún tiene columna Piloto (G), se guarda vacía "" y las 3 casillas quedan en T, U, V
       filaValores = [
         idReclamo,
         d.ruta || d.Ruta || "",
@@ -308,11 +353,14 @@ function doPost(e) {
         d.procesoRechazado || d["Proceso Rechazado"] || "NO",
         d.enProcesoEntrega || d["En Proceso de Entrega"] || "NO",
         d.cambioEntregado || d["Cambio Entregado"] || "NO",
-        direccion,
-        cantidad
+        direccion,     // Columna S
+        cantidad,      // Columna T
+        valCambio,     // Columna U
+        valDevolucion, // Columna V
+        valReparacion  // Columna W
       ];
     } else {
-      // Estructura oficial limpia de 19 columnas (SIN campo Piloto)
+      // Estructura oficial limpia de 22 columnas (A hasta V)
       filaValores = [
         idReclamo,
         d.ruta || d.Ruta || "",
@@ -331,8 +379,11 @@ function doPost(e) {
         d.procesoRechazado || d["Proceso Rechazado"] || "NO",
         d.enProcesoEntrega || d["En Proceso de Entrega"] || "NO",
         d.cambioEntregado || d["Cambio Entregado"] || "NO",
-        direccion,
-        cantidad
+        direccion,     // Columna R: Dirección del Cliente
+        cantidad,      // Columna S: Cantidad de Producto
+        valCambio,     // Columna T: Cambio (SI/NO)
+        valDevolucion, // Columna U: Devolución (SI/NO)
+        valReparacion  // Columna V: Reparación (SI/NO)
       ];
     }
     

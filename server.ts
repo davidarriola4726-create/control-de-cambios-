@@ -208,6 +208,11 @@ async function sincronizarDesdeGoogleSheets() {
         const cantidad = (isNaN(Number(rawCant)) || Number(rawCant) <= 0) ? 1 : Number(rawCant);
         const tel = limpiarTelefonoTexto(item.telefono || item.Telefono || item.clientPhone || '');
 
+        // Casillas de verificación: Cambio (Col T), Devolución (Col U), Reparación (Col V)
+        const esCambio = item.cambio === true || String(item.cambio || item.Cambio || '').trim().toUpperCase() === 'SI' || String(item.cambio || item.Cambio || '').trim().toLowerCase() === 'true';
+        const esDevolucion = item.devolucion === true || String(item.devolucion || item.Devolucion || item['Devolución'] || '').trim().toUpperCase() === 'SI' || String(item.devolucion || item.Devolucion || item['Devolución'] || '').trim().toLowerCase() === 'true';
+        const esReparacion = item.reparacion === true || String(item.reparacion || item.Reparacion || item['Reparación'] || '').trim().toUpperCase() === 'SI' || String(item.reparacion || item.Reparacion || item['Reparación'] || '').trim().toLowerCase() === 'true';
+
         if (index === -1) {
           // Registro nuevo en Google Sheets no existente localmente
           claims.push({
@@ -234,7 +239,10 @@ async function sincronizarDesdeGoogleSheets() {
             enProcesoEntrega: enEntrega,
             cambioEntregado: entregado,
             productoRecibido: recibido,
-            fechaCambioEntregado: item.fechaCambioEntregado || item['Fecha Cambio Entregado'] || ''
+            fechaCambioEntregado: item.fechaCambioEntregado || item['Fecha Cambio Entregado'] || '',
+            cambio: esCambio,
+            devolucion: esDevolucion,
+            reparacion: esReparacion
           });
           huboCambios = true;
         } else {
@@ -245,6 +253,9 @@ async function sincronizarDesdeGoogleSheets() {
               actual.enProcesoEntrega !== enEntrega || 
               actual.cambioEntregado !== entregado || 
               actual.productoRecibido !== recibido ||
+              actual.cambio !== esCambio ||
+              actual.devolucion !== esDevolucion ||
+              actual.reparacion !== esReparacion ||
               (!actual.firmaCliente && firmaC) ||
               (!actual.direccion && direccion) ||
               (!actual.cantidad && cantidad) ||
@@ -254,6 +265,9 @@ async function sincronizarDesdeGoogleSheets() {
             actual.enProcesoEntrega = enEntrega;
             actual.cambioEntregado = entregado;
             actual.productoRecibido = recibido;
+            actual.cambio = esCambio;
+            actual.devolucion = esDevolucion;
+            actual.reparacion = esReparacion;
             if (firmaC) actual.firmaCliente = firmaC;
             if (firmaV) actual.firmaVendedor = firmaV;
             if (direccion) {
@@ -363,7 +377,18 @@ app.post('/api/records', (req, res) => {
       Cantidad: claims[existingIdx].cantidad,
       cantidadProducto: claims[existingIdx].cantidad,
       "Cantidad de Producto": claims[existingIdx].cantidad,
-      quantity: claims[existingIdx].cantidad
+      quantity: claims[existingIdx].cantidad,
+      // Columna T: Cambio
+      cambio: claims[existingIdx].cambio ? "SI" : "NO",
+      Cambio: claims[existingIdx].cambio ? "SI" : "NO",
+      // Columna U: Devolución
+      devolucion: claims[existingIdx].devolucion ? "SI" : "NO",
+      Devolucion: claims[existingIdx].devolucion ? "SI" : "NO",
+      "Devolución": claims[existingIdx].devolucion ? "SI" : "NO",
+      // Columna V: Reparación
+      reparacion: claims[existingIdx].reparacion ? "SI" : "NO",
+      Reparacion: claims[existingIdx].reparacion ? "SI" : "NO",
+      "Reparación": claims[existingIdx].reparacion ? "SI" : "NO"
     });
 
     return res.json(claims[existingIdx]);
@@ -376,7 +401,10 @@ app.post('/api/records', (req, res) => {
     direccion,
     clientAddress: direccion,
     cantidad,
-    quantity: cantidad
+    quantity: cantidad,
+    cambio: record.cambio === true || record.cambio === 'SI' || record.Cambio === 'SI',
+    devolucion: record.devolucion === true || record.devolucion === 'SI' || record.Devolucion === 'SI' || record['Devolución'] === 'SI',
+    reparacion: record.reparacion === true || record.reparacion === 'SI' || record.Reparacion === 'SI' || record['Reparación'] === 'SI'
   };
   claims.unshift(nuevo);
   saveClaims(claims);
@@ -434,7 +462,18 @@ app.post('/api/records', (req, res) => {
     Cantidad: nuevo.cantidad,
     cantidadProducto: nuevo.cantidad,
     "Cantidad de Producto": nuevo.cantidad,
-    quantity: nuevo.cantidad
+    quantity: nuevo.cantidad,
+    // Columna T: Cambio
+    cambio: nuevo.cambio ? "SI" : "NO",
+    Cambio: nuevo.cambio ? "SI" : "NO",
+    // Columna U: Devolución
+    devolucion: nuevo.devolucion ? "SI" : "NO",
+    Devolucion: nuevo.devolucion ? "SI" : "NO",
+    "Devolución": nuevo.devolucion ? "SI" : "NO",
+    // Columna V: Reparación
+    reparacion: nuevo.reparacion ? "SI" : "NO",
+    Reparacion: nuevo.reparacion ? "SI" : "NO",
+    "Reparación": nuevo.reparacion ? "SI" : "NO"
   });
 
   res.status(201).json(nuevo);
@@ -458,6 +497,10 @@ app.put('/api/records/:id', (req, res) => {
   const cantidad = (rawCant !== undefined && !isNaN(Number(rawCant)) && Number(rawCant) > 0) ? Number(rawCant) : undefined;
   const tel = limpiarTelefonoTexto(updatedData.telefono || updatedData.clientPhone);
 
+  const cambio = updatedData.cambio !== undefined ? (updatedData.cambio === true || updatedData.cambio === 'SI') : claims[index]?.cambio;
+  const devolucion = updatedData.devolucion !== undefined ? (updatedData.devolucion === true || updatedData.devolucion === 'SI') : claims[index]?.devolucion;
+  const reparacion = updatedData.reparacion !== undefined ? (updatedData.reparacion === true || updatedData.reparacion === 'SI') : claims[index]?.reparacion;
+
   if (index !== -1) {
     claims[index] = {
       ...claims[index],
@@ -468,7 +511,10 @@ app.put('/api/records/:id', (req, res) => {
       telefono: tel || claims[index].telefono || "",
       clientPhone: tel || claims[index].clientPhone || "",
       cantidad: cantidad !== undefined ? cantidad : (claims[index].cantidad || 1),
-      quantity: cantidad !== undefined ? cantidad : (claims[index].quantity || 1)
+      quantity: cantidad !== undefined ? cantidad : (claims[index].quantity || 1),
+      cambio: !!cambio,
+      devolucion: !!devolucion,
+      reparacion: !!reparacion
     };
     saveClaims(claims);
 
@@ -495,7 +541,18 @@ app.put('/api/records/:id', (req, res) => {
       Cantidad: claims[index].cantidad,
       cantidadProducto: claims[index].cantidad,
       "Cantidad de Producto": claims[index].cantidad,
-      quantity: claims[index].cantidad
+      quantity: claims[index].cantidad,
+      // Columna T: Cambio
+      cambio: claims[index].cambio ? "SI" : "NO",
+      Cambio: claims[index].cambio ? "SI" : "NO",
+      // Columna U: Devolución
+      devolucion: claims[index].devolucion ? "SI" : "NO",
+      Devolucion: claims[index].devolucion ? "SI" : "NO",
+      "Devolución": claims[index].devolucion ? "SI" : "NO",
+      // Columna V: Reparación
+      reparacion: claims[index].reparacion ? "SI" : "NO",
+      Reparacion: claims[index].reparacion ? "SI" : "NO",
+      "Reparación": claims[index].reparacion ? "SI" : "NO"
     });
 
     res.json(claims[index]);

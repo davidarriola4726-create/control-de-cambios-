@@ -860,6 +860,32 @@
                 <input type="file" id="inputFoto" accept="image/*" class="oculto" onchange="procesarFoto(event)">
             </div>
 
+            <!-- 🏷️ CASILLAS DE VERIFICACIÓN: CAMBIO, DEVOLUCIÓN, REPARACIÓN -->
+            <div class="input-grupo campo-completo seccion-tipos-solicitud" style="background:#F8FAFC; border:1px solid #CBD5E1; border-radius:12px; padding:16px;">
+                <div class="estados-cabecera" style="margin-bottom:12px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:18px;">🏷️</span>
+                        <strong style="color:var(--primario); font-size:15px;">Tipo de Solicitud</strong>
+                        <span style="font-size:11px; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:8px; font-weight:700; border:1px solid #bae6fd;">Rutas y Administrador</span>
+                    </div>
+                    <span style="font-size:12px; color:var(--textoClaro);">Marque una o varias opciones según corresponda</span>
+                </div>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
+                    <label class="checkbox-estado-item" id="lblTipoCambio" style="cursor:pointer;">
+                        <input type="checkbox" id="chkTipoCambio" onchange="alCambiarTipoSolicitud('cambio')">
+                        <span style="font-size:14px; font-weight:800;">🔄 Cambio</span>
+                    </label>
+                    <label class="checkbox-estado-item" id="lblTipoDevolucion" style="cursor:pointer;">
+                        <input type="checkbox" id="chkTipoDevolucion" onchange="alCambiarTipoSolicitud('devolucion')">
+                        <span style="font-size:14px; font-weight:800;">↩️ Devolución</span>
+                    </label>
+                    <label class="checkbox-estado-item" id="lblTipoReparacion" style="cursor:pointer;">
+                        <input type="checkbox" id="chkTipoReparacion" onchange="alCambiarTipoSolicitud('reparacion')">
+                        <span style="font-size:14px; font-weight:800;">🛠️ Reparación</span>
+                    </label>
+                </div>
+            </div>
+
             <div class="input-grupo campo-completo">
                 <label>Motivo del Reclamo / Cambio <span style="color:var(--peligro); font-weight:900;">*</span></label>
                 <textarea id="motivo" placeholder="Describa el motivo del reclamo o defecto del producto..." required></textarea>
@@ -1033,6 +1059,27 @@
 
         <div style="background:#F1F5F9; padding:12px; border-radius:10px; margin-bottom:18px; font-size:13px; border:1px solid #CBD5E1;">
             <div id="detalleReclamoModalEstados" style="line-height:1.7;"></div>
+        </div>
+
+        <!-- 🏷️ CASILLAS: CAMBIO, DEVOLUCIÓN, REPARACIÓN EN MODAL -->
+        <div style="margin-bottom:15px; padding:12px; background:#F8FAFC; border:1px solid #CBD5E1; border-radius:10px;">
+            <div style="font-weight:700; font-size:13px; color:var(--primario); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                <span>🏷️</span> Tipo de Solicitud (puede marcar una o varias):
+            </div>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:8px;">
+                <label class="checkbox-estado-item" id="lblModalTipoCambio" style="cursor:pointer;">
+                    <input type="checkbox" id="chkModalTipoCambio" onchange="alCambiarTipoSolicitudModal('cambio')">
+                    <span style="font-weight:800; font-size:13px;">🔄 Cambio</span>
+                </label>
+                <label class="checkbox-estado-item" id="lblModalTipoDevolucion" style="cursor:pointer;">
+                    <input type="checkbox" id="chkModalTipoDevolucion" onchange="alCambiarTipoSolicitudModal('devolucion')">
+                    <span style="font-weight:800; font-size:13px;">↩️ Devolución</span>
+                </label>
+                <label class="checkbox-estado-item" id="lblModalTipoReparacion" style="cursor:pointer;">
+                    <input type="checkbox" id="chkModalTipoReparacion" onchange="alCambiarTipoSolicitudModal('reparacion')">
+                    <span style="font-weight:800; font-size:13px;">🛠️ Reparación</span>
+                </label>
+            </div>
         </div>
 
         <div class="estados-grid" id="gridEstadosModal">
@@ -1664,6 +1711,59 @@ function detenerParpadeoCampana() {
 }
 
 // -------------------------------------------------------------
+// 🏷️ CASILLAS DE VERIFICACIÓN: CAMBIO, DEVOLUCIÓN, REPARACIÓN
+// - Rutas pueden marcar al crear o editar su reclamo
+// - Administrador ve todo y también puede marcar o editar
+// - Se actualiza en tiempo real al instante
+// - Se puede marcar una o varias según corresponda
+// -------------------------------------------------------------
+function alCambiarTipoSolicitud(tipo) {
+    const chkCambio = document.getElementById("chkTipoCambio");
+    const chkDevolucion = document.getElementById("chkTipoDevolucion");
+    const chkReparacion = document.getElementById("chkTipoReparacion");
+
+    const lblCambio = document.getElementById("lblTipoCambio");
+    const lblDevolucion = document.getElementById("lblTipoDevolucion");
+    const lblReparacion = document.getElementById("lblTipoReparacion");
+
+    if (lblCambio && chkCambio) {
+        if (chkCambio.checked) lblCambio.classList.add("activo-azul");
+        else lblCambio.classList.remove("activo-azul");
+    }
+    if (lblDevolucion && chkDevolucion) {
+        if (chkDevolucion.checked) lblDevolucion.classList.add("activo-rojo");
+        else lblDevolucion.classList.remove("activo-rojo");
+    }
+    if (lblReparacion && chkReparacion) {
+        if (chkReparacion.checked) lblReparacion.classList.add("activo-naranja");
+        else lblReparacion.classList.remove("activo-naranja");
+    }
+}
+
+function alCambiarTipoSolicitudModal(tipo) {
+    const chkCambio = document.getElementById("chkModalTipoCambio");
+    const chkDevolucion = document.getElementById("chkModalTipoDevolucion");
+    const chkReparacion = document.getElementById("chkModalTipoReparacion");
+
+    const lblCambio = document.getElementById("lblModalTipoCambio");
+    const lblDevolucion = document.getElementById("lblModalTipoDevolucion");
+    const lblReparacion = document.getElementById("lblModalTipoReparacion");
+
+    if (lblCambio && chkCambio) {
+        if (chkCambio.checked) lblCambio.classList.add("activo-azul");
+        else lblCambio.classList.remove("activo-azul");
+    }
+    if (lblDevolucion && chkDevolucion) {
+        if (chkDevolucion.checked) lblDevolucion.classList.add("activo-rojo");
+        else lblDevolucion.classList.remove("activo-rojo");
+    }
+    if (lblReparacion && chkReparacion) {
+        if (chkReparacion.checked) lblReparacion.classList.add("activo-naranja");
+        else lblReparacion.classList.remove("activo-naranja");
+    }
+}
+
+// -------------------------------------------------------------
 // 🔄 LÓGICA Y REGLAS DE LOS 5 CHECKBOXES DE ESTADO
 // 1. Proceso Aceptado
 // 2. Proceso Rechazado (Excluyente con Aceptado)
@@ -1840,6 +1940,12 @@ function renderizarTabla() {
         // Determinar badge de Estado con Ícono + Texto
         const badgeEstadoHtml = generarBadgeEstado(r, esAdmin);
 
+        // Determinar badges de tipo de solicitud
+        let badgesTipoHtml = '';
+        if (r.cambio) badgesTipoHtml += '<span style="display:inline-block; background:#dbeafe; color:#1d4ed8; padding:1px 5px; border-radius:4px; font-size:10px; font-weight:800; border:1px solid #bfdbfe; margin-top:2px; margin-right:2px;">🔄 Cambio</span>';
+        if (r.devolucion) badgesTipoHtml += '<span style="display:inline-block; background:#fee2e2; color:#b91c1c; padding:1px 5px; border-radius:4px; font-size:10px; font-weight:800; border:1px solid #fecaca; margin-top:2px; margin-right:2px;">↩️ Devolución</span>';
+        if (r.reparacion) badgesTipoHtml += '<span style="display:inline-block; background:#ffedd5; color:#c2410c; padding:1px 5px; border-radius:4px; font-size:10px; font-weight:800; border:1px solid #fed7aa; margin-top:2px; margin-right:2px;">🛠️ Reparación</span>';
+
         tr.innerHTML = `
             <td><strong>${r.id || '-'}</strong></td>
             <td><span style="background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:6px; font-weight:700; font-size:12px;">${r.ruta || '-'}</span></td>
@@ -1848,7 +1954,7 @@ function renderizarTabla() {
             <td><span style="color:#0F52BA; font-weight:700;">📞 ${telCliente}</span></td>
             <td>${r.factura || '-'}</td>
             <td style="text-align:center;">${celdaFoto}</td>
-            <td>${r.producto || '-'}</td>
+            <td><strong>${r.producto || '-'}</strong>${badgesTipoHtml ? `<div style="display:flex; flex-wrap:wrap; gap:2px; margin-top:3px;">${badgesTipoHtml}</div>` : ''}</td>
             <td>${badgeEstadoHtml}</td>
             <td>${r.fecha || '-'}</td>
             <td>${r.hora || '-'}</td>
@@ -1929,6 +2035,29 @@ function abrirModalGestionEstados(id) {
         <strong>Factura:</strong> ${r.factura} | <strong>Producto:</strong> ${r.producto}
     `;
 
+    // Cargar valores actuales en las 3 casillas de tipo de solicitud
+    const chkModCambio = document.getElementById("chkModalTipoCambio");
+    const chkModDevolucion = document.getElementById("chkModalTipoDevolucion");
+    const chkModReparacion = document.getElementById("chkModalTipoReparacion");
+    if (chkModCambio) chkModCambio.checked = !!r.cambio;
+    if (chkModDevolucion) chkModDevolucion.checked = !!r.devolucion;
+    if (chkModReparacion) chkModReparacion.checked = !!r.reparacion;
+
+    const tipoInputs = [chkModCambio, chkModDevolucion, chkModReparacion];
+    const tipoLabels = [
+        document.getElementById("lblModalTipoCambio"),
+        document.getElementById("lblModalTipoDevolucion"),
+        document.getElementById("lblModalTipoReparacion")
+    ];
+    tipoInputs.forEach(chk => { if (chk) chk.disabled = !esAdmin; });
+    tipoLabels.forEach(lbl => {
+        if (lbl) {
+            if (!esAdmin) lbl.classList.add("deshabilitado");
+            else lbl.classList.remove("deshabilitado");
+        }
+    });
+    alCambiarTipoSolicitudModal('init');
+
     // Cargar valores actuales en los 5 checkboxes del modal
     const chkAceptado = document.getElementById("chkModalAceptado");
     const chkRechazado = document.getElementById("chkModalRechazado");
@@ -1991,13 +2120,23 @@ async function guardarEstadosDesdeModal() {
     const cambioEntregado = document.getElementById("chkModalCambioEntregado").checked;
     const productoRecibido = document.getElementById("chkModalRecibido").checked;
 
+    const valCambio = document.getElementById("chkModalTipoCambio") ? document.getElementById("chkModalTipoCambio").checked : false;
+    const valDevolucion = document.getElementById("chkModalTipoDevolucion") ? document.getElementById("chkModalTipoDevolucion").checked : false;
+    const valReparacion = document.getElementById("chkModalTipoReparacion") ? document.getElementById("chkModalTipoReparacion").checked : false;
+
     const camposActualizados = {
         procesoAceptado,
         procesoRechazado,
         enProcesoEntrega,
         cambioEntregado,
         productoRecibido,
-        fechaCambioEntregado: cambioEntregado ? (fechaHoraEntregaModal || obtenerFechaHoraFormateada()) : ""
+        fechaCambioEntregado: cambioEntregado ? (fechaHoraEntregaModal || obtenerFechaHoraFormateada()) : "",
+        cambio: valCambio,
+        Cambio: valCambio ? "SI" : "NO",
+        devolucion: valDevolucion,
+        Devolucion: valDevolucion ? "SI" : "NO",
+        reparacion: valReparacion,
+        Reparacion: valReparacion ? "SI" : "NO"
     };
 
     // Actualizar objeto en caché
@@ -2073,6 +2212,11 @@ async function guardarReclamo() {
     const fecha = document.getElementById("fecha").value;
     const hora = document.getElementById("hora").value;
 
+    // Obtener valores de las 3 casillas de verificación: Cambio, Devolución, Reparación
+    const esCambio = document.getElementById("chkTipoCambio") ? document.getElementById("chkTipoCambio").checked : false;
+    const esDevolucion = document.getElementById("chkTipoDevolucion") ? document.getElementById("chkTipoDevolucion").checked : false;
+    const esReparacion = document.getElementById("chkTipoReparacion") ? document.getElementById("chkTipoReparacion").checked : false;
+
     // Obtener valores de los 5 checkboxes
     const procesoAceptado = document.getElementById("chkFormAceptado").checked;
     const procesoRechazado = document.getElementById("chkFormRechazado").checked;
@@ -2105,6 +2249,12 @@ async function guardarReclamo() {
         hora,
         firmaVendedor: document.getElementById("textoFirmaVendedor").textContent,
         firmaCliente: document.getElementById("textoFirmaCliente").textContent,
+        cambio: esCambio,
+        Cambio: esCambio ? "SI" : "NO",
+        devolucion: esDevolucion,
+        Devolucion: esDevolucion ? "SI" : "NO",
+        reparacion: esReparacion,
+        Reparacion: esReparacion ? "SI" : "NO",
         procesoAceptado,
         procesoRechazado,
         enProcesoEntrega,
@@ -2183,7 +2333,16 @@ function enviarActualizacionGoogleSheets(r) {
             "Proceso Rechazado": r.procesoRechazado ? "SI" : "NO",
             "En Proceso de Entrega": r.enProcesoEntrega ? "SI" : "NO",
             "Cambio Entregado": r.cambioEntregado ? (r.fechaCambioEntregado ? `SI (${r.fechaCambioEntregado})` : "SI") : "NO",
-            "Producto Recibido": r.productoRecibido ? "SI" : "NO"
+            "Producto Recibido": r.productoRecibido ? "SI" : "NO",
+            // 🏷️ Columna T, U, V:
+            cambio: (r.cambio === true || r.cambio === 'SI' || r.Cambio === 'SI') ? 'SI' : 'NO',
+            Cambio: (r.cambio === true || r.cambio === 'SI' || r.Cambio === 'SI') ? 'SI' : 'NO',
+            devolucion: (r.devolucion === true || r.devolucion === 'SI' || r.Devolucion === 'SI' || r['Devolución'] === 'SI') ? 'SI' : 'NO',
+            Devolucion: (r.devolucion === true || r.devolucion === 'SI' || r.Devolucion === 'SI' || r['Devolución'] === 'SI') ? 'SI' : 'NO',
+            "Devolución": (r.devolucion === true || r.devolucion === 'SI' || r.Devolucion === 'SI' || r['Devolución'] === 'SI') ? 'SI' : 'NO',
+            reparacion: (r.reparacion === true || r.reparacion === 'SI' || r.Reparacion === 'SI' || r['Reparación'] === 'SI') ? 'SI' : 'NO',
+            Reparacion: (r.reparacion === true || r.reparacion === 'SI' || r.Reparacion === 'SI' || r['Reparación'] === 'SI') ? 'SI' : 'NO',
+            "Reparación": (r.reparacion === true || r.reparacion === 'SI' || r.Reparacion === 'SI' || r['Reparación'] === 'SI') ? 'SI' : 'NO'
         };
 
         fetch(WEB_APP_URL, {
@@ -2209,6 +2368,12 @@ function limpiarFormulario() {
     document.getElementById("previewFoto").classList.add("oculto");
     document.getElementById("inputFoto").value = "";
     fotoBase64Actual = "";
+
+    // Limpiar 3 casillas de verificación: Cambio, Devolución, Reparación
+    if (document.getElementById("chkTipoCambio")) document.getElementById("chkTipoCambio").checked = false;
+    if (document.getElementById("chkTipoDevolucion")) document.getElementById("chkTipoDevolucion").checked = false;
+    if (document.getElementById("chkTipoReparacion")) document.getElementById("chkTipoReparacion").checked = false;
+    alCambiarTipoSolicitud('init');
 
     // Limpiar checkboxes de estado
     document.getElementById("chkFormAceptado").checked = false;
@@ -2462,6 +2627,21 @@ function verDetalle(idOReclamo) {
         <div class="voucher-campo"><strong>Hora:</strong><span>${r.hora || '-'}</span></div>
         ${fotoHtml}
         <div class="voucher-campo completo"><strong>Motivo del Reclamo:</strong><span>${r.motivo || '-'}</span></div>
+        <!-- 🏷️ Casillas: Cambio, Devolución, Reparación -->
+        <div class="voucher-campo completo" style="background:#F8FAFC; border-color:#cbd5e1;">
+            <strong style="color:var(--primario); font-size:12.5px; margin-bottom:6px;">🏷️ Tipo de Solicitud:</strong>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:4px;">
+                <span style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:6px; font-size:12px; font-weight:800; border:1px solid ${r.cambio ? '#93c5fd' : '#e2e8f0'}; background:${r.cambio ? '#eff6ff' : '#ffffff'}; color:${r.cambio ? '#1d4ed8' : '#94a3b8'};">
+                    ${r.cambio ? '☑️' : '⬜'} 🔄 Cambio
+                </span>
+                <span style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:6px; font-size:12px; font-weight:800; border:1px solid ${r.devolucion ? '#fca5a5' : '#e2e8f0'}; background:${r.devolucion ? '#fef2f2' : '#ffffff'}; color:${r.devolucion ? '#b91c1c' : '#94a3b8'};">
+                    ${r.devolucion ? '☑️' : '⬜'} ↩️ Devolución
+                </span>
+                <span style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:6px; font-size:12px; font-weight:800; border:1px solid ${r.reparacion ? '#fdba74' : '#e2e8f0'}; background:${r.reparacion ? '#fff7ed' : '#ffffff'}; color:${r.reparacion ? '#c2410c' : '#94a3b8'};">
+                    ${r.reparacion ? '☑️' : '⬜'} 🛠️ Reparación
+                </span>
+            </div>
+        </div>
         ${estadosVoucherHtml}
         <div class="voucher-campo"><strong>Firma Vendedor:</strong><span>${r.firmaVendedor || 'Registrada'}</span></div>
         <div class="voucher-campo"><strong>Firma Cliente:</strong><span>${r.firmaCliente || 'Registrada'}</span></div>
