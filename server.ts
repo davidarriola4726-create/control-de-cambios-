@@ -72,6 +72,64 @@ function sonElMismoReclamo(idA: any, idB: any): boolean {
   return false;
 }
 
+const VENDEDORES_POR_RUTA: Record<string, string> = {
+  "Ruta 1": "BRYAN GOMEZ",
+  "Ruta 2": "MELVIN SEQUEN",
+  "Ruta 3": "MARVIN GOMEZ",
+  "Ruta 4": "MARCOS JUAREZ",
+  "Ruta 5": "KENEDY BATZ",
+  "Ruta 6": "GUSTAVO GOMEZ",
+  "Ruta 7": "GUILLERMO ESPAÑA",
+  "Ruta 8": "MARVIN OTONIEL",
+  "Ruta 9": "SERGIO CATU",
+  "Ruta 10": "EDGAR GUZMAN",
+  "Ruta 11": "ESAU OSORIO"
+};
+
+function normalizarARutaId(rutaVal: any, vendedorVal: any): string {
+  const str = `${rutaVal || ''} ${vendedorVal || ''}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  
+  // Ruta 11 - ESAU OSORIO
+  if (str.includes("11") || str.includes("esau") || str.includes("osorio")) return "Ruta 11";
+  // Ruta 10 - EDGAR GUZMAN
+  if (str.includes("10") || str.includes("edgar") || str.includes("guzman")) return "Ruta 10";
+  // Ruta 9 - SERGIO CATU
+  if (str.includes("9") || str.includes("sergio") || str.includes("catu")) return "Ruta 9";
+  // Ruta 8 - MARVIN OTONIEL
+  if (str.includes("8") || str.includes("otoniel")) return "Ruta 8";
+  // Ruta 7 - GUILLERMO ESPAÑA
+  if (str.includes("7") || str.includes("guillermo") || str.includes("espana")) return "Ruta 7";
+  // Ruta 6 - GUSTAVO GOMEZ
+  if (str.includes("6") || str.includes("gustavo")) return "Ruta 6";
+  // Ruta 5 - KENEDY BATZ
+  if (str.includes("5") || str.includes("kenedy") || str.includes("batz")) return "Ruta 5";
+  // Ruta 4 - MARCOS JUAREZ
+  if (str.includes("4") || str.includes("marcos") || str.includes("juarez")) return "Ruta 4";
+  // Ruta 3 - MARVIN GOMEZ
+  if (str.includes("3") || (str.includes("marvin") && !str.includes("otoniel"))) return "Ruta 3";
+  // Ruta 2 - MELVIN SEQUEN
+  if (str.includes("2") || str.includes("melvin") || str.includes("sequen")) return "Ruta 2";
+  // Ruta 1 - BRYAN GOMEZ
+  if (str.includes("1") || str.includes("bryan") || str.includes("brayan")) return "Ruta 1";
+  
+  const m = str.match(/ruta\s*[-_]?\s*(\d+)/i);
+  if (m) {
+    const num = parseInt(m[1], 10);
+    if (num >= 1 && num <= 11) return `Ruta ${num}`;
+  }
+
+  return "Ruta 1";
+}
+
+function esReclamoValido(c: any): boolean {
+  if (!c) return false;
+  const cliente = String(c.cliente || c.Cliente || c.clientName || '').trim();
+  const producto = String(c.producto || c.Producto || c.productName || '').trim();
+  const factura = String(c.factura || c.Factura || c.invoiceNumber || '').trim();
+  const motivo = String(c.motivo || c.Motivo || c.description || '').trim();
+  return Boolean(cliente || producto || factura || motivo);
+}
+
 function getClaims(): any[] {
   try {
     const raw = fs.readFileSync(claimsFile, 'utf8');
@@ -82,6 +140,7 @@ function getClaims(): any[] {
     const seenNums = new Set<number>();
     const deduplicated: any[] = [];
     for (const c of list) {
+      if (!esReclamoValido(c)) continue;
       const cid = String(c.id || '').trim().toLowerCase();
       const cv = String(c.voucherNumber || '').trim().toLowerCase();
       const num = extraerNumeroReclamo(c.id || c.voucherNumber);
@@ -91,6 +150,13 @@ function getClaims(): any[] {
       if (num > 0 && seenNums.has(num)) continue;
       if (key) seenIds.add(key);
       if (num > 0) seenNums.add(num);
+
+      // Normalizar ruta canónica y vendedor exacto
+      c.ruta = normalizarARutaId(c.ruta, c.vendedor);
+      if (!c.vendedor || c.vendedor.trim() === '' || c.vendedor.toLowerCase() === 'administrador general') {
+        c.vendedor = VENDEDORES_POR_RUTA[c.ruta] || c.vendedor;
+      }
+
       deduplicated.push(c);
     }
     return deduplicated;
@@ -105,12 +171,19 @@ function saveClaims(claims: any[]) {
     const seenNums = new Set<number>();
     const deduplicated: any[] = [];
     for (const c of claims) {
+      if (!esReclamoValido(c)) continue;
       const key = String(c.id || c.voucherNumber || '').trim().toLowerCase();
       const num = extraerNumeroReclamo(c.id || c.voucherNumber);
       if (key && seenIds.has(key)) continue;
       if (num > 0 && seenNums.has(num)) continue;
       if (key) seenIds.add(key);
       if (num > 0) seenNums.add(num);
+
+      c.ruta = normalizarARutaId(c.ruta, c.vendedor);
+      if (!c.vendedor || c.vendedor.trim() === '' || c.vendedor.toLowerCase() === 'administrador general') {
+        c.vendedor = VENDEDORES_POR_RUTA[c.ruta] || c.vendedor;
+      }
+
       deduplicated.push(c);
     }
     fs.writeFileSync(claimsFile, JSON.stringify(deduplicated, null, 2), 'utf8');
@@ -167,6 +240,10 @@ async function sincronizarDesdeGoogleSheets() {
 
       for (let idx = 0; idx < items.length; idx++) {
         const item = items[idx];
+        if (!esReclamoValido(item)) {
+          continue; // Omitir filas vacías o de ejemplo
+        }
+
         let rawId = String(item.idReclamo || item.ID_Reclamo || item.id || item.ID || item.voucherNumber || '').trim();
         if (rawId && rawId.startsWith("REC-F") && item.factura && rawId === `REC-F${item.factura}`) {
           rawId = '';
@@ -202,7 +279,7 @@ async function sincronizarDesdeGoogleSheets() {
         const firmaV = item.firmaVendedor || item.FirmaVendedor || item['Firma Vendedor'] || '';
         const firmaC = item.firmaCliente || item.FirmaCliente || item['Firma Cliente'] || '';
 
-        // Campos nuevos: Dirección del Cliente (Columna S) y Cantidad de Producto (Columna T)
+        // Campos: Dirección del Cliente (Columna S) y Cantidad de Producto (Columna T)
         const direccion = String(item.direccion || item.Direccion || item['Dirección'] || item.direccionCliente || item['Dirección del Cliente'] || item['Direccion del Cliente'] || item.clientAddress || '').trim();
         const rawCant = item.cantidad ?? item.Cantidad ?? item.cantidadProducto ?? item['Cantidad de Producto'] ?? item.quantity ?? 1;
         const cantidad = (isNaN(Number(rawCant)) || Number(rawCant) <= 0) ? 1 : Number(rawCant);
@@ -213,13 +290,16 @@ async function sincronizarDesdeGoogleSheets() {
         const esDevolucion = item.devolucion === true || String(item.devolucion || item.Devolucion || item['Devolución'] || '').trim().toUpperCase() === 'SI' || String(item.devolucion || item.Devolucion || item['Devolución'] || '').trim().toLowerCase() === 'true';
         const esReparacion = item.reparacion === true || String(item.reparacion || item.Reparacion || item['Reparación'] || '').trim().toUpperCase() === 'SI' || String(item.reparacion || item.Reparacion || item['Reparación'] || '').trim().toLowerCase() === 'true';
 
+        const rutaCanon = normalizarARutaId(item.ruta || item.Ruta, item.vendedor || item.Vendedor);
+        const vendedorCanon = String(item.vendedor || item.Vendedor || VENDEDORES_POR_RUTA[rutaCanon] || '').trim();
+
         if (index === -1) {
           // Registro nuevo en Google Sheets no existente localmente
           claims.push({
             id: id,
             voucherNumber: id,
-            ruta: item.ruta || item.Ruta || 'Ruta 1',
-            vendedor: item.vendedor || item.Vendedor || '',
+            ruta: rutaCanon,
+            vendedor: vendedorCanon,
             cliente: item.cliente || item.Cliente || '',
             direccion: direccion,
             clientAddress: direccion,
@@ -248,6 +328,8 @@ async function sincronizarDesdeGoogleSheets() {
         } else {
           // Actualizar datos y estados si cambiaron
           const actual = claims[index];
+          actual.ruta = rutaCanon;
+          if (vendedorCanon) actual.vendedor = vendedorCanon;
           if (actual.procesoAceptado !== aceptado || 
               actual.procesoRechazado !== rechazado || 
               actual.enProcesoEntrega !== enEntrega || 
@@ -326,6 +408,18 @@ app.get('/api/records', (req, res) => {
 app.post('/api/records', (req, res) => {
   let claims = getClaims();
   const record = req.body;
+  if (!esReclamoValido(record)) {
+    return res.status(400).json({ error: "Reclamo inválido: requiere cliente, producto o factura" });
+  }
+
+  const rutaCanon = normalizarARutaId(record.ruta, record.vendedor);
+  const vendedorCanon = (record.vendedor && record.vendedor.trim() !== '' && record.vendedor.toLowerCase() !== 'administrador general') 
+    ? record.vendedor 
+    : (VENDEDORES_POR_RUTA[rutaCanon] || 'BRYAN GOMEZ');
+
+  record.ruta = rutaCanon;
+  record.vendedor = vendedorCanon;
+
   if (!record.id) {
     record.id = 'N° ' + String(claims.length + 1).padStart(5, '0');
   }
@@ -502,10 +596,17 @@ app.put('/api/records/:id', (req, res) => {
   const reparacion = updatedData.reparacion !== undefined ? (updatedData.reparacion === true || updatedData.reparacion === 'SI') : claims[index]?.reparacion;
 
   if (index !== -1) {
+    const rutaNorm = normalizarARutaId(updatedData.ruta || claims[index].ruta, updatedData.vendedor || claims[index].vendedor);
+    const vendedorNorm = (updatedData.vendedor && updatedData.vendedor.trim() !== '' && updatedData.vendedor.toLowerCase() !== 'administrador general') 
+      ? updatedData.vendedor 
+      : (VENDEDORES_POR_RUTA[rutaNorm] || claims[index].vendedor);
+
     claims[index] = {
       ...claims[index],
       ...updatedData,
       id: claims[index].id || rawId,
+      ruta: rutaNorm,
+      vendedor: vendedorNorm,
       direccion: direccion || claims[index].direccion || "",
       clientAddress: direccion || claims[index].clientAddress || "",
       telefono: tel || claims[index].telefono || "",

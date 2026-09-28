@@ -663,49 +663,209 @@
             .graficas-grid { grid-template-columns: 1fr; }
         }
 
-        /* 🖨️ ESTILOS PARA IMPRESIÓN LIMPIA DE REPORTES Y VOUCHERS */
+        /* 🖨️ ESTILOS PARA IMPRESIÓN LIMPIA DE REPORTES EN 1 SOLA HOJA A4 VERTICAL */
+        @page {
+            size: A4 portrait;
+            margin: 6mm 8mm 6mm 8mm;
+        }
+
         @media print {
-            body { background: white !important; color: black !important; }
-            .cabecera, .carpetas-barra, .botones-form, .acciones-btns, #seccionGraficas, #formCardNuevo, #bannerAlertaAdmin, .campana-boton, .indicador-sincro, .usuario-badge, .modal-botones, .btn {
+            *, *:before, *:after {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                box-sizing: border-box !important;
+            }
+
+            html, body {
+                width: 100% !important;
+                height: auto !important;
+                min-height: 0 !important;
+                max-height: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif !important;
+                overflow: visible !important;
+            }
+
+            /* Ocultar botones, menús, enlaces, alertas, formularios y modales no imprimibles */
+            .cabecera, 
+            .carpetas-barra, 
+            .botones-form, 
+            .acciones-btns, 
+            #seccionGraficas, 
+            #formCardNuevo, 
+            #bannerAlertaAdmin, 
+            .campana-boton, 
+            .indicador-sincro, 
+            .usuario-badge, 
+            .modal-botones, 
+            .btn,
+            .modal-titulo,
+            #modalEstados,
+            #modalEliminar,
+            #cardHistorial,
+            .cabecera-impresion,
+            a,
+            button {
                 display: none !important;
             }
 
-            /* Impresión de un Reclamo Individual (Reporte Limpio) */
-            body.imprimiendo-reclamo .cabecera-impresion,
-            body.imprimiendo-reclamo #cardHistorial,
-            body.imprimiendo-reclamo #modalEstados,
-            body.imprimiendo-reclamo #modalEliminar {
-                display: none !important;
-            }
+            /* Impresión de un Reclamo Individual en 1 SOLA HOJA A4 */
             body.imprimiendo-reclamo #modalDetalle {
                 position: static !important;
                 display: block !important;
                 background: transparent !important;
                 opacity: 1 !important;
-                pointer-events: all !important;
+                pointer-events: auto !important;
                 padding: 0 !important;
                 margin: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                height: auto !important;
+                max-height: none !important;
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
             }
+
             body.imprimiendo-reclamo #modalDetalle .modal-caja {
                 box-shadow: none !important;
-                border: 1px solid #cbd5e1 !important;
+                border: 1.5px solid #0F52BA !important;
+                border-radius: 8px !important;
                 max-width: 100% !important;
                 width: 100% !important;
-                padding: 16px !important;
-                border-radius: 8px !important;
+                padding: 5mm 6mm !important;
+                margin: 0 auto !important;
                 transform: none !important;
                 max-height: none !important;
                 overflow: visible !important;
-            }
-            body.imprimiendo-reclamo #modalDetalle .modal-titulo {
-                display: none !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                background: #ffffff !important;
             }
 
-            /* Impresión de la Tabla de Historial General */
+            .voucher-detalle-grid {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr !important;
+                gap: 4px 8px !important;
+                margin-bottom: 4px !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            .voucher-campo {
+                background: #F8FAFC !important;
+                padding: 4px 8px !important;
+                border-radius: 5px !important;
+                border: 1px solid #CBD5E1 !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            .voucher-campo strong {
+                display: block !important;
+                font-size: 9.5px !important;
+                color: #475569 !important;
+                text-transform: uppercase !important;
+                margin-bottom: 2px !important;
+                line-height: 1.1 !important;
+                font-weight: 700 !important;
+            }
+
+            .voucher-campo span {
+                display: block !important;
+                font-size: 11px !important;
+                font-weight: 700 !important;
+                color: #0f172a !important;
+                word-break: break-word !important;
+                line-height: 1.2 !important;
+            }
+
+            .voucher-campo.completo {
+                grid-column: 1 / -1 !important;
+            }
+
+            .voucher-header-print {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                background: #0F52BA !important;
+                color: #ffffff !important;
+                padding: 6px 10px !important;
+                border-radius: 6px !important;
+                margin-bottom: 4px !important;
+                gap: 10px !important;
+            }
+
+            .voucher-estado-box {
+                padding: 3px 6px !important;
+                font-size: 9.5px !important;
+                border-radius: 4px !important;
+                border: 1px solid #CBD5E1 !important;
+            }
+
+            .foto-producto-voucher {
+                max-height: 60px !important;
+                max-width: 120px !important;
+                object-fit: contain !important;
+                border-radius: 4px !important;
+                border: 1px solid #CBD5E1 !important;
+                display: block !important;
+                margin: 2px auto !important;
+            }
+
+            .voucher-firmas-contenedor {
+                background: #F8FAFC !important;
+                border: 1px solid #CBD5E1 !important;
+                padding: 5px 8px !important;
+                border-radius: 6px !important;
+                margin-top: 4px !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            .firma-caja-reporte {
+                text-align: center !important;
+            }
+
+            .imagen-firma-reporte {
+                height: 34px !important;
+                max-width: 115px !important;
+                object-fit: contain !important;
+                display: block !important;
+                margin: 0 auto !important;
+                background: transparent !important;
+            }
+
+            .firma-espacio-vacio {
+                height: 34px !important;
+            }
+
+            .firma-reporte-linea {
+                border-top: 1.5px solid #334155 !important;
+                margin: 2px auto 2px auto !important;
+                width: 85% !important;
+            }
+
+            .firma-etiqueta-texto {
+                font-size: 9px !important;
+                color: #1e293b !important;
+                font-weight: 800 !important;
+                text-transform: uppercase !important;
+                display: block !important;
+            }
+
+            /* Impresión de la Tabla de Historial General (si no es reporte individual) */
             body:not(.imprimiendo-reclamo) #modalDetalle,
             body:not(.imprimiendo-reclamo) #modalEstados,
             body:not(.imprimiendo-reclamo) #modalEliminar {
                 display: none !important;
+            }
+            body:not(.imprimiendo-reclamo) #cardHistorial {
+                display: block !important;
             }
             body:not(.imprimiendo-reclamo) .cabecera-impresion {
                 display: flex !important;
@@ -735,8 +895,6 @@
                 font-size: 13px !important;
                 color: #475569 !important;
             }
-            .voucher-campo { background: white !important; border: 1px solid #ddd !important; }
-            .voucher-estado-box { border: 1px solid #ccc !important; }
             .tabla-contenedor { border: none !important; box-shadow: none !important; overflow: visible !important; }
             table { width: 100% !important; min-width: 100% !important; font-size: 11px !important; }
             th { background: #0F52BA !important; color: white !important; -webkit-print-color-adjust: exact; }
@@ -816,6 +974,19 @@
             <div class="input-grupo">
                 <label>Ruta</label>
                 <input type="text" id="ruta" readonly style="background:#f1f5f9; font-weight:700; color:#334155; cursor:not-allowed;">
+                <select id="selectRutaAdmin" class="oculto" onchange="alCambiarRutaAdmin(this.value)" style="margin-top:6px; font-weight:700; background:#eff6ff; border:1.5px solid #0F52BA; color:#0F52BA; padding:7px 10px; border-radius:6px; font-size:13px; cursor:pointer;" title="Cambiar ruta de asignación (Solo Administrador)">
+                    <option value="Ruta 1">🚚 Ruta 1 - BRYAN GOMEZ</option>
+                    <option value="Ruta 2">🚚 Ruta 2 - MELVIN SEQUEN</option>
+                    <option value="Ruta 3">🚚 Ruta 3 - MARVIN GOMEZ</option>
+                    <option value="Ruta 4">🚚 Ruta 4 - MARCOS JUAREZ</option>
+                    <option value="Ruta 5">🚚 Ruta 5 - KENEDY BATZ</option>
+                    <option value="Ruta 6">🚚 Ruta 6 - GUSTAVO GOMEZ</option>
+                    <option value="Ruta 7">🚚 Ruta 7 - GUILLERMO ESPAÑA</option>
+                    <option value="Ruta 8">🚚 Ruta 8 - MARVIN OTONIEL</option>
+                    <option value="Ruta 9">🚚 Ruta 9 - SERGIO CATU</option>
+                    <option value="Ruta 10">🚚 Ruta 10 - EDGAR GUZMAN</option>
+                    <option value="Ruta 11">🚚 Ruta 11 - ESAU OSORIO</option>
+                </select>
             </div>
             <div class="input-grupo">
                 <label>Nombre del Vendedor</label>
@@ -947,7 +1118,8 @@
 
         <div class="botones-form">
             <button class="btn btn-primario" id="btnGuardar" onclick="guardarReclamo()">💾 Guardar Reclamo</button>
-            <button class="btn btn-exito" onclick="imprimirReporteFormulario()" title="Imprimir reporte del reclamo">🖨️ Imprimir Reporte</button>
+            <button class="btn btn-primario" onclick="verDetalleDelFormulario()" title="Ver Detalle del Reclamo">👁️ Ver Detalle</button>
+            <button class="btn btn-exito" onclick="imprimirReporteFormulario()" title="Imprimir Reporte en 1 Hoja A4">🖨️ Imprimir Reporte</button>
             <button class="btn btn-acento" onclick="limpiarFormulario()">🔄 Limpiar Formulario</button>
             <button class="btn" style="background:#64748b; color:white;" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
         </div>
@@ -970,7 +1142,8 @@
             </h2>
             <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                 <button class="btn btn-sm btn-primario" onclick="cargarReclamos()" title="Refrescar datos">🔄 Refrescar</button>
-                <button class="btn btn-sm btn-exito" onclick="window.print()" title="Imprimir reporte de historial">🖨️ Imprimir Reporte</button>
+                <button class="btn btn-sm btn-primario" onclick="verDetallePrimerReclamo()" title="Ver Detalle del Reclamo">👁️ Ver Detalle</button>
+                <button class="btn btn-sm btn-exito" onclick="imprimirReporteReclamoActivo()" title="Imprimir Reporte en 1 Hoja A4">🖨️ Imprimir Reporte</button>
                 <button id="btnLimpiarTodoAdmin" class="btn btn-sm btn-peligro oculto" onclick="pedirConfirmacionLimpiarTodo()" title="Borrar todo el historial (Solo Admin)">🗑️ Limpiar Todo</button>
             </div>
         </div>
@@ -1383,18 +1556,27 @@ function iniciarSesion() {
     badge.classList.remove("oculto");
 
     // Formulario: autoselección de Ruta y Vendedor
+    const selAdmin = document.getElementById("selectRutaAdmin");
     if (usuarioActual.rol === "admin") {
         document.getElementById("ruta").value = "Ruta 1";
-        document.getElementById("vendedor").value = "Administrador General";
+        document.getElementById("vendedor").value = "BRYAN GOMEZ";
+        if (selAdmin) {
+            selAdmin.classList.remove("oculto");
+            selAdmin.value = "Ruta 1";
+        }
         document.getElementById("btnCampanita").classList.remove("oculto");
         document.getElementById("btnLimpiarTodoAdmin").classList.remove("oculto");
         carpetaActiva = "TODAS";
     } else {
-        document.getElementById("ruta").value = usuarioActual.ruta;
-        document.getElementById("vendedor").value = usuarioActual.vendedor;
+        const rutaCanon = normalizarARutaId(usuarioActual.ruta, usuarioActual.vendedor);
+        document.getElementById("ruta").value = rutaCanon;
+        document.getElementById("vendedor").value = usuarioActual.vendedor || VENDEDORES_POR_RUTA[rutaCanon] || "";
+        if (selAdmin) {
+            selAdmin.classList.add("oculto");
+        }
         document.getElementById("btnCampanita").classList.add("oculto");
         document.getElementById("btnLimpiarTodoAdmin").classList.add("oculto");
-        carpetaActiva = usuarioActual.ruta;
+        carpetaActiva = rutaCanon;
     }
 
     // Configurar permisos de los 5 checkboxes en el formulario
@@ -1465,27 +1647,91 @@ function cerrarSesion() {
 }
 
 // -------------------------------------------------------------
-// 📁 RENDERIZADO DE CARPETAS POR RUTA
+// 📁 RENDERIZADO DE CARPETAS POR RUTA Y GESTIÓN CANÓNICA
 // -------------------------------------------------------------
+const VENDEDORES_POR_RUTA = {
+    "Ruta 1": "BRYAN GOMEZ",
+    "Ruta 2": "MELVIN SEQUEN",
+    "Ruta 3": "MARVIN GOMEZ",
+    "Ruta 4": "MARCOS JUAREZ",
+    "Ruta 5": "KENEDY BATZ",
+    "Ruta 6": "GUSTAVO GOMEZ",
+    "Ruta 7": "GUILLERMO ESPAÑA",
+    "Ruta 8": "MARVIN OTONIEL",
+    "Ruta 9": "SERGIO CATU",
+    "Ruta 10": "EDGAR GUZMAN",
+    "Ruta 11": "ESAU OSORIO"
+};
+
+function normalizarARutaId(rutaVal, vendedorVal) {
+    const str = `${rutaVal || ''} ${vendedorVal || ''}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    
+    // Ruta 11 - ESAU OSORIO
+    if (str.includes("11") || str.includes("esau") || str.includes("osorio")) return "Ruta 11";
+    // Ruta 10 - EDGAR GUZMAN
+    if (str.includes("10") || str.includes("edgar") || str.includes("guzman")) return "Ruta 10";
+    // Ruta 9 - SERGIO CATU
+    if (str.includes("9") || str.includes("sergio") || str.includes("catu")) return "Ruta 9";
+    // Ruta 8 - MARVIN OTONIEL
+    if (str.includes("8") || str.includes("otoniel")) return "Ruta 8";
+    // Ruta 7 - GUILLERMO ESPAÑA
+    if (str.includes("7") || str.includes("guillermo") || str.includes("espana")) return "Ruta 7";
+    // Ruta 6 - GUSTAVO GOMEZ
+    if (str.includes("6") || str.includes("gustavo")) return "Ruta 6";
+    // Ruta 5 - KENEDY BATZ
+    if (str.includes("5") || str.includes("kenedy") || str.includes("batz")) return "Ruta 5";
+    // Ruta 4 - MARCOS JUAREZ
+    if (str.includes("4") || str.includes("marcos") || str.includes("juarez")) return "Ruta 4";
+    // Ruta 3 - MARVIN GOMEZ
+    if (str.includes("3") || (str.includes("marvin") && !str.includes("otoniel"))) return "Ruta 3";
+    // Ruta 2 - MELVIN SEQUEN
+    if (str.includes("2") || str.includes("melvin") || str.includes("sequen")) return "Ruta 2";
+    // Ruta 1 - BRYAN GOMEZ
+    if (str.includes("1") || str.includes("bryan") || str.includes("brayan")) return "Ruta 1";
+    
+    const m = str.match(/ruta\s*[-_]?\s*(\d+)/i);
+    if (m) {
+        const num = parseInt(m[1], 10);
+        if (num >= 1 && num <= 11) return `Ruta ${num}`;
+    }
+
+    return "Ruta 1";
+}
+
+function normalizarRuta(r) {
+    return normalizarARutaId(r, "");
+}
+
+function alCambiarRutaAdmin(rutaId) {
+    const rutaCanon = normalizarARutaId(rutaId, "");
+    const campoRuta = document.getElementById("ruta");
+    const campoVendedor = document.getElementById("vendedor");
+    if (campoRuta) campoRuta.value = rutaCanon;
+    if (campoVendedor) campoVendedor.value = VENDEDORES_POR_RUTA[rutaCanon] || "BRYAN GOMEZ";
+}
+
 function renderizarBarraCarpetas() {
     const barra = document.getElementById("barraCarpetas");
+    if (!barra) return;
     barra.innerHTML = "";
 
     if (!usuarioActual) return;
 
     // Conteo por ruta
-    const conteos = { "TODAS": reclamosCache.length };
+    const conteos = { "TODAS": (reclamosCache || []).length };
     LISTA_RUTAS.forEach(r => { conteos[r.id] = 0; });
-    reclamosCache.forEach(r => {
-        const rutaNom = r.ruta || "Ruta 1";
-        conteos[rutaNom] = (conteos[rutaNom] || 0) + 1;
+    (reclamosCache || []).forEach(r => {
+        const rutaCanon = normalizarARutaId(r.ruta, r.vendedor);
+        if (conteos[rutaCanon] !== undefined) {
+            conteos[rutaCanon] = (conteos[rutaCanon] || 0) + 1;
+        }
     });
 
     if (usuarioActual.rol === "admin") {
         // Carpeta "Todas las Rutas"
         const chipTodas = document.createElement("div");
         chipTodas.className = "carpeta-chip" + (carpetaActiva === "TODAS" ? " activa" : "");
-        chipTodas.innerHTML = `<span>📁 Todas las Rutas</span> <span class="carpeta-conteo">${conteos["TODAS"]}</span>`;
+        chipTodas.innerHTML = `<span>📁 Todas las Rutas</span> <span class="carpeta-conteo">${conteos["TODAS"] || 0}</span>`;
         chipTodas.onclick = () => seleccionarCarpeta("TODAS");
         barra.appendChild(chipTodas);
 
@@ -1499,7 +1745,7 @@ function renderizarBarraCarpetas() {
         });
     } else {
         // Para usuario de ruta: muestra ÚNICAMENTE su propia carpeta
-        const miRuta = usuarioActual.ruta;
+        const miRuta = normalizarARutaId(usuarioActual.ruta, usuarioActual.vendedor);
         const chip = document.createElement("div");
         chip.className = "carpeta-chip activa";
         chip.innerHTML = `<span>📁 Mi Carpeta (${miRuta})</span> <span class="carpeta-conteo">${conteos[miRuta] || 0}</span>`;
@@ -1509,6 +1755,15 @@ function renderizarBarraCarpetas() {
 
 function seleccionarCarpeta(rutaId) {
     carpetaActiva = rutaId;
+    if (usuarioActual && usuarioActual.rol === "admin" && rutaId !== "TODAS") {
+        const rutaCanon = normalizarARutaId(rutaId, "");
+        const campoRuta = document.getElementById("ruta");
+        const campoVendedor = document.getElementById("vendedor");
+        if (campoRuta) campoRuta.value = rutaCanon;
+        if (campoVendedor) campoVendedor.value = VENDEDORES_POR_RUTA[rutaCanon] || "BRYAN GOMEZ";
+        const selAdmin = document.getElementById("selectRutaAdmin");
+        if (selAdmin) selAdmin.value = rutaCanon;
+    }
     renderizarBarraCarpetas();
     renderizarTabla();
     actualizarGraficas();
@@ -1633,6 +1888,33 @@ async function sincronizarEnSegundoPlano() {
 function procesarDatosRecibidos(nuevosDatos, esPrimerCarga) {
     let hayNuevoParaAdmin = false;
     let nuevoReclamoDetectado = null;
+
+    const listaLimpia = [];
+    (nuevosDatos || []).forEach(r => {
+        if (!r || !r.id) return;
+        const cliente = String(r.cliente || r.Cliente || r.clientName || '').trim();
+        const producto = String(r.producto || r.Producto || r.productName || '').trim();
+        const factura = String(r.factura || r.Factura || r.invoiceNumber || '').trim();
+        const motivo = String(r.motivo || r.Motivo || r.description || '').trim();
+        if (!cliente && !producto && !factura && !motivo) return;
+
+        const idNorm = String(r.id).trim().toLowerCase();
+        const vnNorm = String(r.voucherNumber || '').trim().toLowerCase();
+        if (idsEliminados.has(idNorm) || idsEliminados.has(vnNorm)) return;
+
+        r.ruta = normalizarARutaId(r.ruta, r.vendedor);
+        if (!r.vendedor || r.vendedor.trim() === '' || r.vendedor.toLowerCase() === 'administrador general') {
+            r.vendedor = VENDEDORES_POR_RUTA[r.ruta] || r.vendedor;
+        }
+
+        const idx = listaLimpia.findIndex(x => sonElMismoReclamo(x.id, r.id) || sonElMismoReclamo(x.voucherNumber, r.id));
+        if (idx !== -1) {
+            listaLimpia[idx] = { ...listaLimpia[idx], ...r };
+        } else {
+            listaLimpia.push(r);
+        }
+    });
+    nuevosDatos = listaLimpia;
 
     if (esPrimerCarga) {
         nuevosDatos.forEach(r => idsConocidos.add(r.id));
@@ -1896,27 +2178,38 @@ function renderizarTabla() {
     const tbody = document.getElementById("cuerpoTabla");
     tbody.innerHTML = "";
 
-    let lista = reclamosCache;
+    let lista = reclamosCache || [];
 
-    // 🔒 RESTRICCIÓN DE ACCESO: Cada ruta ve SOLO lo suyo
+    // 🔒 RESTRICCIÓN DE ACCESO: Cada ruta ve ÚNICAMENTE sus propios reclamos
     if (usuarioActual && usuarioActual.rol === "ruta") {
-        lista = reclamosCache.filter(r => r.ruta === usuarioActual.ruta);
+        const miRuta = normalizarARutaId(usuarioActual.ruta, usuarioActual.vendedor);
+        lista = (reclamosCache || []).filter(r => normalizarARutaId(r.ruta, r.vendedor) === miRuta);
     } else if (usuarioActual && usuarioActual.rol === "admin") {
-        if (carpetaActiva !== "TODAS") {
-            lista = reclamosCache.filter(r => r.ruta === carpetaActiva);
+        // 🔑 ADMINISTRADOR: ve todo en "TODAS" o filtra por la carpeta seleccionada
+        if (carpetaActiva && carpetaActiva !== "TODAS") {
+            const carpetaFiltro = normalizarARutaId(carpetaActiva, "");
+            lista = (reclamosCache || []).filter(r => normalizarARutaId(r.ruta, r.vendedor) === carpetaFiltro);
+        } else {
+            lista = reclamosCache || [];
         }
     }
 
     if (lista.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; padding:35px; color:var(--textoClaro); font-weight:600;">No hay reclamos en esta carpeta.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="16" style="text-align:center; padding:35px; color:var(--textoClaro); font-weight:600;">No hay reclamos en esta carpeta.</td></tr>`;
         return;
     }
 
+    // 🕒 ORDENAR DEL MÁS RECIENTE AL PRIMERO
     lista.sort((a, b) => {
-        const numA = extraerNumeroCorrelativo(a.id);
-        const numB = extraerNumeroCorrelativo(b.id);
+        const numA = extraerNumeroCorrelativo(a.id || a.voucherNumber);
+        const numB = extraerNumeroCorrelativo(b.id || b.voucherNumber);
         if (numA && numB && numA !== numB) {
             return numB - numA;
+        }
+        const timeA = new Date(a.timestamp || a.fecha || 0).getTime();
+        const timeB = new Date(b.timestamp || b.fecha || 0).getTime();
+        if (timeA && timeB && timeA !== timeB) {
+            return timeB - timeA;
         }
         return (b.id || "").localeCompare(a.id || "");
     });
@@ -1962,8 +2255,8 @@ function renderizarTabla() {
             <td><span style="color:#16a34a; font-weight:600; font-size:12px;">${r.firmaCliente ? '✅ Registrada' : 'Pendiente'}</span></td>
             <td>
                 <div class="acciones-btns">
-                    <button class="btn btn-sm btn-primario" onclick="verDetalle('${r.id}')" title="Ver Detalle">👁️ Detalle</button>
-                    <button class="btn btn-sm btn-exito" onclick="imprimirReporteReclamo('${r.id}')" title="Imprimir Reporte">🖨️ Imprimir Reporte</button>
+                    <button class="btn btn-sm btn-primario" onclick="verDetalle('${r.id}')" title="Ver Detalle del Reclamo">👁️ Ver Detalle</button>
+                    <button class="btn btn-sm btn-exito" onclick="imprimirReporteReclamo('${r.id}')" title="Imprimir Reporte en 1 Hoja A4">🖨️ Imprimir Reporte</button>
                     <button class="btn btn-sm" style="background:#0284c7; color:white;" onclick="abrirModalGestionEstados('${r.id}')" title="${esAdmin ? 'Gestionar Estados' : 'Ver Estados'}">⚙️ Estado</button>
                     ${esAdmin ? `<button class="btn btn-sm btn-peligro" onclick="pedirConfirmacionEliminar('${r.id}')" title="Eliminar Reclamo (Solo Administrador)">🗑️ Eliminar</button>` : ''}
                 </div>
@@ -2207,8 +2500,12 @@ async function guardarReclamo() {
     btn.textContent = "⏳ Guardando...";
 
     const id = document.getElementById("idReclamo").value;
-    const ruta = document.getElementById("ruta").value;
-    const vendedor = document.getElementById("vendedor").value;
+    const rawRuta = document.getElementById("ruta").value;
+    const rawVendedor = document.getElementById("vendedor").value;
+    const ruta = normalizarARutaId(rawRuta, rawVendedor);
+    const vendedor = (rawVendedor && rawVendedor.trim() !== '' && rawVendedor.toLowerCase() !== 'administrador general') 
+        ? rawVendedor.trim() 
+        : (VENDEDORES_POR_RUTA[ruta] || 'BRYAN GOMEZ');
     const fecha = document.getElementById("fecha").value;
     const hora = document.getElementById("hora").value;
 
@@ -2601,50 +2898,71 @@ function verDetalle(idOReclamo) {
     `;
 
     cont.innerHTML = `
-        <div class="voucher-campo completo" style="display:flex; align-items:center; justify-content:space-between; background:linear-gradient(135deg, #0F52BA 0%, #1565C0 100%); color:white; padding:14px 18px; border-radius:12px; margin-bottom:6px; flex-wrap:wrap; gap:12px;">
-            <div style="display:flex; align-items:center; gap:14px;">
-                <img src="${LOGO_URL}" onerror="this.onerror=null; this.src='https://drive.google.com/uc?id=1lgJvo_v5BIBLsgGZIGpgjGtfMZKEC474';" style="width:60px; height:auto; background:white; padding:4px; border-radius:8px; object-fit:contain; box-shadow:0 2px 6px rgba(0,0,0,0.2);" alt="Logo MYG">
+        <div class="voucher-campo completo voucher-header-print" style="display:flex; align-items:center; justify-content:space-between; background:linear-gradient(135deg, #0F52BA 0%, #1565C0 100%); color:white; padding:10px 16px; border-radius:8px; margin-bottom:4px; gap:12px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <img src="${LOGO_URL}" onerror="this.onerror=null; this.src='https://drive.google.com/uc?id=1lgJvo_v5BIBLsgGZIGpgjGtfMZKEC474';" style="width:48px; height:auto; background:white; padding:3px; border-radius:6px; object-fit:contain;" alt="Logo MYG">
                 <div>
-                    <div style="font-weight:800; font-size:16px; letter-spacing:0.5px; color:#ffffff;">Sistema de Reclamos MYG</div>
-                    <div style="font-size:11.5px; opacity:0.95; font-weight:600; color:#E3F2FD;">Comprobante de Cambio y Reclamación de Producto</div>
+                    <div style="font-weight:800; font-size:15px; color:#ffffff; line-height:1.2;">Sistema de Reclamos MYG</div>
+                    <div style="font-size:11px; opacity:0.95; font-weight:600; color:#E3F2FD;">Comprobante de Cambio y Reclamación de Producto</div>
                 </div>
             </div>
             <div style="text-align:right;">
-                <span style="font-size:17px; font-weight:900; color:#FFD54F; background:rgba(0,0,0,0.25); padding:5px 12px; border-radius:6px; letter-spacing:0.5px; display:inline-block;">${r.id || '-'}</span>
+                <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.5px; opacity:0.9;">N° Reclamo / Correlativo</div>
+                <span style="font-size:16px; font-weight:900; color:#FFD54F; background:rgba(0,0,0,0.25); padding:3px 10px; border-radius:6px; display:inline-block;">${r.id || '-'}</span>
             </div>
         </div>
         <div class="voucher-campo"><strong>ID Reclamo:</strong><span>${r.id || '-'}</span></div>
+        <div class="voucher-campo"><strong>Fecha y Hora:</strong><span>${r.fecha || '-'} ${r.hora || ''}</span></div>
         <div class="voucher-campo"><strong>Ruta:</strong><span>${r.ruta || '-'}</span></div>
-        <div class="voucher-campo"><strong>Vendedor:</strong><span>${r.vendedor || '-'}</span></div>
-        <div class="voucher-campo"><strong>Cliente:</strong><span>${r.cliente || '-'}</span></div>
+        <div class="voucher-campo"><strong>Nombre del Vendedor:</strong><span>${r.vendedor || '-'}</span></div>
+        <div class="voucher-campo"><strong>Nombre del Cliente:</strong><span>${r.cliente || '-'}</span></div>
         <div class="voucher-campo" style="background:#E3F2FD; border-color:#0091EA;">
             <strong style="color:#0F52BA;">📞 Teléfono del Cliente:</strong>
-            <span style="color:#0F52BA; font-size:15px;">${r.telefono || r.clientPhone || r.phone || '-'}</span>
+            <span style="color:#0F52BA; font-size:13.5px; font-weight:700;">${r.telefono || r.clientPhone || r.phone || '-'}</span>
+        </div>
+        <div class="voucher-campo completo" style="background:#F8FAFC; border-color:#cbd5e1;">
+            <strong style="color:#0369a1;">📍 Dirección del Cliente:</strong>
+            <span style="font-weight:700; color:#1e293b;">${r.direccion || r.direccionCliente || r.clientAddress || '-'}</span>
         </div>
         <div class="voucher-campo"><strong>N° Factura:</strong><span>${r.factura || '-'}</span></div>
         <div class="voucher-campo"><strong>Producto con Falla:</strong><span>${r.producto || '-'}</span></div>
-        <div class="voucher-campo"><strong>Fecha:</strong><span>${r.fecha || '-'}</span></div>
-        <div class="voucher-campo"><strong>Hora:</strong><span>${r.hora || '-'}</span></div>
+        <div class="voucher-campo" style="background:#F1F5F9; border-color:#cbd5e1;">
+            <strong style="color:var(--primario);">📦 Cantidad de Producto:</strong>
+            <span style="font-weight:800; color:var(--primario); font-size:13px;">${r.cantidad || r.cantidadProducto || r.quantity || 1} unidad(es)</span>
+        </div>
         ${fotoHtml}
         <div class="voucher-campo completo"><strong>Motivo del Reclamo:</strong><span>${r.motivo || '-'}</span></div>
         <!-- 🏷️ Casillas: Cambio, Devolución, Reparación -->
-        <div class="voucher-campo completo" style="background:#F8FAFC; border-color:#cbd5e1;">
-            <strong style="color:var(--primario); font-size:12.5px; margin-bottom:6px;">🏷️ Tipo de Solicitud:</strong>
-            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:4px;">
-                <span style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:6px; font-size:12px; font-weight:800; border:1px solid ${r.cambio ? '#93c5fd' : '#e2e8f0'}; background:${r.cambio ? '#eff6ff' : '#ffffff'}; color:${r.cambio ? '#1d4ed8' : '#94a3b8'};">
+        <div class="voucher-campo completo casillas-tipo-print" style="background:#F8FAFC; border-color:#cbd5e1; padding:6px 10px;">
+            <strong style="color:var(--primario); font-size:11px; margin-bottom:4px; display:block;">🏷️ Tipo de Solicitud:</strong>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:2px;">
+                <span style="display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:6px; font-size:11.5px; font-weight:800; border:1px solid ${r.cambio ? '#93c5fd' : '#cbd5e1'}; background:${r.cambio ? '#eff6ff' : '#ffffff'}; color:${r.cambio ? '#1d4ed8' : '#64748b'};">
                     ${r.cambio ? '☑️' : '⬜'} 🔄 Cambio
                 </span>
-                <span style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:6px; font-size:12px; font-weight:800; border:1px solid ${r.devolucion ? '#fca5a5' : '#e2e8f0'}; background:${r.devolucion ? '#fef2f2' : '#ffffff'}; color:${r.devolucion ? '#b91c1c' : '#94a3b8'};">
+                <span style="display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:6px; font-size:11.5px; font-weight:800; border:1px solid ${r.devolucion ? '#fca5a5' : '#cbd5e1'}; background:${r.devolucion ? '#fef2f2' : '#ffffff'}; color:${r.devolucion ? '#b91c1c' : '#64748b'};">
                     ${r.devolucion ? '☑️' : '⬜'} ↩️ Devolución
                 </span>
-                <span style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:6px; font-size:12px; font-weight:800; border:1px solid ${r.reparacion ? '#fdba74' : '#e2e8f0'}; background:${r.reparacion ? '#fff7ed' : '#ffffff'}; color:${r.reparacion ? '#c2410c' : '#94a3b8'};">
+                <span style="display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:6px; font-size:11.5px; font-weight:800; border:1px solid ${r.reparacion ? '#fdba74' : '#cbd5e1'}; background:${r.reparacion ? '#fff7ed' : '#ffffff'}; color:${r.reparacion ? '#c2410c' : '#64748b'};">
                     ${r.reparacion ? '☑️' : '⬜'} 🛠️ Reparación
                 </span>
             </div>
         </div>
         ${estadosVoucherHtml}
-        <div class="voucher-campo"><strong>Firma Vendedor:</strong><span>${r.firmaVendedor || 'Registrada'}</span></div>
-        <div class="voucher-campo"><strong>Firma Cliente:</strong><span>${r.firmaCliente || 'Registrada'}</span></div>
+        <!-- ✍️ Firmas de Conformidad y Autorización -->
+        <div class="voucher-campo completo voucher-firmas-contenedor" style="background:#F8FAFC; border:1px solid #CBD5E1; padding:8px 12px; border-radius:6px; margin-top:4px;">
+            <strong style="color:var(--primario); font-size:10.5px; text-transform:uppercase; margin-bottom:6px; display:block;">✍️ Firmas de Conformidad y Autorización:</strong>
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; text-align:center;">
+                <div class="firma-caja-reporte">
+                    ${formatearFirmaParaReporte(r.firmaCliente, 'Firma del Cliente')}
+                </div>
+                <div class="firma-caja-reporte">
+                    ${formatearFirmaParaReporte(r.firmaVendedor, 'Firma del Vendedor')}
+                </div>
+                <div class="firma-caja-reporte">
+                    ${formatearFirmaParaReporte(r.firmaAdmin || '', 'Firma del Administrador')}
+                </div>
+            </div>
+        </div>
     `;
 
     document.getElementById("modalDetalle").classList.add("activo");
@@ -2656,19 +2974,96 @@ function cerrarModalDetalle() {
 }
 
 // -------------------------------------------------------------
-// 🖨️ FUNCIONES DE IMPRESIÓN DE REPORTES LIMPIOS (TODOS LOS USUARIOS)
+// 🖨️ FUNCIONES DE IMPRESIÓN Y DETALLE (VISIBLES PARA TODOS LOS USUARIOS)
 // -------------------------------------------------------------
+function obtenerReclamoActivoOPrimero() {
+    let lista = reclamosCache || [];
+    if (usuarioActual && usuarioActual.rol === "ruta") {
+        lista = lista.filter(r => r.ruta === usuarioActual.ruta);
+    } else if (carpetaActiva && carpetaActiva !== "TODAS") {
+        const cNorm = normalizarRuta(carpetaActiva);
+        lista = lista.filter(r => normalizarRuta(r.ruta) === cNorm);
+    }
+    return (lista && lista.length > 0) ? lista[0] : null;
+}
+
+function verDetallePrimerReclamo() {
+    const r = obtenerReclamoActivoOPrimero();
+    if (r) {
+        verDetalle(r.id);
+    } else {
+        verDetalleDelFormulario();
+    }
+}
+
+function imprimirReporteReclamoActivo() {
+    const r = obtenerReclamoActivoOPrimero();
+    if (r) {
+        imprimirReporteReclamo(r.id);
+    } else {
+        imprimirReporteFormulario();
+    }
+}
+
+function verDetalleDelFormulario() {
+    const cliente = document.getElementById("cliente").value.trim();
+    const producto = document.getElementById("producto").value.trim();
+    const id = document.getElementById("idReclamo").value.trim();
+
+    if (cliente || producto || id) {
+        const reclamoTemp = {
+            id: id || "REC-VOUCHER",
+            ruta: document.getElementById("ruta").value || (usuarioActual ? usuarioActual.ruta : "Ruta 1"),
+            vendedor: document.getElementById("vendedor").value || (usuarioActual ? usuarioActual.vendedor : ""),
+            cliente: cliente || "Cliente no especificado",
+            direccion: document.getElementById("direccion").value.trim() || "-",
+            direccionCliente: document.getElementById("direccion").value.trim() || "-",
+            telefono: document.getElementById("telefono").value || "-",
+            factura: document.getElementById("factura").value || "-",
+            producto: producto || "Producto no especificado",
+            cantidad: parseInt(document.getElementById("cantidad").value, 10) || 1,
+            cantidadProducto: parseInt(document.getElementById("cantidad").value, 10) || 1,
+            motivo: document.getElementById("motivo").value || "-",
+            fecha: document.getElementById("fecha").value || obtenerFechaHoy(),
+            hora: document.getElementById("hora").value || obtenerHoraActual(),
+            photo: fotoBase64Actual || "",
+            foto: fotoBase64Actual || "",
+            procesoAceptado: document.getElementById("chkFormAceptado") ? document.getElementById("chkFormAceptado").checked : false,
+            procesoRechazado: document.getElementById("chkFormRechazado") ? document.getElementById("chkFormRechazado").checked : false,
+            enProcesoEntrega: document.getElementById("chkFormEntrega") ? document.getElementById("chkFormEntrega").checked : false,
+            cambioEntregado: document.getElementById("chkFormCambioEntregado") ? document.getElementById("chkFormCambioEntregado").checked : false,
+            fechaCambioEntregado: fechaHoraEntregaForm || "",
+            productoRecibido: document.getElementById("chkFormRecibido") ? document.getElementById("chkFormRecibido").checked : false,
+            cambio: document.getElementById("chkTipoCambio") ? document.getElementById("chkTipoCambio").checked : false,
+            devolucion: document.getElementById("chkTipoDevolucion") ? document.getElementById("chkTipoDevolucion").checked : false,
+            reparacion: document.getElementById("chkTipoReparacion") ? document.getElementById("chkTipoReparacion").checked : false,
+            firmaVendedor: document.getElementById("textoFirmaVendedor") && document.getElementById("textoFirmaVendedor").textContent.includes("✅") ? document.getElementById("textoFirmaVendedor").textContent.replace("✅ Firmado por ", "") : "Registrada",
+            firmaCliente: document.getElementById("textoFirmaCliente") && document.getElementById("textoFirmaCliente").textContent.includes("✅") ? document.getElementById("textoFirmaCliente").textContent.replace("✅ Firmado por ", "") : "Registrada"
+        };
+        verDetalle(reclamoTemp);
+    } else {
+        const primero = obtenerReclamoActivoOPrimero();
+        if (primero) {
+            verDetalle(primero.id);
+        } else {
+            alert("Para ver el detalle, ingrese los datos del reclamo en el formulario o haga clic en '👁️ Ver Detalle' en cualquier reclamo de la tabla.");
+        }
+    }
+}
+
 function imprimirReporteReclamo(id) {
     verDetalle(id);
     document.body.classList.add("imprimiendo-reclamo");
     setTimeout(() => {
         window.print();
-    }, 200);
+    }, 250);
 }
 
 function imprimirReporteActual() {
     document.body.classList.add("imprimiendo-reclamo");
-    window.print();
+    setTimeout(() => {
+        window.print();
+    }, 150);
 }
 
 function imprimirReporteFormulario() {
@@ -2676,50 +3071,88 @@ function imprimirReporteFormulario() {
     const producto = document.getElementById("producto").value.trim();
     const id = document.getElementById("idReclamo").value.trim();
 
-    if (cliente || producto) {
-        const reclamoTemp = {
-            id: id || "REC-REPORTE",
-            ruta: document.getElementById("ruta").value || (usuarioActual ? usuarioActual.ruta : "Ruta 1"),
-            vendedor: document.getElementById("vendedor").value || (usuarioActual ? usuarioActual.vendedor : ""),
-            cliente: cliente || "Cliente no especificado",
-            telefono: document.getElementById("telefono").value || "-",
-            factura: document.getElementById("factura").value || "-",
-            producto: producto || "Producto no especificado",
-            motivo: document.getElementById("motivo").value || "-",
-            fecha: document.getElementById("fecha").value || "",
-            hora: document.getElementById("hora").value || "",
-            photo: fotoBase64Actual || "",
-            procesoAceptado: document.getElementById("chkFormAceptado").checked,
-            procesoRechazado: document.getElementById("chkFormRechazado").checked,
-            enProcesoEntrega: document.getElementById("chkFormEntrega").checked,
-            cambioEntregado: document.getElementById("chkFormCambioEntregado").checked,
-            fechaCambioEntregado: fechaHoraEntregaForm || "",
-            productoRecibido: document.getElementById("chkFormRecibido").checked,
-            firmaVendedor: document.getElementById("textoFirmaVendedor").textContent.includes("✅") ? document.getElementById("textoFirmaVendedor").textContent.replace("✅ Firmado por ", "") : "Registrada",
-            firmaCliente: document.getElementById("textoFirmaCliente").textContent.includes("✅") ? document.getElementById("textoFirmaCliente").textContent.replace("✅ Firmado por ", "") : "Registrada"
-        };
+    const reclamoTemp = {
+        id: id || "REC-REPORTE",
+        ruta: document.getElementById("ruta").value || (usuarioActual ? usuarioActual.ruta : "Ruta 1"),
+        vendedor: document.getElementById("vendedor").value || (usuarioActual ? usuarioActual.vendedor : ""),
+        cliente: cliente || "Cliente General",
+        direccion: document.getElementById("direccion").value.trim() || "-",
+        direccionCliente: document.getElementById("direccion").value.trim() || "-",
+        telefono: document.getElementById("telefono").value || "-",
+        factura: document.getElementById("factura").value || "-",
+        producto: producto || "Producto Especificado",
+        cantidad: parseInt(document.getElementById("cantidad").value, 10) || 1,
+        cantidadProducto: parseInt(document.getElementById("cantidad").value, 10) || 1,
+        motivo: document.getElementById("motivo").value || "-",
+        fecha: document.getElementById("fecha").value || obtenerFechaHoy(),
+        hora: document.getElementById("hora").value || obtenerHoraActual(),
+        photo: fotoBase64Actual || "",
+        foto: fotoBase64Actual || "",
+        procesoAceptado: document.getElementById("chkFormAceptado") ? document.getElementById("chkFormAceptado").checked : false,
+        procesoRechazado: document.getElementById("chkFormRechazado") ? document.getElementById("chkFormRechazado").checked : false,
+        enProcesoEntrega: document.getElementById("chkFormEntrega") ? document.getElementById("chkFormEntrega").checked : false,
+        cambioEntregado: document.getElementById("chkFormCambioEntregado") ? document.getElementById("chkFormCambioEntregado").checked : false,
+        fechaCambioEntregado: fechaHoraEntregaForm || "",
+        productoRecibido: document.getElementById("chkFormRecibido") ? document.getElementById("chkFormRecibido").checked : false,
+        cambio: document.getElementById("chkTipoCambio") ? document.getElementById("chkTipoCambio").checked : false,
+        devolucion: document.getElementById("chkTipoDevolucion") ? document.getElementById("chkTipoDevolucion").checked : false,
+        reparacion: document.getElementById("chkTipoReparacion") ? document.getElementById("chkTipoReparacion").checked : false,
+        firmaVendedor: document.getElementById("textoFirmaVendedor") && document.getElementById("textoFirmaVendedor").textContent.includes("✅") ? document.getElementById("textoFirmaVendedor").textContent.replace("✅ Firmado por ", "") : "Registrada",
+        firmaCliente: document.getElementById("textoFirmaCliente") && document.getElementById("textoFirmaCliente").textContent.includes("✅") ? document.getElementById("textoFirmaCliente").textContent.replace("✅ Firmado por ", "") : "Registrada"
+    };
+
+    if (cliente || producto || id) {
         verDetalle(reclamoTemp);
         document.body.classList.add("imprimiendo-reclamo");
         setTimeout(() => {
             window.print();
-        }, 200);
+        }, 250);
     } else {
-        // Si el formulario aún está vacío, imprimir el primer reclamo visible de su lista o notificar
-        let lista = reclamosCache;
-        if (usuarioActual && usuarioActual.rol === "ruta") {
-            lista = reclamosCache.filter(r => r.ruta === usuarioActual.ruta);
-        }
-        if (lista.length > 0) {
-            imprimirReporteReclamo(lista[0].id);
+        const primero = obtenerReclamoActivoOPrimero();
+        if (primero) {
+            imprimirReporteReclamo(primero.id);
         } else {
-            alert("Para imprimir un reporte, ingrese los datos del reclamo en el formulario o haga clic en '🖨️ Imprimir Reporte' en cualquier reclamo de la tabla.");
+            verDetalle(reclamoTemp);
+            document.body.classList.add("imprimiendo-reclamo");
+            setTimeout(() => {
+                window.print();
+            }, 250);
         }
     }
 }
 
+window.addEventListener("beforeprint", () => {
+    const modal = document.getElementById("modalDetalle");
+    if (modal && modal.classList.contains("activo")) {
+        document.body.classList.add("imprimiendo-reclamo");
+    }
+});
+
 window.addEventListener("afterprint", () => {
     document.body.classList.remove("imprimiendo-reclamo");
 });
+
+function formatearFirmaParaReporte(firma, etiqueta) {
+    if (firma && String(firma).startsWith('data:image')) {
+        return `<div class="firma-reporte-item">
+            <img src="${firma}" alt="${etiqueta}" class="imagen-firma-reporte">
+            <div class="firma-reporte-linea"></div>
+            <span class="firma-etiqueta-texto">${etiqueta}</span>
+        </div>`;
+    }
+    if (firma && typeof firma === "string" && firma.trim() !== "" && firma !== "No registrada" && firma !== "Pendiente" && firma !== "Sin firmar") {
+        return `<div class="firma-reporte-item">
+            <div style="height:34px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:11px; color:#1e293b;">${firma}</div>
+            <div class="firma-reporte-linea"></div>
+            <span class="firma-etiqueta-texto">${etiqueta}</span>
+        </div>`;
+    }
+    return `<div class="firma-reporte-item">
+        <div class="firma-espacio-vacio" style="height:34px;"></div>
+        <div class="firma-reporte-linea"></div>
+        <span class="firma-etiqueta-texto">${etiqueta}</span>
+    </div>`;
+}
 
 function abrirFirma(tipo) {
     const titular = tipo === 'vendedor' ? document.getElementById("vendedor").value : (document.getElementById("cliente").value || 'Cliente');
