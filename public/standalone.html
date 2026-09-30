@@ -1327,7 +1327,7 @@
 // -------------------------------------------------------------
 // 📌 DATOS FIJOS DEL SISTEMA Y GOOGLE APPS SCRIPT
 // -------------------------------------------------------------
-const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbyi3ihHM7b1qj9mECcdDEQURHdkjA_duCdJS6FvWVIsRQW7NMOsDoOGZV1I9Nk4E34abw/exec";
+const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbzZkl_wtYdxVRk9NgBIsYsoD7_E3C5B_BniLfyucE7b27hRG8_ciE_JVGzyiGalQfh0/exec";
 const WEB_APP_URL = URL_SCRIPT;
 const LOGO_URL = "/logo.png";
 
@@ -2552,9 +2552,20 @@ function recopilarDatosFormulario() {
 }
 
 // -------------------------------------------------------------
-// 📤 ENVIAR DATOS A GOOGLE SHEETS CON NOMBRES EXACTOS
+// 💾 GUARDAR RECLAMO (FUNCIÓN OFICIAL CONECTADA A GOOGLE APPS SCRIPT)
 // -------------------------------------------------------------
-async function enviarDatos(datosFormulario) {
+async function guardarReclamo(datosFormulario) {
+  if (!datosFormulario || (typeof datosFormulario === "object" && datosFormulario instanceof Event)) {
+    datosFormulario = recopilarDatosFormulario();
+  }
+  if (!datosFormulario) return false;
+
+  const btn = document.getElementById("btnGuardar");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "⏳ Guardando...";
+  }
+
   const datos = {
     idReclamo: datosFormulario.idReclamo,
     ruta: datosFormulario.ruta,
@@ -2563,78 +2574,61 @@ async function enviarDatos(datosFormulario) {
     telefono: datosFormulario.telefono,
     factura: datosFormulario.factura,
     producto: datosFormulario.producto,
-    cantidad: datosFormulario.cantidad,
     motivo: datosFormulario.motivo,
+    cantidad: datosFormulario.cantidad,
     direccion: datosFormulario.direccion,
     firmaVendedor: datosFormulario.firmaVendedor,
     firmaCliente: datosFormulario.firmaCliente
   };
 
   try {
-    const resp = await fetch(URL_SCRIPT, {
+    const respuesta = await fetch(URL_SCRIPT, {
       method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify(datos)
     });
-    try { alert("✅ ¡Guardado en la hoja!"); } catch (e) {}
-    mostrarMensaje("mensajeAccion", "✅ ¡Guardado en la hoja!", "exito");
-    return true;
-  } catch (e) {
-    try { alert("❌ No llegó a la hoja: " + e.message); } catch (err) {}
-    mostrarMensaje("mensajeAccion", "❌ No llegó a la hoja: " + e.message, "error");
+
+    const resultado = await respuesta.json();
+
+    if (resultado.ok || resultado.success) {
+      alert("✅ ¡GUARDADO EN LA HOJA!");
+
+      // Envío a servidor local
+      try {
+        await fetch("/api/records", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(datosFormulario)
+        });
+      } catch (e) {
+        console.warn("Backend local:", e);
+      }
+
+      reclamosCache.unshift(datosFormulario);
+      idsConocidos.add(datosFormulario.id);
+      localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache));
+
+      limpiarFormulario();
+      renderizarBarraCarpetas();
+      renderizarTabla();
+      actualizarGraficas();
+
+      return true;
+    } else {
+      alert("❌ " + (resultado.error || "Error al procesar en la hoja"));
+      return false;
+    }
+  } catch (error) {
+    alert("❌ Error: " + error.message);
     return false;
-  }
-}
-
-// -------------------------------------------------------------
-// 💾 GUARDAR RECLAMO CON TELÉFONO OBLIGATORIO Y ENVÍO A HOJA "RECLAMOS"
-// -------------------------------------------------------------
-async function guardarReclamo(datos) {
-    if (!datos || (typeof datos === "object" && datos instanceof Event)) {
-        datos = recopilarDatosFormulario();
-    }
-    if (!datos) return false;
-
-    const btn = document.getElementById("btnGuardar");
+  } finally {
     if (btn) {
-        btn.disabled = true;
-        btn.textContent = "⏳ Guardando...";
+      btn.disabled = false;
+      btn.textContent = "💾 Guardar Reclamo";
     }
-
-    try {
-        await enviarDatos(datos);
-
-        // Envío a servidor local
-        try {
-            await fetch("/api/records", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(datos)
-            });
-        } catch (e) {
-            console.warn("Backend local:", e);
-        }
-
-        reclamosCache.unshift(datos);
-        idsConocidos.add(datos.id);
-        localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache));
-
-        limpiarFormulario();
-        renderizarBarraCarpetas();
-        renderizarTabla();
-        actualizarGraficas();
-
-        return true;
-    } catch (error) {
-        console.error("Error en guardarReclamo:", error);
-        return false;
-    } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.textContent = "💾 Guardar Reclamo";
-        }
-    }
+  }
 }
 
 // Envío a Google Sheets (Hoja "RECLAMOS" columnas A-R)

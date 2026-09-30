@@ -439,6 +439,7 @@ function doPost(e) {
       SpreadsheetApp.flush(); // ⚡ Guardar al instante en Google Sheets
       try { lock.releaseLock(); } catch(e) {}
       return ContentService.createTextOutput(JSON.stringify({
+        ok: true,
         success: true,
         action: "actualizado",
         fila: filaExistente,
@@ -449,7 +450,9 @@ function doPost(e) {
       SpreadsheetApp.flush();
       try { lock.releaseLock(); } catch(e) {}
       return ContentService.createTextOutput(JSON.stringify({
+        ok: false,
         success: false,
+        error: "No se encontró fila para actualizar el estado.",
         message: "No se encontró fila para actualizar el estado. Se evitó la creación de duplicados.",
         id: idReclamo
       })).setMimeType(ContentService.MimeType.JSON);
@@ -461,6 +464,7 @@ function doPost(e) {
       SpreadsheetApp.flush(); // ⚡ Guardar al instante en Google Sheets
       try { lock.releaseLock(); } catch(e) {}
       return ContentService.createTextOutput(JSON.stringify({
+        ok: true,
         success: true,
         action: "creado",
         fila: filaNueva,
@@ -470,7 +474,7 @@ function doPost(e) {
     
   } catch (err) {
     try { lock.releaseLock(); } catch(e) {}
-    return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() }))
+    return ContentService.createTextOutput(JSON.stringify({ ok: false, success: false, error: err.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 }

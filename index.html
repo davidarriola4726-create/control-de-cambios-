@@ -1474,7 +1474,7 @@
 // -------------------------------------------------------------
 // 📌 DATOS FIJOS DEL SISTEMA Y GOOGLE APPS SCRIPT
 // -------------------------------------------------------------
-const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbyi3ihHM7b1qj9mECcdDEQURHdkjA_duCdJS6FvWVIsRQW7NMOsDoOGZV1I9Nk4E34abw/exec";
+const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbzZkl_wtYdxVRk9NgBIsYsoD7_E3C5B_BniLfyucE7b27hRG8_ciE_JVGzyiGalQfh0/exec";
 const WEB_APP_URL = URL_SCRIPT;
 const LOGO_URL = "/logo.png";
 
@@ -3146,9 +3146,20 @@ function recopilarDatosFormulario() {
 }
 
 // -------------------------------------------------------------
-// 📤 ENVIAR DATOS A GOOGLE SHEETS CON NOMBRES EXACTOS
+// 💾 GUARDAR RECLAMO (FUNCIÓN OFICIAL CONECTADA A GOOGLE APPS SCRIPT)
 // -------------------------------------------------------------
-async function enviarDatos(datosFormulario) {
+async function guardarReclamo(datosFormulario) {
+  if (!datosFormulario || (typeof datosFormulario === "object" && datosFormulario instanceof Event)) {
+    datosFormulario = recopilarDatosFormulario();
+  }
+  if (!datosFormulario) return false;
+
+  const btn = document.getElementById("btnGuardar");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "⏳ Guardando...";
+  }
+
   const datos = {
     idReclamo: datosFormulario.idReclamo,
     ruta: datosFormulario.ruta,
@@ -3157,92 +3168,73 @@ async function enviarDatos(datosFormulario) {
     telefono: datosFormulario.telefono,
     factura: datosFormulario.factura,
     producto: datosFormulario.producto,
-    cantidad: datosFormulario.cantidad,
     motivo: datosFormulario.motivo,
+    cantidad: datosFormulario.cantidad,
     direccion: datosFormulario.direccion,
     firmaVendedor: datosFormulario.firmaVendedor,
     firmaCliente: datosFormulario.firmaCliente
   };
 
   try {
-    const resp = await fetch(URL_SCRIPT, {
+    const respuesta = await fetch(URL_SCRIPT, {
       method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify(datos)
     });
-    try { alert("✅ ¡Guardado en la hoja!"); } catch (e) {}
-    mostrarMensaje("mensajeAccion", "✅ ¡Guardado en la hoja!", "exito");
-    return true;
-  } catch (e) {
-    try { alert("❌ No llegó a la hoja: " + e.message); } catch (err) {}
-    mostrarMensaje("mensajeAccion", "❌ No llegó a la hoja: " + e.message, "error");
-    return false;
-  }
-}
 
-// -------------------------------------------------------------
-// 💾 GUARDAR RECLAMO (FUNCIÓN OFICIAL CONECTADA A GOOGLE APPS SCRIPT)
-// -------------------------------------------------------------
-async function guardarReclamo(datos) {
-  // Si no se pasaron datos directamente o se llamó desde evento, recopilar del formulario
-  if (!datos || (typeof datos === "object" && datos instanceof Event)) {
-    datos = recopilarDatosFormulario();
-  }
-  if (!datos) return false;
+    const resultado = await respuesta.json();
 
-  const btn = document.getElementById("btnGuardar");
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = "⏳ Guardando...";
-  }
+    if (resultado.ok || resultado.success) {
+      alert("✅ ¡GUARDADO EN LA HOJA!");
 
-  try {
-    await enviarDatos(datos);
+      // Sincronización en caché local y UI
+      const id = datos.idReclamo || datosFormulario.id;
+      const indexExistente = reclamosCache.findIndex(x => sonElMismoReclamo(x.id, id) || sonElMismoReclamo(x.voucherNumber, id));
+      const esModificacion = (reclamoEnEdicionId !== null) || (indexExistente !== -1);
 
-    // Mantener la sincronización local en vivo y en interfaz
-    const id = datos.id || datos.idReclamo;
-    const indexExistente = reclamosCache.findIndex(x => sonElMismoReclamo(x.id, id) || sonElMismoReclamo(x.voucherNumber, id));
-    const esModificacion = (reclamoEnEdicionId !== null) || (indexExistente !== -1);
-
-    if (esModificacion) {
-      const idxActualizar = indexExistente !== -1 ? indexExistente : reclamosCache.findIndex(x => sonElMismoReclamo(x.id, reclamoEnEdicionId) || sonElMismoReclamo(x.voucherNumber, reclamoEnEdicionId));
-      if (idxActualizar !== -1) {
-        reclamosCache[idxActualizar] = { ...reclamosCache[idxActualizar], ...datos };
+      if (esModificacion) {
+        const idxActualizar = indexExistente !== -1 ? indexExistente : reclamosCache.findIndex(x => sonElMismoReclamo(x.id, reclamoEnEdicionId) || sonElMismoReclamo(x.voucherNumber, reclamoEnEdicionId));
+        if (idxActualizar !== -1) {
+          reclamosCache[idxActualizar] = { ...reclamosCache[idxActualizar], ...datosFormulario };
+        } else {
+          reclamosCache.unshift(datosFormulario);
+        }
+        fetch(`/api/records/${encodeURIComponent(id)}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(datosFormulario)
+        }).catch(e => console.warn(e));
       } else {
-        reclamosCache.unshift(datos);
+        reclamosCache.unshift(datosFormulario);
+        idsConocidos.add(id);
+        fetch("/api/records", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(datosFormulario)
+        }).catch(e => console.warn(e));
       }
-      fetch(`/api/records/${encodeURIComponent(id)}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(datos)
-      }).catch(e => console.warn(e));
+
+      try { localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache)); } catch (e) {}
+
+      limpiarFormulario();
+      renderizarBarraCarpetas();
+      renderizarTabla();
+      actualizarGraficas();
+
+      return true;
     } else {
-      reclamosCache.unshift(datos);
-      idsConocidos.add(id);
-      fetch("/api/records", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(datos)
-      }).catch(e => console.warn(e));
+      alert("❌ " + (resultado.error || "Error al procesar en la hoja"));
+      return false;
     }
-
-    try { localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache)); } catch (e) {}
-
-    limpiarFormulario();
-    renderizarBarraCarpetas();
-    renderizarTabla();
-    actualizarGraficas();
-
-    return true;
   } catch (error) {
-    console.error("Error en guardarReclamo:", error);
+    alert("❌ Error: " + error.message);
     return false;
   } finally {
-    const btnFinal = document.getElementById("btnGuardar");
-    if (btnFinal && !reclamoEnEdicionId) {
-      btnFinal.disabled = false;
-      btnFinal.textContent = "💾 Guardar Reclamo";
+    if (btn && !reclamoEnEdicionId) {
+      btn.disabled = false;
+      btn.textContent = "💾 Guardar Reclamo";
     }
   }
 }
