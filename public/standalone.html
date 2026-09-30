@@ -1117,7 +1117,7 @@
         </div>
 
         <div class="botones-form">
-            <button class="btn btn-primario" id="btnGuardar" onclick="guardarReclamo()">💾 Guardar Reclamo</button>
+            <button class="btn btn-primario" id="btnGuardar" onclick="guardarReclamo(recopilarDatosFormulario())">💾 Guardar Reclamo</button>
             <button class="btn btn-primario" onclick="verDetalleDelFormulario()" title="Ver Detalle del Reclamo">👁️ Ver Detalle</button>
             <button class="btn btn-exito" onclick="imprimirReporteFormulario()" title="Imprimir Reporte en 1 Hoja A4">🖨️ Imprimir Reporte</button>
             <button class="btn btn-acento" onclick="limpiarFormulario()">🔄 Limpiar Formulario</button>
@@ -1327,7 +1327,8 @@
 // -------------------------------------------------------------
 // 📌 DATOS FIJOS DEL SISTEMA Y GOOGLE APPS SCRIPT
 // -------------------------------------------------------------
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxTs9AoIJjwII3K5KcMGzhJAIFzF-Fias43rCWB6VxXx8Dvi3Tc3rygQwEn9A47E7uOSg/exec";
+const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbyi3ihHM7b1qj9mECcdDEQURHdkjA_duCdJS6FvWVIsRQW7NMOsDoOGZV1I9Nk4E34abw/exec";
+const WEB_APP_URL = URL_SCRIPT;
 const LOGO_URL = "/logo.png";
 
 // -------------------------------------------------------------
@@ -2462,42 +2463,41 @@ async function guardarEstadosDesdeModal() {
 }
 
 // -------------------------------------------------------------
-// 💾 GUARDAR RECLAMO CON TELÉFONO OBLIGATORIO Y ENVÍO A HOJA "RECLAMOS"
+// 📋 RECOPILAR DATOS DEL FORMULARIO
 // -------------------------------------------------------------
-async function guardarReclamo() {
+function recopilarDatosFormulario() {
     const cliente = document.getElementById("cliente").value.trim();
     const telefono = document.getElementById("telefono").value.trim();
     const factura = document.getElementById("factura").value.trim();
     const producto = document.getElementById("producto").value.trim();
     const motivo = document.getElementById("motivo").value.trim();
+    const direccion = document.getElementById("direccion") ? document.getElementById("direccion").value.trim() : "";
+    const rawCantidad = document.getElementById("cantidad") ? document.getElementById("cantidad").value.trim() : "1";
+    const cantidad = parseInt(rawCantidad, 10) || 1;
 
     if (!cliente) {
         mostrarMensaje("mensajeAccion", "❌ El Nombre del Cliente es obligatorio.", "error");
         document.getElementById("cliente").focus();
-        return;
+        return null;
     }
 
     if (!telefono) {
         mostrarMensaje("mensajeAccion", "❌ El Teléfono del Cliente es obligatorio. Por favor escríbalo.", "error");
         document.getElementById("telefono").focus();
-        return;
+        return null;
     }
 
     const formatoTelValido = /^[0-9\s\-+]+$/.test(telefono);
     if (!formatoTelValido) {
         mostrarMensaje("mensajeAccion", "❌ El Teléfono solo debe contener números, guiones o espacios.", "error");
         document.getElementById("telefono").focus();
-        return;
+        return null;
     }
 
     if (!factura || !producto || !motivo) {
         mostrarMensaje("mensajeAccion", "❌ Por favor complete todos los campos obligatorios marcados con (*).", "error");
-        return;
+        return null;
     }
-
-    const btn = document.getElementById("btnGuardar");
-    btn.disabled = true;
-    btn.textContent = "⏳ Guardando...";
 
     const id = document.getElementById("idReclamo").value;
     const rawRuta = document.getElementById("ruta").value;
@@ -2509,84 +2509,106 @@ async function guardarReclamo() {
     const fecha = document.getElementById("fecha").value;
     const hora = document.getElementById("hora").value;
 
-    // Obtener valores de las 3 casillas de verificación: Cambio, Devolución, Reparación
     const esCambio = document.getElementById("chkTipoCambio") ? document.getElementById("chkTipoCambio").checked : false;
     const esDevolucion = document.getElementById("chkTipoDevolucion") ? document.getElementById("chkTipoDevolucion").checked : false;
     const esReparacion = document.getElementById("chkTipoReparacion") ? document.getElementById("chkTipoReparacion").checked : false;
 
-    // Obtener valores de los 5 checkboxes
-    const procesoAceptado = document.getElementById("chkFormAceptado").checked;
-    const procesoRechazado = document.getElementById("chkFormRechazado").checked;
-    const enProcesoEntrega = document.getElementById("chkFormEntrega").checked;
-    const cambioEntregado = document.getElementById("chkFormCambioEntregado").checked;
-    const productoRecibido = document.getElementById("chkFormRecibido").checked;
+    const firmaVendedor = document.getElementById("textoFirmaVendedor") ? document.getElementById("textoFirmaVendedor").textContent : "";
+    const firmaCliente = document.getElementById("textoFirmaCliente") ? document.getElementById("textoFirmaCliente").textContent : "";
 
-    const nuevo = {
-        id,
+    return {
+        idReclamo: id,
+        id: id,
         voucherNumber: id,
+        ruta: ruta,
+        Ruta: ruta,
         routeId: ruta.toUpperCase().replace(/\s+/g, '-'),
-        ruta,
-        vendorName: vendedor,
-        vendedor,
-        clientName: cliente,
-        cliente,
+        vendedor: vendedor,
+        Vendedor: vendedor,
+        cliente: cliente,
+        Cliente: cliente,
+        telefono: telefono,
+        Telefono: telefono,
         clientPhone: telefono,
-        telefono,
-        invoiceNumber: factura,
-        factura,
+        factura: factura,
+        Factura: factura,
+        producto: producto,
+        Producto: producto,
+        cantidad: cantidad,
+        motivo: motivo,
+        Motivo: motivo,
+        direccion: direccion,
+        firmaVendedor: firmaVendedor,
+        firmaCliente: firmaCliente,
         photo: fotoBase64Actual,
         foto: fotoBase64Actual,
-        productName: producto,
-        producto,
-        description: motivo,
-        motivo,
-        date: fecha,
-        fecha,
-        time: hora,
-        hora,
-        firmaVendedor: document.getElementById("textoFirmaVendedor").textContent,
-        firmaCliente: document.getElementById("textoFirmaCliente").textContent,
-        cambio: esCambio,
-        Cambio: esCambio ? "SI" : "NO",
-        devolucion: esDevolucion,
-        Devolucion: esDevolucion ? "SI" : "NO",
-        reparacion: esReparacion,
-        Reparacion: esReparacion ? "SI" : "NO",
-        procesoAceptado,
-        procesoRechazado,
-        enProcesoEntrega,
-        cambioEntregado,
-        productoRecibido,
-        fechaCambioEntregado: cambioEntregado ? (fechaHoraEntregaForm || obtenerFechaHoraFormateada()) : "",
+        fecha: fecha,
+        hora: hora,
+        cambio: esCambio ? "SI" : "NO",
+        devolucion: esDevolucion ? "SI" : "NO",
+        reparacion: esReparacion ? "SI" : "NO",
         timestamp: new Date().toISOString()
     };
+}
 
-    // Envío a Google Apps Script (hoja RECLAMOS con columnas A a R completas)
-    enviarActualizacionGoogleSheets(nuevo);
+// -------------------------------------------------------------
+// 💾 GUARDAR RECLAMO CON TELÉFONO OBLIGATORIO Y ENVÍO A HOJA "RECLAMOS"
+// -------------------------------------------------------------
+async function guardarReclamo(datos) {
+    if (!datos || (typeof datos === "object" && datos instanceof Event)) {
+        datos = recopilarDatosFormulario();
+    }
+    if (!datos) return false;
 
-    // Envío a servidor local
-    try {
-        await fetch("/api/records", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(nuevo)
-        });
-    } catch (e) {
-        console.warn("Backend local:", e);
+    const btn = document.getElementById("btnGuardar");
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = "⏳ Guardando...";
     }
 
-    reclamosCache.unshift(nuevo);
-    idsConocidos.add(nuevo.id);
-    localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache));
+    try {
+        const respuesta = await fetch(URL_SCRIPT, {
+            method: "POST",
+            mode: "no-cors",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(datos)
+        });
 
-    mostrarMensaje("mensajeAccion", `✅ ¡Reclamo ${id} guardado con éxito! Tel: ${telefono}`, "exito");
-    limpiarFormulario();
-    renderizarBarraCarpetas();
-    renderizarTabla();
-    actualizarGraficas();
+        // Envío a servidor local
+        try {
+            await fetch("/api/records", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(datos)
+            });
+        } catch (e) {
+            console.warn("Backend local:", e);
+        }
 
-    btn.disabled = false;
-    btn.textContent = "💾 Guardar Reclamo";
+        reclamosCache.unshift(datos);
+        idsConocidos.add(datos.id);
+        localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache));
+
+        try { alert("✅ Guardado correctamente"); } catch (e) {}
+        mostrarMensaje("mensajeAccion", `✅ Guardado correctamente`, "exito");
+        limpiarFormulario();
+        renderizarBarraCarpetas();
+        renderizarTabla();
+        actualizarGraficas();
+
+        return true;
+    } catch (error) {
+        try { alert("❌ Error: " + error.message); } catch (e) {}
+        mostrarMensaje("mensajeAccion", "❌ Error: " + error.message, "error");
+        return false;
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = "💾 Guardar Reclamo";
+        }
+    }
 }
 
 // Envío a Google Sheets (Hoja "RECLAMOS" columnas A-R)

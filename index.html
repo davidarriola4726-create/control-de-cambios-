@@ -1227,7 +1227,7 @@
         </div>
 
         <div class="botones-form">
-            <button class="btn btn-primario" id="btnGuardar" onclick="guardarReclamo()">💾 Guardar Reclamo</button>
+            <button class="btn btn-primario" id="btnGuardar" onclick="guardarReclamo(recopilarDatosFormulario())">💾 Guardar Reclamo</button>
             <button class="btn btn-primario" onclick="verDetalleDelFormulario()" title="Ver Detalle del Reclamo">👁️ Ver Detalle</button>
             <button class="btn btn-exito" onclick="imprimirReporteFormulario()" title="Imprimir Reporte en 1 Hoja A4">🖨️ Imprimir Reporte</button>
             <button class="btn btn-acento" onclick="limpiarFormulario()">🔄 Limpiar Formulario</button>
@@ -1474,7 +1474,8 @@
 // -------------------------------------------------------------
 // 📌 DATOS FIJOS DEL SISTEMA Y GOOGLE APPS SCRIPT
 // -------------------------------------------------------------
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxTs9AoIJjwII3K5KcMGzhJAIFzF-Fias43rCWB6VxXx8Dvi3Tc3rygQwEn9A47E7uOSg/exec";
+const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbyi3ihHM7b1qj9mECcdDEQURHdkjA_duCdJS6FvWVIsRQW7NMOsDoOGZV1I9Nk4E34abw/exec";
+const WEB_APP_URL = URL_SCRIPT;
 const LOGO_URL = "/logo.png";
 
 // -------------------------------------------------------------
@@ -2996,9 +2997,9 @@ function cancelarEdicion() {
 }
 
 // -------------------------------------------------------------
-// 💾 GUARDAR RECLAMO (CREACIÓN O ACTUALIZACIÓN SIN DUPLICADOS)
+// 📋 RECOPILAR DATOS DEL FORMULARIO
 // -------------------------------------------------------------
-async function guardarReclamo() {
+function recopilarDatosFormulario() {
     const cliente = String(document.getElementById("cliente").value || "").trim();
     const direccion = String(document.getElementById("direccion").value || "").trim();
     const rawTelefono = document.getElementById("telefono").value;
@@ -3011,202 +3012,213 @@ async function guardarReclamo() {
     if (!cliente) {
         mostrarMensaje("mensajeAccion", "❌ El Nombre del Cliente es obligatorio.", "error");
         document.getElementById("cliente").focus();
-        return;
+        return null;
     }
 
-    // 📍 Dirección del Cliente — campo de texto, obligatorio → Columna S
     if (!direccion) {
         mostrarMensaje("mensajeAccion", "❌ La Dirección del Cliente es obligatoria.", "error");
         document.getElementById("direccion").focus();
-        return;
+        return null;
     }
 
     if (!telefono) {
         mostrarMensaje("mensajeAccion", "❌ El Teléfono del Cliente es obligatorio. Por favor escríbalo.", "error");
         document.getElementById("telefono").focus();
-        return;
+        return null;
     }
 
     const formatoTelValido = /^[0-9\s\-+]+$/.test(telefono);
     if (!formatoTelValido) {
         mostrarMensaje("mensajeAccion", "❌ El Teléfono solo debe contener números, guiones o espacios.", "error");
         document.getElementById("telefono").focus();
-        return;
+        return null;
     }
 
     if (!factura) {
         mostrarMensaje("mensajeAccion", "❌ El N° de Factura es obligatorio.", "error");
         document.getElementById("factura").focus();
-        return;
+        return null;
     }
 
     if (!producto) {
         mostrarMensaje("mensajeAccion", "❌ El Producto con Falla es obligatorio.", "error");
         document.getElementById("producto").focus();
-        return;
+        return null;
     }
 
-    // 📦 Cantidad de Producto — campo numérico, obligatorio → Columna T
     const cantidad = parseInt(rawCantidad, 10);
     if (isNaN(cantidad) || cantidad <= 0) {
         mostrarMensaje("mensajeAccion", "❌ La Cantidad de Producto debe ser un número entero mayor a 0.", "error");
         document.getElementById("cantidad").focus();
-        return;
+        return null;
     }
 
     if (!motivo) {
         mostrarMensaje("mensajeAccion", "❌ El Motivo del Reclamo es obligatorio.", "error");
         document.getElementById("motivo").focus();
-        return;
+        return null;
     }
 
-    const btn = document.getElementById("btnGuardar");
+    const idReclamo = document.getElementById("idReclamo").value.trim() || ("N° " + String((reclamosCache ? reclamosCache.length : 0) + 1).padStart(5, '0'));
+    const rawRuta = document.getElementById("ruta").value;
+    const rawVendedor = document.getElementById("vendedor").value;
+    const ruta = normalizarARutaId(rawRuta, rawVendedor);
+    const vendedor = (rawVendedor && rawVendedor.trim() !== '' && rawVendedor.toLowerCase() !== 'administrador general') 
+        ? rawVendedor.trim() 
+        : (VENDEDORES_POR_RUTA[ruta] || 'BRYAN GOMEZ');
+    const fecha = document.getElementById("fecha").value || obtenerFechaActual();
+    const hora = document.getElementById("hora").value || obtenerHoraActual();
+
+    // Obtener valores de las 3 casillas de verificación: Cambio, Devolución, Reparación
+    const esCambio = document.getElementById("chkTipoCambio") ? document.getElementById("chkTipoCambio").checked : false;
+    const esDevolucion = document.getElementById("chkTipoDevolucion") ? document.getElementById("chkTipoDevolucion").checked : false;
+    const esReparacion = document.getElementById("chkTipoReparacion") ? document.getElementById("chkTipoReparacion").checked : false;
+
+    // Obtener valores de los 5 checkboxes de estado
+    const procesoAceptado = document.getElementById("chkFormAceptado") ? document.getElementById("chkFormAceptado").checked : false;
+    const procesoRechazado = document.getElementById("chkFormRechazado") ? document.getElementById("chkFormRechazado").checked : false;
+    const enProcesoEntrega = document.getElementById("chkFormEntrega") ? document.getElementById("chkFormEntrega").checked : false;
+    const cambioEntregado = document.getElementById("chkFormCambioEntregado") ? document.getElementById("chkFormCambioEntregado").checked : false;
+    const productoRecibido = document.getElementById("chkFormRecibido") ? document.getElementById("chkFormRecibido").checked : false;
+
+    // Extraer firmas dibujadas en canvas como base64
+    const canvasVendedor = document.getElementById("canvasFirmaVendedor");
+    const canvasCliente = document.getElementById("canvasFirmaCliente");
+    const firmaVendedor = (firmaVendedorTrazada && canvasVendedor) ? canvasVendedor.toDataURL("image/png") : "";
+    const firmaCliente = (firmaClienteTrazada && canvasCliente) ? canvasCliente.toDataURL("image/png") : "";
+
+    return {
+        idReclamo: idReclamo,
+        id: idReclamo,
+        voucherNumber: idReclamo,
+        ruta: ruta,
+        Ruta: ruta,
+        routeId: ruta.toUpperCase().replace(/\s+/g, '-'),
+        vendedor: vendedor,
+        Vendedor: vendedor,
+        vendorName: vendedor,
+        cliente: cliente,
+        Cliente: cliente,
+        clientName: cliente,
+        telefono: String(telefono),
+        Telefono: String(telefono),
+        clientPhone: String(telefono),
+        factura: factura,
+        Factura: factura,
+        invoiceNumber: factura,
+        producto: producto,
+        Producto: producto,
+        productName: producto,
+        cantidad: cantidad,
+        Cantidad: cantidad,
+        cantidadProducto: cantidad,
+        quantity: cantidad,
+        motivo: motivo,
+        Motivo: motivo,
+        description: motivo,
+        direccion: direccion,
+        Direccion: direccion,
+        direccionCliente: direccion,
+        clientAddress: direccion,
+        "Dirección del Cliente": direccion,
+        firmaVendedor: firmaVendedor,
+        FirmaVendedor: firmaVendedor,
+        firmaCliente: firmaCliente,
+        FirmaCliente: firmaCliente,
+        photo: fotoBase64Actual,
+        foto: fotoBase64Actual,
+        fecha: fecha,
+        hora: hora,
+        cambio: esCambio,
+        Cambio: esCambio ? "SI" : "NO",
+        devolucion: esDevolucion,
+        Devolucion: esDevolucion ? "SI" : "NO",
+        reparacion: esReparacion,
+        Reparacion: esReparacion ? "SI" : "NO",
+        procesoAceptado: procesoAceptado,
+        procesoRechazado: procesoRechazado,
+        enProcesoEntrega: enProcesoEntrega,
+        cambioEntregado: cambioEntregado,
+        productoRecibido: productoRecibido,
+        fechaCambioEntregado: cambioEntregado ? (fechaHoraEntregaForm || obtenerFechaHoraFormateada()) : "",
+        timestamp: new Date().toISOString()
+    };
+}
+
+// -------------------------------------------------------------
+// 💾 GUARDAR RECLAMO (FUNCIÓN OFICIAL CONECTADA A GOOGLE APPS SCRIPT)
+// -------------------------------------------------------------
+async function guardarReclamo(datos) {
+  // Si no se pasaron datos directamente o se llamó desde evento, recopilar del formulario
+  if (!datos || (typeof datos === "object" && datos instanceof Event)) {
+    datos = recopilarDatosFormulario();
+  }
+  if (!datos) return false;
+
+  const btn = document.getElementById("btnGuardar");
+  if (btn) {
     btn.disabled = true;
     btn.textContent = "⏳ Guardando...";
+  }
 
-    try {
-        const id = document.getElementById("idReclamo").value.trim() || ("N° " + String((reclamosCache ? reclamosCache.length : 0) + 1).padStart(5, '0'));
-        const rawRuta = document.getElementById("ruta").value;
-        const rawVendedor = document.getElementById("vendedor").value;
-        const ruta = normalizarARutaId(rawRuta, rawVendedor);
-        const vendedor = (rawVendedor && rawVendedor.trim() !== '' && rawVendedor.toLowerCase() !== 'administrador general') 
-            ? rawVendedor.trim() 
-            : (VENDEDORES_POR_RUTA[ruta] || 'BRYAN GOMEZ');
-        const fecha = document.getElementById("fecha").value || obtenerFechaActual();
-        const hora = document.getElementById("hora").value || obtenerHoraActual();
+  try {
+    const respuesta = await fetch(URL_SCRIPT, {
+      method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(datos)
+    });
 
-        // Obtener valores de las 3 casillas de verificación: Cambio, Devolución, Reparación
-        const esCambio = document.getElementById("chkTipoCambio") ? document.getElementById("chkTipoCambio").checked : false;
-        const esDevolucion = document.getElementById("chkTipoDevolucion") ? document.getElementById("chkTipoDevolucion").checked : false;
-        const esReparacion = document.getElementById("chkTipoReparacion") ? document.getElementById("chkTipoReparacion").checked : false;
+    // Mantener la sincronización local en vivo y en interfaz
+    const id = datos.id || datos.idReclamo;
+    const indexExistente = reclamosCache.findIndex(x => sonElMismoReclamo(x.id, id) || sonElMismoReclamo(x.voucherNumber, id));
+    const esModificacion = (reclamoEnEdicionId !== null) || (indexExistente !== -1);
 
-        // Obtener valores de los 5 checkboxes de estado
-        const procesoAceptado = document.getElementById("chkFormAceptado") ? document.getElementById("chkFormAceptado").checked : false;
-        const procesoRechazado = document.getElementById("chkFormRechazado") ? document.getElementById("chkFormRechazado").checked : false;
-        const enProcesoEntrega = document.getElementById("chkFormEntrega") ? document.getElementById("chkFormEntrega").checked : false;
-        const cambioEntregado = document.getElementById("chkFormCambioEntregado") ? document.getElementById("chkFormCambioEntregado").checked : false;
-        const productoRecibido = document.getElementById("chkFormRecibido") ? document.getElementById("chkFormRecibido").checked : false;
-
-        // Extraer firmas dibujadas en canvas como base64
-        const canvasVendedor = document.getElementById("canvasFirmaVendedor");
-        const canvasCliente = document.getElementById("canvasFirmaCliente");
-        const base64FirmaVendedor = (firmaVendedorTrazada && canvasVendedor) ? canvasVendedor.toDataURL("image/png") : "";
-        const base64FirmaCliente = (firmaClienteTrazada && canvasCliente) ? canvasCliente.toDataURL("image/png") : "";
-
-        // 🔍 Detectar si es una modificación de un reclamo existente para NUNCA duplicar
-        const indexExistente = reclamosCache.findIndex(x => sonElMismoReclamo(x.id, id) || sonElMismoReclamo(x.voucherNumber, id));
-        const esModificacion = (reclamoEnEdicionId !== null) || (indexExistente !== -1);
-
-        const datosReclamo = {
-            id,
-            voucherNumber: id,
-            routeId: ruta.toUpperCase().replace(/\s+/g, '-'),
-            ruta,
-            vendorName: vendedor,
-            vendedor,
-            clientName: cliente,
-            cliente,
-            direccion,
-            direccionCliente: direccion,
-            clientAddress: direccion,
-            clientPhone: String(telefono),
-            telefono: String(telefono),
-            invoiceNumber: factura,
-            factura,
-            photo: fotoBase64Actual,
-            foto: fotoBase64Actual,
-            productName: producto,
-            producto,
-            cantidad,
-            cantidadProducto: cantidad,
-            quantity: cantidad,
-            description: motivo,
-            motivo,
-            date: fecha,
-            fecha,
-            time: hora,
-            hora,
-            firmaVendedor: base64FirmaVendedor || (esModificacion && indexExistente !== -1 ? reclamosCache[indexExistente].firmaVendedor : ""),
-            firmaCliente: base64FirmaCliente || (esModificacion && indexExistente !== -1 ? reclamosCache[indexExistente].firmaCliente : ""),
-            procesoAceptado,
-            procesoRechazado,
-            enProcesoEntrega,
-            cambioEntregado,
-            productoRecibido,
-            fechaCambioEntregado: cambioEntregado ? (fechaHoraEntregaForm || obtenerFechaHoraFormateada()) : "",
-            cambio: esCambio,
-            Cambio: esCambio ? "SI" : "NO",
-            devolucion: esDevolucion,
-            Devolucion: esDevolucion ? "SI" : "NO",
-            reparacion: esReparacion,
-            Reparacion: esReparacion ? "SI" : "NO",
-            timestamp: new Date().toISOString()
-        };
-
-        if (esModificacion) {
-            // 🔄 ACTUALIZACIÓN: Modificar el registro existente en su posición, NUNCA crear fila nueva
-            const idxActualizar = indexExistente !== -1 ? indexExistente : reclamosCache.findIndex(x => sonElMismoReclamo(x.id, reclamoEnEdicionId) || sonElMismoReclamo(x.voucherNumber, reclamoEnEdicionId));
-            if (idxActualizar !== -1) {
-                reclamosCache[idxActualizar] = { ...reclamosCache[idxActualizar], ...datosReclamo };
-            } else {
-                reclamosCache.unshift(datosReclamo);
-            }
-            try {
-                localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache));
-            } catch (e) {}
-
-            mostrarMensaje("mensajeAccion", "Reclamo guardado correctamente ✅", "exito");
-            cancelarEdicion();
-            limpiarFormulario();
-            renderizarBarraCarpetas();
-            renderizarTabla();
-            actualizarGraficas();
-
-            // Enviar al servidor local vía PUT /api/records/:id para actualizar
-            fetch(`/api/records/${encodeURIComponent(id)}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(datosReclamo)
-            }).catch(e => console.warn("Backend local error:", e));
-
-            // Sincronizar actualización con Google Sheets (action: "actualizar")
-            enviarActualizacionGoogleSheets(datosReclamo, true);
-
-        } else {
-            // 🆕 NUEVO REGISTRO
-            reclamosCache.unshift(datosReclamo);
-            idsConocidos.add(datosReclamo.id);
-            try {
-                localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache));
-            } catch (e) {}
-
-            // Mensaje requerido: "Reclamo guardado correctamente"
-            mostrarMensaje("mensajeAccion", "Reclamo guardado correctamente ✅", "exito");
-            limpiarFormulario();
-            renderizarBarraCarpetas();
-            renderizarTabla();
-            actualizarGraficas();
-
-            // Envío a Google Apps Script y servidor en segundo plano
-            enviarActualizacionGoogleSheets(datosReclamo, false);
-
-            fetch("/api/records", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(datosReclamo)
-            }).catch(e => console.warn("Backend local error:", e));
-        }
-
-    } catch (err) {
-        console.error("Error en guardarReclamo:", err);
-        mostrarMensaje("mensajeAccion", "❌ Error al guardar: " + (err.message || err), "error");
-    } finally {
-        const btnFinal = document.getElementById("btnGuardar");
-        if (btnFinal && !reclamoEnEdicionId) {
-            btnFinal.disabled = false;
-            btnFinal.textContent = "💾 Guardar Reclamo";
-        }
+    if (esModificacion) {
+      const idxActualizar = indexExistente !== -1 ? indexExistente : reclamosCache.findIndex(x => sonElMismoReclamo(x.id, reclamoEnEdicionId) || sonElMismoReclamo(x.voucherNumber, reclamoEnEdicionId));
+      if (idxActualizar !== -1) {
+        reclamosCache[idxActualizar] = { ...reclamosCache[idxActualizar], ...datos };
+      } else {
+        reclamosCache.unshift(datos);
+      }
+      fetch(`/api/records/${encodeURIComponent(id)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datos)
+      }).catch(e => console.warn(e));
+    } else {
+      reclamosCache.unshift(datos);
+      idsConocidos.add(id);
+      fetch("/api/records", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datos)
+      }).catch(e => console.warn(e));
     }
+
+    try { localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache)); } catch (e) {}
+
+    limpiarFormulario();
+    renderizarBarraCarpetas();
+    renderizarTabla();
+    actualizarGraficas();
+
+    try { alert("✅ Guardado correctamente"); } catch (e) {}
+    mostrarMensaje("mensajeAccion", "✅ Guardado correctamente", "exito");
+    return true;
+  } catch (error) {
+    try { alert("❌ Error: " + error.message); } catch (e) {}
+    mostrarMensaje("mensajeAccion", "❌ Error: " + error.message, "error");
+    return false;
+  } finally {
+    const btnFinal = document.getElementById("btnGuardar");
+    if (btnFinal && !reclamoEnEdicionId) {
+      btnFinal.disabled = false;
+      btnFinal.textContent = "💾 Guardar Reclamo";
+    }
+  }
 }
 
 // Envío a Google Sheets con reintentos (Hoja "RECLAMOS" columnas A-T)
