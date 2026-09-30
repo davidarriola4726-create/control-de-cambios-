@@ -41,7 +41,23 @@
 
 function obtenerHojaReclamos() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName("RECLAMOS");
+  var sheets = ss.getSheets();
+  var sheet = null;
+  
+  // Buscar de forma insensible a mayúsculas/minúsculas: "Reclamos", "RECLAMOS", etc.
+  for (var i = 0; i < sheets.length; i++) {
+    var sName = sheets[i].getName().trim().toLowerCase();
+    if (sName === "reclamos") {
+      sheet = sheets[i];
+      break;
+    }
+  }
+
+  // Si no existe una hoja llamada "Reclamos", usar la hoja activa o la primera
+  if (!sheet) {
+    sheet = ss.getActiveSheet() || sheets[0];
+  }
+
   var encabezadosOficiales = [
     "ID_Reclamo", "Ruta", "Vendedor", "Cliente", "Telefono", "Factura",
     "Photo", "Producto", "Motivo", "Fecha", "Hora", "FirmaVendedor", "FirmaCliente",
@@ -49,8 +65,8 @@ function obtenerHojaReclamos() {
     "Dirección del Cliente", "Cantidad de Producto", "Cambio", "Devolución", "Reparación"
   ];
 
-  if (!sheet) {
-    sheet = ss.insertSheet("RECLAMOS");
+  if (!sheet || sheet.getLastRow() === 0) {
+    if (!sheet) sheet = ss.insertSheet("Reclamos");
     sheet.appendRow(encabezadosOficiales);
     sheet.getRange(1, 1, 1, 22).setFontWeight("bold").setBackground("#0F52BA").setFontColor("#FFFFFF");
     sheet.getRange("E:E").setNumberFormat("@"); // Columna E: Teléfono estrictamente como TEXTO
@@ -73,6 +89,26 @@ function obtenerHojaReclamos() {
     SpreadsheetApp.flush();
   }
   return sheet;
+}
+
+function obtenerSiguienteFilaVacia(sheet) {
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return 2;
+  
+  // Buscar si hay filas vacías entre la fila 2 y lastRow
+  var colA = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+  for (var i = 0; i < colA.length; i++) {
+    var val = colA[i][0];
+    if (val === null || val === undefined || String(val).trim() === "") {
+      var fila = i + 2;
+      var vals = sheet.getRange(fila, 1, 1, Math.min(sheet.getLastColumn() || 6, 6)).getValues()[0];
+      var estaVacia = vals.every(function(v) { return v === null || v === undefined || String(v).trim() === ""; });
+      if (estaVacia) {
+        return fila;
+      }
+    }
+  }
+  return lastRow + 1;
 }
 
 function extraerNumeroReclamo(str) {
@@ -387,10 +423,13 @@ function doPost(e) {
       ];
     }
     
-    // 🔍 BUSCAR SI EXISTE POR NÚMERO O POR ID
-    var filaExistente = buscarFilaPorIdONumero(sheet, idReclamo, d.factura);
+    // 🔍 Si es actualización explícita, buscar la fila existente por ID
+    var filaExistente = -1;
+    if (esActualizacion) {
+      filaExistente = buscarFilaPorIdONumero(sheet, idReclamo, d.factura);
+    }
     
-    if (filaExistente !== -1) {
+    if (esActualizacion && filaExistente !== -1) {
       // ✏️ ACTUALIZAR FILA QUE YA EXISTE EN SU POSICIÓN EXACTA (NUNCA CREAR DUPLICADO)
       sheet.getRange(filaExistente, 1, 1, filaValores.length).setValues([filaValores]);
       sheet.getRange(filaExistente, 5).setNumberFormat("@"); // Asegurar formato texto en teléfono
@@ -412,16 +451,16 @@ function doPost(e) {
         id: idReclamo
       })).setMimeType(ContentService.MimeType.JSON);
     } else {
-      // 🆕 REGISTRO NUEVO
-      sheet.appendRow(filaValores);
-      var lastRow = sheet.getLastRow();
-      sheet.getRange(lastRow, 5).setNumberFormat("@"); // Columna E: Teléfono como texto
+      // 🆕 REGISTRO NUEVO: Guardar exactamente en la siguiente fila vacía
+      var filaNueva = obtenerSiguienteFilaVacia(sheet);
+      sheet.getRange(filaNueva, 1, 1, filaValores.length).setValues([filaValores]);
+      sheet.getRange(filaNueva, 5).setNumberFormat("@"); // Columna E: Teléfono como texto
       SpreadsheetApp.flush(); // ⚡ Guardar al instante en Google Sheets
       try { lock.releaseLock(); } catch(e) {}
       return ContentService.createTextOutput(JSON.stringify({
         success: true,
         action: "creado",
-        fila: lastRow,
+        fila: filaNueva,
         id: idReclamo
       })).setMimeType(ContentService.MimeType.JSON);
     }

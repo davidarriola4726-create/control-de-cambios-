@@ -1474,7 +1474,7 @@
 // -------------------------------------------------------------
 // 📌 DATOS FIJOS DEL SISTEMA Y GOOGLE APPS SCRIPT
 // -------------------------------------------------------------
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwBNgwKl7EOyAZBpyBpAe_B4eIpZLwkpRtWyGLzyPEE8eJf1ofHxbKu9P2zaKMH2lh1_Q/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxSQLmqGksQfdEqncQ9pvv9lCsxv2XA-UIaKaXjqTrH1yYWiR5gdBjfhQxAO5UcEaD7qQ/exec";
 const LOGO_URL = "/logo.png";
 
 // -------------------------------------------------------------
@@ -2123,27 +2123,30 @@ async function obtenerDatosFrescos() {
     try {
         const respSheets = await fetch(WEB_APP_URL, { cache: "no-store" });
         if (respSheets.ok) {
-            const resJson = await respSheets.json();
-            const items = Array.isArray(resJson) ? resJson : (resJson.reclamos || resJson.records || resJson.data || []);
-            if (Array.isArray(items) && items.length > 0) {
-                const sheetsData = items.map((item, idx) => normalizarReclamo(item, idx)).filter(Boolean);
-                
-                const listaCombinada = [];
-                function mezclarRegistro(r) {
-                    if (!r || !r.id) return;
-                    const idx = listaCombinada.findIndex(x => sonElMismoReclamo(x.id, r.id) || sonElMismoReclamo(x.voucherNumber, r.id));
-                    if (idx !== -1) {
-                        listaCombinada[idx] = { ...listaCombinada[idx], ...r };
-                    } else {
-                        listaCombinada.push(r);
+            const rawText = await respSheets.text();
+            if (rawText && (rawText.trim().startsWith('{') || rawText.trim().startsWith('['))) {
+                const resJson = JSON.parse(rawText);
+                const items = Array.isArray(resJson) ? resJson : (resJson.reclamos || resJson.records || resJson.data || []);
+                if (Array.isArray(items) && items.length > 0) {
+                    const sheetsData = items.map((item, idx) => normalizarReclamo(item, idx)).filter(Boolean);
+                    
+                    const listaCombinada = [];
+                    function mezclarRegistro(r) {
+                        if (!r || !r.id) return;
+                        const idx = listaCombinada.findIndex(x => sonElMismoReclamo(x.id, r.id) || sonElMismoReclamo(x.voucherNumber, r.id));
+                        if (idx !== -1) {
+                            listaCombinada[idx] = { ...listaCombinada[idx], ...r };
+                        } else {
+                            listaCombinada.push(r);
+                        }
                     }
+                    // Primero datos leídos de Google Sheets (todas las filas)
+                    sheetsData.forEach(mezclarRegistro);
+                    // Combinar con datos del backend local
+                    datos.forEach(mezclarRegistro);
+                    datos = listaCombinada;
+                    obtuveDatos = true;
                 }
-                // Primero datos leídos de Google Sheets (todas las filas)
-                sheetsData.forEach(mezclarRegistro);
-                // Combinar con datos del backend local
-                datos.forEach(mezclarRegistro);
-                datos = listaCombinada;
-                obtuveDatos = true;
             }
         }
     } catch (e) {
@@ -3061,142 +3064,147 @@ async function guardarReclamo() {
     btn.disabled = true;
     btn.textContent = "⏳ Guardando...";
 
-    const id = document.getElementById("idReclamo").value.trim();
-    const rawRuta = document.getElementById("ruta").value;
-    const rawVendedor = document.getElementById("vendedor").value;
-    const ruta = normalizarARutaId(rawRuta, rawVendedor);
-    const vendedor = (rawVendedor && rawVendedor.trim() !== '' && rawVendedor.toLowerCase() !== 'administrador general') 
-        ? rawVendedor.trim() 
-        : (VENDEDORES_POR_RUTA[ruta] || 'BRYAN GOMEZ');
-    const fecha = document.getElementById("fecha").value;
-    const hora = document.getElementById("hora").value;
+    try {
+        const id = document.getElementById("idReclamo").value.trim() || ("N° " + String((reclamosCache ? reclamosCache.length : 0) + 1).padStart(5, '0'));
+        const rawRuta = document.getElementById("ruta").value;
+        const rawVendedor = document.getElementById("vendedor").value;
+        const ruta = normalizarARutaId(rawRuta, rawVendedor);
+        const vendedor = (rawVendedor && rawVendedor.trim() !== '' && rawVendedor.toLowerCase() !== 'administrador general') 
+            ? rawVendedor.trim() 
+            : (VENDEDORES_POR_RUTA[ruta] || 'BRYAN GOMEZ');
+        const fecha = document.getElementById("fecha").value || obtenerFechaActual();
+        const hora = document.getElementById("hora").value || obtenerHoraActual();
 
-    // Obtener valores de las 3 casillas de verificación: Cambio, Devolución, Reparación
-    const esCambio = document.getElementById("chkTipoCambio") ? document.getElementById("chkTipoCambio").checked : false;
-    const esDevolucion = document.getElementById("chkTipoDevolucion") ? document.getElementById("chkTipoDevolucion").checked : false;
-    const esReparacion = document.getElementById("chkTipoReparacion") ? document.getElementById("chkTipoReparacion").checked : false;
+        // Obtener valores de las 3 casillas de verificación: Cambio, Devolución, Reparación
+        const esCambio = document.getElementById("chkTipoCambio") ? document.getElementById("chkTipoCambio").checked : false;
+        const esDevolucion = document.getElementById("chkTipoDevolucion") ? document.getElementById("chkTipoDevolucion").checked : false;
+        const esReparacion = document.getElementById("chkTipoReparacion") ? document.getElementById("chkTipoReparacion").checked : false;
 
-    // Obtener valores de los 5 checkboxes de estado
-    const procesoAceptado = document.getElementById("chkFormAceptado").checked;
-    const procesoRechazado = document.getElementById("chkFormRechazado").checked;
-    const enProcesoEntrega = document.getElementById("chkFormEntrega").checked;
-    const cambioEntregado = document.getElementById("chkFormCambioEntregado").checked;
-    const productoRecibido = document.getElementById("chkFormRecibido").checked;
+        // Obtener valores de los 5 checkboxes de estado
+        const procesoAceptado = document.getElementById("chkFormAceptado") ? document.getElementById("chkFormAceptado").checked : false;
+        const procesoRechazado = document.getElementById("chkFormRechazado") ? document.getElementById("chkFormRechazado").checked : false;
+        const enProcesoEntrega = document.getElementById("chkFormEntrega") ? document.getElementById("chkFormEntrega").checked : false;
+        const cambioEntregado = document.getElementById("chkFormCambioEntregado") ? document.getElementById("chkFormCambioEntregado").checked : false;
+        const productoRecibido = document.getElementById("chkFormRecibido") ? document.getElementById("chkFormRecibido").checked : false;
 
-    // Extraer firmas dibujadas en canvas como base64
-    const canvasVendedor = document.getElementById("canvasFirmaVendedor");
-    const canvasCliente = document.getElementById("canvasFirmaCliente");
-    const base64FirmaVendedor = (firmaVendedorTrazada && canvasVendedor) ? canvasVendedor.toDataURL("image/png") : "";
-    const base64FirmaCliente = (firmaClienteTrazada && canvasCliente) ? canvasCliente.toDataURL("image/png") : "";
+        // Extraer firmas dibujadas en canvas como base64
+        const canvasVendedor = document.getElementById("canvasFirmaVendedor");
+        const canvasCliente = document.getElementById("canvasFirmaCliente");
+        const base64FirmaVendedor = (firmaVendedorTrazada && canvasVendedor) ? canvasVendedor.toDataURL("image/png") : "";
+        const base64FirmaCliente = (firmaClienteTrazada && canvasCliente) ? canvasCliente.toDataURL("image/png") : "";
 
-    // 🔍 Detectar si es una modificación de un reclamo existente para NUNCA duplicar
-    const indexExistente = reclamosCache.findIndex(x => sonElMismoReclamo(x.id, id) || sonElMismoReclamo(x.voucherNumber, id));
+        // 🔍 Detectar si es una modificación de un reclamo existente para NUNCA duplicar
+        const indexExistente = reclamosCache.findIndex(x => sonElMismoReclamo(x.id, id) || sonElMismoReclamo(x.voucherNumber, id));
+        const esModificacion = (reclamoEnEdicionId !== null) || (indexExistente !== -1);
 
-    const esModificacion = (reclamoEnEdicionId !== null) || (indexExistente !== -1);
+        const datosReclamo = {
+            id,
+            voucherNumber: id,
+            routeId: ruta.toUpperCase().replace(/\s+/g, '-'),
+            ruta,
+            vendorName: vendedor,
+            vendedor,
+            clientName: cliente,
+            cliente,
+            direccion,
+            direccionCliente: direccion,
+            clientAddress: direccion,
+            clientPhone: String(telefono),
+            telefono: String(telefono),
+            invoiceNumber: factura,
+            factura,
+            photo: fotoBase64Actual,
+            foto: fotoBase64Actual,
+            productName: producto,
+            producto,
+            cantidad,
+            cantidadProducto: cantidad,
+            quantity: cantidad,
+            description: motivo,
+            motivo,
+            date: fecha,
+            fecha,
+            time: hora,
+            hora,
+            firmaVendedor: base64FirmaVendedor || (esModificacion && indexExistente !== -1 ? reclamosCache[indexExistente].firmaVendedor : ""),
+            firmaCliente: base64FirmaCliente || (esModificacion && indexExistente !== -1 ? reclamosCache[indexExistente].firmaCliente : ""),
+            procesoAceptado,
+            procesoRechazado,
+            enProcesoEntrega,
+            cambioEntregado,
+            productoRecibido,
+            fechaCambioEntregado: cambioEntregado ? (fechaHoraEntregaForm || obtenerFechaHoraFormateada()) : "",
+            cambio: esCambio,
+            Cambio: esCambio ? "SI" : "NO",
+            devolucion: esDevolucion,
+            Devolucion: esDevolucion ? "SI" : "NO",
+            reparacion: esReparacion,
+            Reparacion: esReparacion ? "SI" : "NO",
+            timestamp: new Date().toISOString()
+        };
 
-    const datosReclamo = {
-        id,
-        voucherNumber: id,
-        routeId: ruta.toUpperCase().replace(/\s+/g, '-'),
-        ruta,
-        vendorName: vendedor,
-        vendedor,
-        clientName: cliente,
-        cliente,
-        direccion,
-        direccionCliente: direccion,
-        clientAddress: direccion,
-        clientPhone: String(telefono),
-        telefono: String(telefono),
-        invoiceNumber: factura,
-        factura,
-        photo: fotoBase64Actual,
-        foto: fotoBase64Actual,
-        productName: producto,
-        producto,
-        cantidad,
-        cantidadProducto: cantidad,
-        quantity: cantidad,
-        description: motivo,
-        motivo,
-        date: fecha,
-        fecha,
-        time: hora,
-        hora,
-        firmaVendedor: base64FirmaVendedor || (esModificacion && indexExistente !== -1 ? reclamosCache[indexExistente].firmaVendedor : ""),
-        firmaCliente: base64FirmaCliente || (esModificacion && indexExistente !== -1 ? reclamosCache[indexExistente].firmaCliente : ""),
-        procesoAceptado,
-        procesoRechazado,
-        enProcesoEntrega,
-        cambioEntregado,
-        productoRecibido,
-        fechaCambioEntregado: cambioEntregado ? (fechaHoraEntregaForm || obtenerFechaHoraFormateada()) : "",
-        cambio: esCambio,
-        Cambio: esCambio ? "SI" : "NO",
-        devolucion: esDevolucion,
-        Devolucion: esDevolucion ? "SI" : "NO",
-        reparacion: esReparacion,
-        Reparacion: esReparacion ? "SI" : "NO",
-        timestamp: new Date().toISOString()
-    };
+        if (esModificacion) {
+            // 🔄 ACTUALIZACIÓN: Modificar el registro existente en su posición, NUNCA crear fila nueva
+            const idxActualizar = indexExistente !== -1 ? indexExistente : reclamosCache.findIndex(x => sonElMismoReclamo(x.id, reclamoEnEdicionId) || sonElMismoReclamo(x.voucherNumber, reclamoEnEdicionId));
+            if (idxActualizar !== -1) {
+                reclamosCache[idxActualizar] = { ...reclamosCache[idxActualizar], ...datosReclamo };
+            } else {
+                reclamosCache.unshift(datosReclamo);
+            }
+            try {
+                localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache));
+            } catch (e) {}
 
-    if (esModificacion) {
-        // 🔄 ACTUALIZACIÓN: Modificar el registro existente en su posición, NUNCA crear fila nueva
-        const idxActualizar = indexExistente !== -1 ? indexExistente : reclamosCache.findIndex(x => sonElMismoReclamo(x.id, reclamoEnEdicionId) || sonElMismoReclamo(x.voucherNumber, reclamoEnEdicionId));
-        if (idxActualizar !== -1) {
-            reclamosCache[idxActualizar] = { ...reclamosCache[idxActualizar], ...datosReclamo };
-        } else {
-            reclamosCache.unshift(datosReclamo);
-        }
-        localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache));
+            mostrarMensaje("mensajeAccion", "Reclamo guardado correctamente ✅", "exito");
+            cancelarEdicion();
+            limpiarFormulario();
+            renderizarBarraCarpetas();
+            renderizarTabla();
+            actualizarGraficas();
 
-        mostrarMensaje("mensajeAccion", `✅ ¡Reclamo ${id} actualizado correctamente sin duplicados!`, "exito");
-        cancelarEdicion();
-        limpiarFormulario();
-        renderizarBarraCarpetas();
-        renderizarTabla();
-        actualizarGraficas();
-
-        // Enviar al servidor local vía PUT /api/records/:id para actualizar
-        try {
-            await fetch(`/api/records/${encodeURIComponent(id)}`, {
+            // Enviar al servidor local vía PUT /api/records/:id para actualizar
+            fetch(`/api/records/${encodeURIComponent(id)}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(datosReclamo)
-            });
-        } catch (e) {
-            console.warn("Backend local error:", e);
-        }
+            }).catch(e => console.warn("Backend local error:", e));
 
-        // Sincronizar actualización con Google Sheets (action: "actualizar")
-        enviarActualizacionGoogleSheets(datosReclamo, true);
+            // Sincronizar actualización con Google Sheets (action: "actualizar")
+            enviarActualizacionGoogleSheets(datosReclamo, true);
 
-    } else {
-        // 🆕 NUEVO REGISTRO
-        reclamosCache.unshift(datosReclamo);
-        idsConocidos.add(datosReclamo.id);
-        localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache));
+        } else {
+            // 🆕 NUEVO REGISTRO
+            reclamosCache.unshift(datosReclamo);
+            idsConocidos.add(datosReclamo.id);
+            try {
+                localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache));
+            } catch (e) {}
 
-        mostrarMensaje("mensajeAccion", `✅ ¡Reclamo ${id} registrado con éxito! Tel: ${telefono}`, "exito");
-        limpiarFormulario();
-        renderizarBarraCarpetas();
-        renderizarTabla();
-        actualizarGraficas();
+            // Mensaje requerido: "Reclamo guardado correctamente"
+            mostrarMensaje("mensajeAccion", "Reclamo guardado correctamente ✅", "exito");
+            limpiarFormulario();
+            renderizarBarraCarpetas();
+            renderizarTabla();
+            actualizarGraficas();
 
-        btn.disabled = false;
-        btn.textContent = "💾 Guardar Reclamo";
+            // Envío a Google Apps Script y servidor en segundo plano
+            enviarActualizacionGoogleSheets(datosReclamo, false);
 
-        // Envío a Google Apps Script y servidor
-        enviarActualizacionGoogleSheets(datosReclamo, false);
-
-        try {
-            await fetch("/api/records", {
+            fetch("/api/records", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(datosReclamo)
-            });
-        } catch (e) {
-            console.warn("Backend local error:", e);
+            }).catch(e => console.warn("Backend local error:", e));
+        }
+
+    } catch (err) {
+        console.error("Error en guardarReclamo:", err);
+        mostrarMensaje("mensajeAccion", "❌ Error al guardar: " + (err.message || err), "error");
+    } finally {
+        const btnFinal = document.getElementById("btnGuardar");
+        if (btnFinal && !reclamoEnEdicionId) {
+            btnFinal.disabled = false;
+            btnFinal.textContent = "💾 Guardar Reclamo";
         }
     }
 }

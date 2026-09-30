@@ -199,7 +199,7 @@ function limpiarTelefonoTexto(val: any): string {
   return s;
 }
 
-const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbwBNgwKl7EOyAZBpyBpAe_B4eIpZLwkpRtWyGLzyPEE8eJf1ofHxbKu9P2zaKMH2lh1_Q/exec";
+const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbxSQLmqGksQfdEqncQ9pvv9lCsxv2XA-UIaKaXjqTrH1yYWiR5gdBjfhQxAO5UcEaD7qQ/exec";
 
 // Reintentar envío a Google Sheets en segundo plano
 async function enviarAGoogleSheetsConReintentos(payload: any, maxRetries = 3) {
@@ -230,7 +230,16 @@ async function sincronizarDesdeGoogleSheets() {
   try {
     const resp = await fetch(GOOGLE_SHEETS_URL);
     if (!resp.ok) return;
-    const data: any = await resp.json();
+    const cType = resp.headers.get('content-type') || '';
+    if (!cType.includes('json') && !cType.includes('javascript') && !cType.includes('text/plain')) {
+      // Si devolvió HTML (ej. página de inicio de sesión de Google o 404), ignorar
+      return;
+    }
+    const rawText = await resp.text();
+    if (!rawText || !rawText.trim().startsWith('{') && !rawText.trim().startsWith('[')) {
+      return;
+    }
+    const data: any = JSON.parse(rawText);
     const items = Array.isArray(data) ? data : (data?.reclamos || data?.records || data?.data || []);
     
     if (Array.isArray(items) && items.length > 0) {
