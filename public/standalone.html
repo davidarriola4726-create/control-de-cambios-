@@ -2584,42 +2584,36 @@ async function guardarReclamo(datosFormulario) {
   try {
     const respuesta = await fetch(URL_SCRIPT, {
       method: "POST",
+      mode: "no-cors",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify(datos)
     });
 
-    const resultado = await respuesta.json();
-
-    if (resultado.ok || resultado.success) {
-      alert("✅ ¡GUARDADO EN LA HOJA!");
-
-      // Envío a servidor local
-      try {
-        await fetch("/api/records", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(datosFormulario)
-        });
-      } catch (e) {
-        console.warn("Backend local:", e);
-      }
-
-      reclamosCache.unshift(datosFormulario);
-      idsConocidos.add(datosFormulario.id);
-      localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache));
-
-      limpiarFormulario();
-      renderizarBarraCarpetas();
-      renderizarTabla();
-      actualizarGraficas();
-
-      return true;
-    } else {
-      alert("❌ " + (resultado.error || "Error al procesar en la hoja"));
-      return false;
+    // Envío a servidor local
+    try {
+      await fetch("/api/records", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datosFormulario)
+      });
+    } catch (e) {
+      console.warn("Backend local:", e);
     }
+
+    reclamosCache.unshift(datosFormulario);
+    idsConocidos.add(datosFormulario.id);
+    localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache));
+
+    limpiarFormulario();
+    renderizarBarraCarpetas();
+    renderizarTabla();
+    actualizarGraficas();
+
+    alert("✅ Enviado a la hoja. Revisa si aparece.");
+    return true;
+
   } catch (error) {
     alert("❌ Error: " + error.message);
     return false;

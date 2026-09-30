@@ -3178,56 +3178,50 @@ async function guardarReclamo(datosFormulario) {
   try {
     const respuesta = await fetch(URL_SCRIPT, {
       method: "POST",
+      mode: "no-cors",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify(datos)
     });
 
-    const resultado = await respuesta.json();
+    // Sincronización en caché local y UI
+    const id = datos.idReclamo || datosFormulario.id;
+    const indexExistente = reclamosCache.findIndex(x => sonElMismoReclamo(x.id, id) || sonElMismoReclamo(x.voucherNumber, id));
+    const esModificacion = (reclamoEnEdicionId !== null) || (indexExistente !== -1);
 
-    if (resultado.ok || resultado.success) {
-      alert("✅ ¡GUARDADO EN LA HOJA!");
-
-      // Sincronización en caché local y UI
-      const id = datos.idReclamo || datosFormulario.id;
-      const indexExistente = reclamosCache.findIndex(x => sonElMismoReclamo(x.id, id) || sonElMismoReclamo(x.voucherNumber, id));
-      const esModificacion = (reclamoEnEdicionId !== null) || (indexExistente !== -1);
-
-      if (esModificacion) {
-        const idxActualizar = indexExistente !== -1 ? indexExistente : reclamosCache.findIndex(x => sonElMismoReclamo(x.id, reclamoEnEdicionId) || sonElMismoReclamo(x.voucherNumber, reclamoEnEdicionId));
-        if (idxActualizar !== -1) {
-          reclamosCache[idxActualizar] = { ...reclamosCache[idxActualizar], ...datosFormulario };
-        } else {
-          reclamosCache.unshift(datosFormulario);
-        }
-        fetch(`/api/records/${encodeURIComponent(id)}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(datosFormulario)
-        }).catch(e => console.warn(e));
+    if (esModificacion) {
+      const idxActualizar = indexExistente !== -1 ? indexExistente : reclamosCache.findIndex(x => sonElMismoReclamo(x.id, reclamoEnEdicionId) || sonElMismoReclamo(x.voucherNumber, reclamoEnEdicionId));
+      if (idxActualizar !== -1) {
+        reclamosCache[idxActualizar] = { ...reclamosCache[idxActualizar], ...datosFormulario };
       } else {
         reclamosCache.unshift(datosFormulario);
-        idsConocidos.add(id);
-        fetch("/api/records", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(datosFormulario)
-        }).catch(e => console.warn(e));
       }
-
-      try { localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache)); } catch (e) {}
-
-      limpiarFormulario();
-      renderizarBarraCarpetas();
-      renderizarTabla();
-      actualizarGraficas();
-
-      return true;
+      fetch(`/api/records/${encodeURIComponent(id)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datosFormulario)
+      }).catch(e => console.warn(e));
     } else {
-      alert("❌ " + (resultado.error || "Error al procesar en la hoja"));
-      return false;
+      reclamosCache.unshift(datosFormulario);
+      idsConocidos.add(id);
+      fetch("/api/records", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datosFormulario)
+      }).catch(e => console.warn(e));
     }
+
+    try { localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache)); } catch (e) {}
+
+    limpiarFormulario();
+    renderizarBarraCarpetas();
+    renderizarTabla();
+    actualizarGraficas();
+
+    alert("✅ Enviado a la hoja. Revisa si aparece.");
+    return true;
+
   } catch (error) {
     alert("❌ Error: " + error.message);
     return false;
