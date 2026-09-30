@@ -199,7 +199,7 @@ function limpiarTelefonoTexto(val: any): string {
   return s;
 }
 
-const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbxSQLmqGksQfdEqncQ9pvv9lCsxv2XA-UIaKaXjqTrH1yYWiR5gdBjfhQxAO5UcEaD7qQ/exec";
+const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbxTs9AoIJjwII3K5KcMGzhJAIFzF-Fias43rCWB6VxXx8Dvi3Tc3rygQwEn9A47E7uOSg/exec";
 
 // Reintentar envío a Google Sheets en segundo plano
 async function enviarAGoogleSheetsConReintentos(payload: any, maxRetries = 3) {
