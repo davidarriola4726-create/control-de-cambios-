@@ -3146,6 +3146,42 @@ function recopilarDatosFormulario() {
 }
 
 // -------------------------------------------------------------
+// 📤 ENVIAR DATOS A GOOGLE SHEETS CON NOMBRES EXACTOS
+// -------------------------------------------------------------
+async function enviarDatos(datosFormulario) {
+  const datos = {
+    idReclamo: datosFormulario.idReclamo,
+    ruta: datosFormulario.ruta,
+    vendedor: datosFormulario.vendedor,
+    cliente: datosFormulario.cliente,
+    telefono: datosFormulario.telefono,
+    factura: datosFormulario.factura,
+    producto: datosFormulario.producto,
+    cantidad: datosFormulario.cantidad,
+    motivo: datosFormulario.motivo,
+    direccion: datosFormulario.direccion,
+    firmaVendedor: datosFormulario.firmaVendedor,
+    firmaCliente: datosFormulario.firmaCliente
+  };
+
+  try {
+    const resp = await fetch(URL_SCRIPT, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(datos)
+    });
+    try { alert("✅ ¡Guardado en la hoja!"); } catch (e) {}
+    mostrarMensaje("mensajeAccion", "✅ ¡Guardado en la hoja!", "exito");
+    return true;
+  } catch (e) {
+    try { alert("❌ No llegó a la hoja: " + e.message); } catch (err) {}
+    mostrarMensaje("mensajeAccion", "❌ No llegó a la hoja: " + e.message, "error");
+    return false;
+  }
+}
+
+// -------------------------------------------------------------
 // 💾 GUARDAR RECLAMO (FUNCIÓN OFICIAL CONECTADA A GOOGLE APPS SCRIPT)
 // -------------------------------------------------------------
 async function guardarReclamo(datos) {
@@ -3162,14 +3198,7 @@ async function guardarReclamo(datos) {
   }
 
   try {
-    const respuesta = await fetch(URL_SCRIPT, {
-      method: "POST",
-      mode: "no-cors",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(datos)
-    });
+    await enviarDatos(datos);
 
     // Mantener la sincronización local en vivo y en interfaz
     const id = datos.id || datos.idReclamo;
@@ -3205,12 +3234,9 @@ async function guardarReclamo(datos) {
     renderizarTabla();
     actualizarGraficas();
 
-    try { alert("✅ Guardado correctamente"); } catch (e) {}
-    mostrarMensaje("mensajeAccion", "✅ Guardado correctamente", "exito");
     return true;
   } catch (error) {
-    try { alert("❌ Error: " + error.message); } catch (e) {}
-    mostrarMensaje("mensajeAccion", "❌ Error: " + error.message, "error");
+    console.error("Error en guardarReclamo:", error);
     return false;
   } finally {
     const btnFinal = document.getElementById("btnGuardar");

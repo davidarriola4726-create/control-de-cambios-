@@ -367,6 +367,9 @@ function doPost(e) {
       }
     }
 
+    var fechaStr = d.fecha || Utilities.formatDate(new Date(), Session.getScriptTimeZone() || "GMT-6", "yyyy-MM-dd");
+    var horaStr = d.hora || Utilities.formatDate(new Date(), Session.getScriptTimeZone() || "GMT-6", "HH:mm");
+
     var filaValores;
     if (tieneColumnaPiloto) {
       // Si la hoja aún tiene columna Piloto (G), se guarda vacía "" y las 3 casillas quedan en T, U, V
@@ -381,8 +384,8 @@ function doPost(e) {
         d.photo || d.foto || d.Photo || "",
         d.producto || d.Producto || "",
         d.motivo || d.Motivo || "",
-        d.fecha || d.Fecha || "",
-        d.hora || d.Hora || "",
+        fechaStr,
+        horaStr,
         d.firmaVendedor || d.FirmaVendedor || "",
         d.firmaCliente || d.FirmaCliente || "",
         d.procesoAceptado || d["Proceso Aceptado"] || "NO",
@@ -407,8 +410,8 @@ function doPost(e) {
         d.photo || d.foto || d.Photo || "",
         d.producto || d.Producto || "",
         d.motivo || d.Motivo || "",
-        d.fecha || d.Fecha || "",
-        d.hora || d.Hora || "",
+        fechaStr,
+        horaStr,
         d.firmaVendedor || d.FirmaVendedor || "",
         d.firmaCliente || d.FirmaCliente || "",
         d.procesoAceptado || d["Proceso Aceptado"] || "NO",
