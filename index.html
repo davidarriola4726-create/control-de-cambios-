@@ -3148,11 +3148,11 @@ function recopilarDatosFormulario() {
 // -------------------------------------------------------------
 // 💾 GUARDAR RECLAMO (FUNCIÓN OFICIAL CONECTADA A GOOGLE APPS SCRIPT)
 // -------------------------------------------------------------
-async function guardarReclamo(datos) {
-  if (!datos || (typeof datos === "object" && datos instanceof Event)) {
-    datos = recopilarDatosFormulario();
+async function guardarReclamo(form) {
+  if (!form || (typeof form === "object" && form instanceof Event)) {
+    form = recopilarDatosFormulario();
   }
-  if (!datos) return false;
+  if (!form) return false;
 
   const btn = document.getElementById("btnGuardar");
   if (btn) {
@@ -3160,19 +3160,19 @@ async function guardarReclamo(datos) {
     btn.textContent = "⏳ Guardando...";
   }
 
-  const envio = {
-    idReclamo: datos.idReclamo,
-    ruta: datos.ruta,
-    vendedor: datos.vendedor,
-    cliente: datos.cliente,
-    telefono: datos.telefono,
-    factura: datos.factura,
-    producto: datos.producto,
-    motivo: datos.motivo,
-    direccion: datos.direccion,
-    cantidad: datos.cantidad,
-    firmaVendedor: datos.firmaVendedor,
-    firmaCliente: datos.firmaCliente
+  const datos = {
+    idReclamo: form.idReclamo,
+    ruta: form.ruta,
+    vendedor: form.vendedor,
+    cliente: form.cliente,
+    direccion: form.direccion,
+    telefono: form.telefono,
+    factura: form.factura,
+    producto: form.producto,
+    cantidad: form.cantidad,
+    motivo: form.motivo,
+    firmaVendedor: form.firmaVendedor,
+    firmaCliente: form.firmaCliente
   };
 
   try {
@@ -3180,33 +3180,33 @@ async function guardarReclamo(datos) {
       method: "POST",
       mode: "no-cors",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(envio)
+      body: JSON.stringify(datos)
     });
 
     // Sincronización en caché local y UI
-    const id = envio.idReclamo || datos.id;
+    const id = datos.idReclamo || form.id;
     const indexExistente = reclamosCache.findIndex(x => sonElMismoReclamo(x.id, id) || sonElMismoReclamo(x.voucherNumber, id));
     const esModificacion = (reclamoEnEdicionId !== null) || (indexExistente !== -1);
 
     if (esModificacion) {
       const idxActualizar = indexExistente !== -1 ? indexExistente : reclamosCache.findIndex(x => sonElMismoReclamo(x.id, reclamoEnEdicionId) || sonElMismoReclamo(x.voucherNumber, reclamoEnEdicionId));
       if (idxActualizar !== -1) {
-        reclamosCache[idxActualizar] = { ...reclamosCache[idxActualizar], ...datos };
+        reclamosCache[idxActualizar] = { ...reclamosCache[idxActualizar], ...form };
       } else {
-        reclamosCache.unshift(datos);
+        reclamosCache.unshift(form);
       }
       fetch(`/api/records/${encodeURIComponent(id)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(datos)
+        body: JSON.stringify(form)
       }).catch(e => console.warn(e));
     } else {
-      reclamosCache.unshift(datos);
+      reclamosCache.unshift(form);
       idsConocidos.add(id);
       fetch("/api/records", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(datos)
+        body: JSON.stringify(form)
       }).catch(e => console.warn(e));
     }
 
