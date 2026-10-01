@@ -1474,7 +1474,7 @@
 // -------------------------------------------------------------
 // 📌 DATOS FIJOS DEL SISTEMA Y GOOGLE APPS SCRIPT
 // -------------------------------------------------------------
-const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbzZkl_wtYdxVRk9NgBIsYsoD7_E3C5B_BniLfyucE7b27hRG8_ciE_JVGzyiGalQfh0/exec";
+const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbwQ4cwbfHSAv5nb3eWonDd5n4sfCXuW3jOEIVZs8AUH1ah19cZNpaJD1BgVFGbMh2m26A/exec";
 const WEB_APP_URL = URL_SCRIPT;
 const LOGO_URL = "/logo.png";
 
@@ -3148,11 +3148,11 @@ function recopilarDatosFormulario() {
 // -------------------------------------------------------------
 // 💾 GUARDAR RECLAMO (FUNCIÓN OFICIAL CONECTADA A GOOGLE APPS SCRIPT)
 // -------------------------------------------------------------
-async function guardarReclamo(datosFormulario) {
-  if (!datosFormulario || (typeof datosFormulario === "object" && datosFormulario instanceof Event)) {
-    datosFormulario = recopilarDatosFormulario();
+async function guardarReclamo(form) {
+  if (!form || (typeof form === "object" && form instanceof Event)) {
+    form = recopilarDatosFormulario();
   }
-  if (!datosFormulario) return false;
+  if (!form) return false;
 
   const btn = document.getElementById("btnGuardar");
   if (btn) {
@@ -3161,54 +3161,52 @@ async function guardarReclamo(datosFormulario) {
   }
 
   const datos = {
-    idReclamo: datosFormulario.idReclamo,
-    ruta: datosFormulario.ruta,
-    vendedor: datosFormulario.vendedor,
-    cliente: datosFormulario.cliente,
-    telefono: datosFormulario.telefono,
-    factura: datosFormulario.factura,
-    producto: datosFormulario.producto,
-    motivo: datosFormulario.motivo,
-    cantidad: datosFormulario.cantidad,
-    direccion: datosFormulario.direccion,
-    firmaVendedor: datosFormulario.firmaVendedor,
-    firmaCliente: datosFormulario.firmaCliente
+    idReclamo: form.idReclamo,
+    ruta: form.ruta,
+    vendedor: form.vendedor,
+    cliente: form.cliente,
+    telefono: form.telefono,
+    factura: form.factura,
+    producto: form.producto,
+    motivo: form.motivo,
+    cantidad: form.cantidad,
+    direccion: form.direccion,
+    firmaVendedor: form.firmaVendedor,
+    firmaCliente: form.firmaCliente
   };
 
   try {
-    const respuesta = await fetch(URL_SCRIPT, {
+    await fetch(URL_SCRIPT, {
       method: "POST",
       mode: "no-cors",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(datos)
     });
 
     // Sincronización en caché local y UI
-    const id = datos.idReclamo || datosFormulario.id;
+    const id = datos.idReclamo || form.id;
     const indexExistente = reclamosCache.findIndex(x => sonElMismoReclamo(x.id, id) || sonElMismoReclamo(x.voucherNumber, id));
     const esModificacion = (reclamoEnEdicionId !== null) || (indexExistente !== -1);
 
     if (esModificacion) {
       const idxActualizar = indexExistente !== -1 ? indexExistente : reclamosCache.findIndex(x => sonElMismoReclamo(x.id, reclamoEnEdicionId) || sonElMismoReclamo(x.voucherNumber, reclamoEnEdicionId));
       if (idxActualizar !== -1) {
-        reclamosCache[idxActualizar] = { ...reclamosCache[idxActualizar], ...datosFormulario };
+        reclamosCache[idxActualizar] = { ...reclamosCache[idxActualizar], ...form };
       } else {
-        reclamosCache.unshift(datosFormulario);
+        reclamosCache.unshift(form);
       }
       fetch(`/api/records/${encodeURIComponent(id)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(datosFormulario)
+        body: JSON.stringify(form)
       }).catch(e => console.warn(e));
     } else {
-      reclamosCache.unshift(datosFormulario);
+      reclamosCache.unshift(form);
       idsConocidos.add(id);
       fetch("/api/records", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(datosFormulario)
+        body: JSON.stringify(form)
       }).catch(e => console.warn(e));
     }
 
@@ -3219,11 +3217,12 @@ async function guardarReclamo(datosFormulario) {
     renderizarTabla();
     actualizarGraficas();
 
-    alert("✅ Enviado a la hoja. Revisa si aparece.");
+    // Con no-cors no podemos leer la respuesta, así que:
+    alert("✅ Enviado. Ahora mira tu hoja RECLAMOS — si aparece ahí, ¡ya quedó! 🎉");
     return true;
 
   } catch (error) {
-    alert("❌ Error: " + error.message);
+    alert("❌ No se pudo enviar: " + error.message);
     return false;
   } finally {
     if (btn && !reclamoEnEdicionId) {
