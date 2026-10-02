@@ -208,6 +208,12 @@ function doGet(e) {
       if (hName.indexOf("reparac") !== -1) {
         idxReparacion = c;
       }
+      if (hName.indexOf("direcci") !== -1 || hName === "direccion") {
+        idxDireccion = c;
+      }
+      if (hName.indexOf("cantid") !== -1 || hName === "cantidad") {
+        idxCantidad = c;
+      }
     }
 
     if (tieneColumnaPiloto) {
@@ -296,186 +302,45 @@ function doGet(e) {
 }
 
 // -------------------------------------------------------------
-// 📤 doPost: GUARDAR, ACTUALIZAR ESTADOS (SIN DUPLICAR) Y FLUSH INMEDIATO
+// 📤 doPost: GUARDAR RECLAMO EN HOJA "RECLAMOS"
 // -------------------------------------------------------------
 function doPost(e) {
-  var lock = LockService.getScriptLock();
+  const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("RECLAMOS");
+  
+  if (!hoja) return ContentService.createTextOutput("ERROR: No encontré la hoja");
+
+  let datosTexto = "{}";
+  if (e.postData && e.postData.contents) {
+    datosTexto = e.postData.contents;
+  }
+
   try {
-    try { lock.waitLock(15000); } catch(lErr) {}
+    const d = JSON.parse(datosTexto);
+    
+    hoja.appendRow([
+      d.idReclamo || "",
+      d.ruta || "",
+      d.vendedor || "",
+      d.cliente || "",
+      d.telefono || "",
+      d.factura || "",
+      d.producto || "",
+      d.motivo || "",
+      new Date(),
+      "",
+      d.firmaVendedor || "",
+      d.firmaCliente || "",
+      "", "", "", "", "", "", "",
+      d.cantidad || "",
+      d.direccion || "",
+      ""
+    ]);
 
-    var rawData = e.postData && e.postData.contents ? e.postData.contents : "{}";
-    var d = JSON.parse(rawData);
-    var sheet = obtenerHojaReclamos();
+    return ContentService.createTextOutput("OK");
     
-    var accion = String(d.action || d.metodo || d.tipo || '').toLowerCase();
-    var idReclamo = String(d.id || d.ID_Reclamo || d.idReclamo || d.voucherNumber || '').trim();
-    var esActualizacion = (accion === "actualizar" || accion === "modificar" || accion === "patch" || d.esActualizacion === true);
-    
-    // 🗑️ ACCIÓN: ELIMINAR TODO EL HISTORIAL (Solo Admin)
-    if (accion === "limpiartodo") {
-      var lr = sheet.getLastRow();
-      if (lr >= 2) {
-        sheet.deleteRows(2, lr - 1);
-      }
-      SpreadsheetApp.flush();
-      try { lock.releaseLock(); } catch(e) {}
-      return ContentService.createTextOutput(JSON.stringify({ success: true, message: "Historial limpiado" }))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-    
-    // 🗑️ ACCIÓN: ELIMINAR UN RECLAMO ESPECÍFICO (Solo Admin)
-    if (accion === "eliminar" || accion === "borrar" || accion === "delete") {
-      var filaDel = buscarFilaPorIdONumero(sheet, idReclamo, d.factura);
-      if (filaDel !== -1) {
-        sheet.deleteRow(filaDel);
-        SpreadsheetApp.flush();
-        try { lock.releaseLock(); } catch(e) {}
-        return ContentService.createTextOutput(JSON.stringify({ success: true, message: "Reclamo eliminado", id: idReclamo }))
-          .setMimeType(ContentService.MimeType.JSON);
-      }
-      try { lock.releaseLock(); } catch(e) {}
-      return ContentService.createTextOutput(JSON.stringify({ success: false, message: "No encontrado" }))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-    
-    // 📞 TELÉFONO: Forzar como TEXTO PURO con apóstrofe inicial
-    var telRaw = d.telefono != null ? d.telefono : (d.Telefono != null ? d.Telefono : (d.clientPhone != null ? d.clientPhone : ''));
-    var telTexto = String(telRaw).trim();
-    if (telTexto.indexOf("'") === 0) {
-      telTexto = telTexto.substring(1).trim();
-    }
-    var telParaHoja = telTexto ? ("'" + telTexto) : "";
-
-    var direccion = String(d.direccion || d.Direccion || d["Dirección"] || d.direccionCliente || d["Dirección del Cliente"] || d.clientAddress || '').trim();
-    var rawCant = d.cantidad ?? d.Cantidad ?? d.cantidadProducto ?? d["Cantidad de Producto"] ?? d.quantity ?? 1;
-    var cantidad = (isNaN(Number(rawCant)) || Number(rawCant) <= 0) ? 1 : Number(rawCant);
-
-    // Casillas de verificación: Cambio (Col T), Devolución (Col U), Reparación (Col V)
-    var valCambio = (d.cambio === true || String(d.cambio || d.Cambio || '').trim().toUpperCase() === 'SI' || String(d.cambio || d.Cambio || '').trim().toLowerCase() === 'true') ? 'SI' : 'NO';
-    var valDevolucion = (d.devolucion === true || String(d.devolucion || d.Devolucion || d['Devolución'] || '').trim().toUpperCase() === 'SI' || String(d.devolucion || d.Devolucion || d['Devolución'] || '').trim().toLowerCase() === 'true') ? 'SI' : 'NO';
-    var valReparacion = (d.reparacion === true || String(d.reparacion || d.Reparacion || d['Reparación'] || '').trim().toUpperCase() === 'SI' || String(d.reparacion || d.Reparacion || d['Reparación'] || '').trim().toLowerCase() === 'true') ? 'SI' : 'NO';
-
-    // Detectar si la hoja existente tiene la columna antigua "Piloto"
-    var numCols = Math.max(sheet.getLastColumn(), 22);
-    var headers = sheet.getRange(1, 1, 1, numCols).getValues()[0];
-    var tieneColumnaPiloto = false;
-    for (var c = 0; c < headers.length; c++) {
-      var hName = String(headers[c] || '').trim().toLowerCase();
-      if (hName === "piloto" || hName === "conductor" || hName === "chofer") {
-        tieneColumnaPiloto = true;
-        break;
-      }
-    }
-
-    var fechaStr = d.fecha || Utilities.formatDate(new Date(), Session.getScriptTimeZone() || "GMT-6", "yyyy-MM-dd");
-    var horaStr = d.hora || Utilities.formatDate(new Date(), Session.getScriptTimeZone() || "GMT-6", "HH:mm");
-
-    var filaValores;
-    if (tieneColumnaPiloto) {
-      // Si la hoja aún tiene columna Piloto (G), se guarda vacía "" y las 3 casillas quedan en T, U, V
-      filaValores = [
-        idReclamo,
-        d.ruta || d.Ruta || "",
-        d.vendedor || d.Vendedor || "",
-        d.cliente || d.Cliente || "",
-        telParaHoja, // Columna E: Teléfono estrictamente como TEXTO
-        d.factura || d.Factura || "",
-        "", // Columna Piloto / Conductor ELIMINADA (queda en blanco)
-        d.photo || d.foto || d.Photo || "",
-        d.producto || d.Producto || "",
-        d.motivo || d.Motivo || "",
-        fechaStr,
-        horaStr,
-        d.firmaVendedor || d.FirmaVendedor || "",
-        d.firmaCliente || d.FirmaCliente || "",
-        d.procesoAceptado || d["Proceso Aceptado"] || "NO",
-        d.procesoRechazado || d["Proceso Rechazado"] || "NO",
-        d.enProcesoEntrega || d["En Proceso de Entrega"] || "NO",
-        d.cambioEntregado || d["Cambio Entregado"] || "NO",
-        direccion,     // Columna S
-        cantidad,      // Columna T
-        valCambio,     // Columna U
-        valDevolucion, // Columna V
-        valReparacion  // Columna W
-      ];
-    } else {
-      // Estructura oficial limpia de 22 columnas (A hasta V)
-      filaValores = [
-        idReclamo,
-        d.ruta || d.Ruta || "",
-        d.vendedor || d.Vendedor || "",
-        d.cliente || d.Cliente || "",
-        telParaHoja, // Columna E: Teléfono estrictamente como TEXTO
-        d.factura || d.Factura || "",
-        d.photo || d.foto || d.Photo || "",
-        d.producto || d.Producto || "",
-        d.motivo || d.Motivo || "",
-        fechaStr,
-        horaStr,
-        d.firmaVendedor || d.FirmaVendedor || "",
-        d.firmaCliente || d.FirmaCliente || "",
-        d.procesoAceptado || d["Proceso Aceptado"] || "NO",
-        d.procesoRechazado || d["Proceso Rechazado"] || "NO",
-        d.enProcesoEntrega || d["En Proceso de Entrega"] || "NO",
-        d.cambioEntregado || d["Cambio Entregado"] || "NO",
-        direccion,     // Columna R: Dirección del Cliente
-        cantidad,      // Columna S: Cantidad de Producto
-        valCambio,     // Columna T: Cambio (SI/NO)
-        valDevolucion, // Columna U: Devolución (SI/NO)
-        valReparacion  // Columna V: Reparación (SI/NO)
-      ];
-    }
-    
-    // 🔍 Si es actualización explícita, buscar la fila existente por ID
-    var filaExistente = -1;
-    if (esActualizacion) {
-      filaExistente = buscarFilaPorIdONumero(sheet, idReclamo, d.factura);
-    }
-    
-    if (esActualizacion && filaExistente !== -1) {
-      // ✏️ ACTUALIZAR FILA QUE YA EXISTE EN SU POSICIÓN EXACTA (NUNCA CREAR DUPLICADO)
-      sheet.getRange(filaExistente, 1, 1, filaValores.length).setValues([filaValores]);
-      sheet.getRange(filaExistente, 5).setNumberFormat("@"); // Asegurar formato texto en teléfono
-      SpreadsheetApp.flush(); // ⚡ Guardar al instante en Google Sheets
-      try { lock.releaseLock(); } catch(e) {}
-      return ContentService.createTextOutput(JSON.stringify({
-        ok: true,
-        success: true,
-        action: "actualizado",
-        fila: filaExistente,
-        id: idReclamo
-      })).setMimeType(ContentService.MimeType.JSON);
-    } else if (esActualizacion) {
-      // 🚫 SI ES ACTUALIZACIÓN DE ESTADO Y NO SE ENCONTRÓ: NUNCA CREAR FILA NUEVA
-      SpreadsheetApp.flush();
-      try { lock.releaseLock(); } catch(e) {}
-      return ContentService.createTextOutput(JSON.stringify({
-        ok: false,
-        success: false,
-        error: "No se encontró fila para actualizar el estado.",
-        message: "No se encontró fila para actualizar el estado. Se evitó la creación de duplicados.",
-        id: idReclamo
-      })).setMimeType(ContentService.MimeType.JSON);
-    } else {
-      // 🆕 REGISTRO NUEVO: Guardar exactamente en la siguiente fila vacía
-      var filaNueva = obtenerSiguienteFilaVacia(sheet);
-      sheet.getRange(filaNueva, 1, 1, filaValores.length).setValues([filaValores]);
-      sheet.getRange(filaNueva, 5).setNumberFormat("@"); // Columna E: Teléfono como texto
-      SpreadsheetApp.flush(); // ⚡ Guardar al instante en Google Sheets
-      try { lock.releaseLock(); } catch(e) {}
-      return ContentService.createTextOutput(JSON.stringify({
-        ok: true,
-        success: true,
-        action: "creado",
-        fila: filaNueva,
-        id: idReclamo
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
-    
-  } catch (err) {
-    try { lock.releaseLock(); } catch(e) {}
-    return ContentService.createTextOutput(JSON.stringify({ ok: false, success: false, error: err.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    hoja.appendRow(["ERROR:", error.message]);
+    return ContentService.createTextOutput("ERROR: " + error.message);
   }
 }
 

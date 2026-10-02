@@ -1327,7 +1327,7 @@
 // -------------------------------------------------------------
 // 📌 DATOS FIJOS DEL SISTEMA Y GOOGLE APPS SCRIPT
 // -------------------------------------------------------------
-const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbx3k2G_W6vUDyn7dk_NM57idjJVFDdKJga5lM9tewlE_1e9uHA3jiYLQdui_Cq3lFeX/exec";
+const URL_SCRIPT = "https://script.google.com/macros/s/AKfycby_AVE7UcpWuYE91kl9g_a-k6hJDetNx-DCgUtzH82v8BFgPIZUbS4JxRa29qfCJ7iVmA/exec";
 const WEB_APP_URL = URL_SCRIPT;
 const LOGO_URL = "/logo.png";
 
@@ -2554,11 +2554,11 @@ function recopilarDatosFormulario() {
 // -------------------------------------------------------------
 // 💾 GUARDAR RECLAMO (FUNCIÓN OFICIAL CONECTADA A GOOGLE APPS SCRIPT)
 // -------------------------------------------------------------
-async function guardarReclamo(form) {
-  if (!form || (typeof form === "object" && form instanceof Event)) {
-    form = recopilarDatosFormulario();
+async function guardarReclamo(datos) {
+  if (!datos || (typeof datos === "object" && datos instanceof Event)) {
+    datos = recopilarDatosFormulario();
   }
-  if (!form) return false;
+  if (!datos) return false;
 
   const btn = document.getElementById("btnGuardar");
   if (btn) {
@@ -2566,19 +2566,19 @@ async function guardarReclamo(form) {
     btn.textContent = "⏳ Guardando...";
   }
 
-  const datos = {
-    idReclamo: form.idReclamo,
-    ruta: form.ruta,
-    vendedor: form.vendedor,
-    cliente: form.cliente,
-    direccion: form.direccion,
-    telefono: form.telefono,
-    factura: form.factura,
-    producto: form.producto,
-    cantidad: form.cantidad,
-    motivo: form.motivo,
-    firmaVendedor: form.firmaVendedor,
-    firmaCliente: form.firmaCliente
+  const envio = {
+    idReclamo: datos.idReclamo,
+    ruta: datos.ruta,
+    vendedor: datos.vendedor,
+    cliente: datos.cliente,
+    direccion: datos.direccion,
+    telefono: datos.telefono,
+    factura: datos.factura,
+    producto: datos.producto,
+    cantidad: datos.cantidad,
+    motivo: datos.motivo,
+    firmaVendedor: datos.firmaVendedor,
+    firmaCliente: datos.firmaCliente
   };
 
   try {
@@ -2586,7 +2586,7 @@ async function guardarReclamo(form) {
       method: "POST",
       mode: "no-cors",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(datos)
+      body: JSON.stringify(envio)
     });
 
     // Envío a servidor local
@@ -2594,14 +2594,14 @@ async function guardarReclamo(form) {
       await fetch("/api/records", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form)
+        body: JSON.stringify(datos)
       });
     } catch (e) {
       console.warn("Backend local:", e);
     }
 
-    reclamosCache.unshift(form);
-    idsConocidos.add(form.id);
+    reclamosCache.unshift(datos);
+    idsConocidos.add(datos.id);
     localStorage.setItem("myg_reclamos_backup", JSON.stringify(reclamosCache));
 
     limpiarFormulario();
@@ -2611,7 +2611,6 @@ async function guardarReclamo(form) {
 
     alert("✅ ¡ENVIADO! Revisa tu hoja RECLAMOS");
     return true;
-
   } catch (error) {
     alert("❌ Error: " + error.message);
     return false;
